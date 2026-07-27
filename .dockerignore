@@ -3,3 +3,9 @@
 .brain/sessions
 .plan/.meta
 bin
+_build
+cover
+deps
+doc
+erl_crash.dump
+.elixir_ls

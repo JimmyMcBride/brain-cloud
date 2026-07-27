@@ -1,13 +1,48 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.26-alpine AS build
-WORKDIR /src
-COPY go.mod go.sum* ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 go build -trimpath -o /out/brain-cloud-api ./cmd/api
 
-FROM gcr.io/distroless/static-debian12:nonroot
-COPY --from=build /out/brain-cloud-api /brain-cloud-api
-EXPOSE 8080
-USER nonroot:nonroot
-ENTRYPOINT ["/brain-cloud-api"]
+FROM hexpm/elixir:1.20.2-erlang-29.0.3-alpine-3.22.5 AS build
+
+RUN apk add --no-cache build-base git
+
+WORKDIR /src
+
+ENV MIX_ENV=prod
+
+RUN mix local.hex --force && mix local.rebar --force
+
+COPY mix.exs mix.lock ./
+COPY config config
+COPY apps/brain_cloud/mix.exs apps/brain_cloud/mix.exs
+COPY apps/brain_cloud_web/mix.exs apps/brain_cloud_web/mix.exs
+
+RUN mix deps.get --only prod
+RUN mix deps.compile
+
+COPY apps apps
+
+RUN mix compile
+RUN mix assets.deploy
+RUN mix release brain_cloud
+
+FROM alpine:3.22.5 AS runtime
+
+RUN apk add --no-cache ca-certificates libgcc libstdc++ lksctp-tools ncurses-libs openssl \
+    && addgroup -S -g 1000 brain \
+    && adduser -S -u 1000 -G brain brain
+
+WORKDIR /app
+
+RUN chown brain:brain /app
+
+COPY --from=build --chown=brain:brain /src/_build/prod/rel/brain_cloud ./
+COPY --chown=brain:brain rel/entrypoint.sh /app/entrypoint.sh
+
+ENV HOME=/app
+ENV LANG=C.UTF-8
+ENV PHX_SERVER=true
+
+EXPOSE 4000
+
+USER brain
+
+ENTRYPOINT ["/app/entrypoint.sh"]

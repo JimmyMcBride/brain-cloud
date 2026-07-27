@@ -9,17 +9,42 @@ permissions:
   contents: read
 
 jobs:
-  go:
+  elixir:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: brain_cloud_test
+          POSTGRES_USER: brain
+          POSTGRES_PASSWORD: brain
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brain -d brain_cloud_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: ecto://brain:brain@localhost/brain_cloud_test
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
+      - uses: erlef/setup-beam@v1
         with:
-          go-version-file: go.mod
-          cache: true
+          elixir-version: "1.20.2"
+          otp-version: "29.0.3"
+      - run: mix local.hex --force
+      - run: mix local.rebar --force
+      - run: mix deps.get
       - name: Verify formatting
-        run: test -z "$(gofmt -l .)"
-      - run: go test ./...
-      - run: go vet ./...
-      - run: go build ./cmd/api
-      - run: go build ./cmd/worker
+        run: mix format --check-formatted
+      - name: Compile
+        run: MIX_ENV=test mix compile --warnings-as-errors
+      - name: Prepare test database
+        run: |
+          MIX_ENV=test mix ecto.create
+          MIX_ENV=test mix ecto.migrate
+      - name: Test
+        run: MIX_ENV=test mix test
+      - name: Build production assets
+        run: MIX_ENV=prod mix assets.deploy
