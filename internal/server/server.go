@@ -12,6 +12,7 @@ type systemInfo struct {
 	ServerVersion   string   `json:"server_version"`
 	ProtocolVersion string   `json:"protocol_version"`
 	Capabilities    []string `json:"capabilities"`
+	Modules         []string `json:"modules"`
 }
 
 func New(logger *slog.Logger) http.Handler {
@@ -28,6 +29,7 @@ func New(logger *slog.Logger) http.Handler {
 			ServerVersion:   "0.0.0-dev",
 			ProtocolVersion: "v1",
 			Capabilities:    []string{"system.info"},
+			Modules:         []string{},
 		})
 	})
 	return requestLogger(logger, mux)

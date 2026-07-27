@@ -25,6 +25,7 @@ func TestEndpoints(t *testing.T) {
 			ServerVersion:   "0.0.0-dev",
 			ProtocolVersion: "v1",
 			Capabilities:    []string{"system.info"},
+			Modules:         []string{},
 		}},
 	}
 
