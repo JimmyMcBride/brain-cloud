@@ -28,7 +28,7 @@ Prove Brain Cloud as a real durable knowledge service through one complete, inte
 - `docs/architecture.md`
 - `docs/roadmap.md`
 - `openapi/brain-cloud-v1.yaml`
-- `docs/adr/0001-brain-cloud-repository-boundaries.md` through `0006-plan-cloud-remains-a-separate-domain.md`
+- `docs/adr/0001-brain-cloud-repository-boundaries.md` through `0012-github-planning-support-is-transitional-and-optional.md`; ADR 0006 is historical and superseded by ADRs 0007 and 0010.
 
 ## Constraints
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "last_active_chain": "brainstorm/brain-cloud-first-vertical-slice",
-  "last_updated_at": "2026-07-27T17:51:36Z",
+  "last_active_chain": "brainstorm/brain-module-ecosystem-foundation",
+  "last_updated_at": "2026-07-27T21:20:04Z",
   "sessions": {
     "brainstorm/brain-cloud-first-vertical-slice": {
       "chain_id": "brainstorm/brain-cloud-first-vertical-slice",
@@ -16,6 +16,20 @@
       "next_action": "Review recap and continue into the epic stage when ready.",
       "created_at": "2026-07-27T17:50:37Z",
       "updated_at": "2026-07-27T17:51:36Z"
+    },
+    "brainstorm/brain-module-ecosystem-foundation": {
+      "chain_id": "brainstorm/brain-module-ecosystem-foundation",
+      "brainstorm": "brain-module-ecosystem-foundation",
+      "current_stage": "brainstorm",
+      "current_cluster": 1,
+      "current_cluster_label": "vision-intake",
+      "stage_statuses": {
+        "brainstorm": "in_progress"
+      },
+      "summary": "Vision still missing. No supporting material recorded yet.",
+      "next_action": "Capture the user's vision in plain language.",
+      "created_at": "2026-07-27T21:20:04Z",
+      "updated_at": "2026-07-27T21:20:04Z"
     }
   }
 }
