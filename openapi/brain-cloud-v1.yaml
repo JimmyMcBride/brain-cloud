@@ -4,7 +4,7 @@ info:
   version: 0.0.0-dev
   description: Public, versioned protocol shared by hosted and self-hosted Brain Cloud servers, including capability-gated optional modules.
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:4000
 x-reserved-paths:
   - /v1/modules
   - /v1/modules/{module_id}
@@ -33,6 +33,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Status"
+        "503":
+          description: PostgreSQL is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+              examples:
+                notReady:
+                  value:
+                    status: not_ready
   /v1/system/info:
     get:
       operationId: getSystemInfo

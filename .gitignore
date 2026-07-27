@@ -4,3 +4,16 @@
 .brain/policy.override.yaml
 .brain/state/
 # brain:end gitignore-session
+
+# Elixir build and dependency artifacts
+/_build/
+/cover/
+/deps/
+/doc/
+/erl_crash.dump
+/*.ez
+/mix.lock.bak
+
+# Phoenix generated assets
+/apps/brain_cloud_web/priv/static/assets/
+/apps/brain_cloud_web/priv/static/cache_manifest.json
