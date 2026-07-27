@@ -3,19 +3,18 @@
 <!-- brain:begin project-doc-architecture -->
 Use this file for the structural shape of the repository.
 
-## Internal Packages
+## Umbrella Applications
 
-- `internal/config/`
-- `internal/server/`
+- `apps/brain_cloud/`
+- `apps/brain_cloud_web/`
 
 ## Architecture Notes
 
-- Favor small package boundaries and explicit CLI/app wiring.
-- Keep public CLI behavior stable; add internal seams only when they improve testability or safety.
-- Treat generated project context as deterministic repo state, not LLM-authored prose.
-- Treat session enforcement as the hard-control layer above soft context files.
+- Keep domain and persistence concerns in `brain_cloud`.
+- Keep Phoenix, LiveView, and HTTP transport concerns in `brain_cloud_web`.
+- Use OTP supervision for background processes; add no worker-only app until jobs exist.
 <!-- brain:end project-doc-architecture -->
 
 ## Local Notes
 
-The Phase 0 server uses standard-library HTTP and structured logging. `internal/config` loads environment configuration; `internal/server` owns `/healthz`, `/readyz`, and `/v1/system/info`. System discovery includes an empty enabled-module list; no module registry exists. PostgreSQL appears in development Compose but is not connected until Phase 1. Planning begins later as an optional compiled official module; community process execution follows only after official contract validation. See `docs/architecture.md` and ADRs 0007–0012.
+The Phase 0 server is a Phoenix umbrella. `brain_cloud` owns Ecto/PostgreSQL, system information, readiness, release migrations, and domain supervision. `brain_cloud_web` owns Phoenix, Bandit, LiveView, JSON controllers, and assets. System discovery includes an empty enabled-module list; no module registry exists. PostgreSQL readiness is implemented, while Phase 1 product persistence remains deferred. Planning begins later as an optional supervised official OTP application; community process execution follows only after official contract validation. See `docs/architecture.md` and ADRs 0007–0013.

@@ -34,7 +34,7 @@ After `brain adopt` creates starter context, the AI agent must scan the repo bef
 
 1. Start one task or ticket at a time and keep the scope narrow.
 2. Implement the task, then run focused tests for the touched packages.
-3. Run the required full checks through `brain session run -- go test ./...` and `brain session run -- go build ./...`.
+3. Run the required full checks through `brain session run -- mix test`, `brain session run -- mix compile --warnings-as-errors`, and `brain session run -- mix assets.deploy`.
 4. Review the diff against the task goal and user-facing behavior.
 5. If review finds issues, patch the work and repeat the test and review steps.
 6. When the task is clean, commit it, push it, and only then move to the next task.
@@ -54,4 +54,4 @@ After `brain adopt` creates starter context, the AI agent must scan the repo bef
 
 ## Local Notes
 
-Use `make check` for format, tests, vet, and binary compilation. Smoke-test all three HTTP routes after transport changes. Active integration work targets `develop`; release stabilization uses `release/vX.Y.Z`; `main` contains releases. Plan owns GitHub planning artifacts whenever source mode is `github`.
+Use `make check` for formatting, warnings-as-errors compilation, database migrations/tests, and production assets. Smoke-test `/`, `/healthz`, `/readyz`, and `/v1/system/info` after transport changes. Active integration work targets `develop`; release stabilization uses `release/vX.Y.Z`; `main` contains releases. Plan owns GitHub planning artifacts whenever source mode is `github`.

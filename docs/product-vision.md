@@ -24,6 +24,8 @@ Modules may contribute searchable sources, project relationships, domain metadat
 
 Official modules are maintained by the Brain project and use the same formal contracts available to trusted third-party modules. Expected directions include Planning, Git and GitHub integration, agent or MCP access, notifications, secrets/redaction, import/export providers, and selected adapters. This list is directional, not a first-release commitment.
 
+Brain Cloud initially hosts official modules as supervised Elixir/OTP applications implementing explicit behaviours. This runtime choice does not make the eventual community contract language-specific; community modules remain external processes.
+
 Community modules may add company workflows, context and search providers, memory types, domain models, tools, jobs, web surfaces, approval flows, infrastructure integrations, documentation publishers, importers, and enterprise systems.
 
 Modules declare identity, compatibility, runtimes, capabilities, permissions, configuration, migrations, network/secret access, provenance, publisher identity, and integrity data. They are executable applications—not harmless configuration—and must be mediated by Brain Core.

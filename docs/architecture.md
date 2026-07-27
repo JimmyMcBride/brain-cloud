@@ -46,13 +46,13 @@ Expected official modules may cover Planning, Git/GitHub, agent access, notifica
 
 ## Staged runtime model
 
-### Stage 1: compiled official modules
+### Stage 1: supervised official modules
 
-Official modules initially live as compiled Go packages inside `brain` or `brain-cloud`. Each implements stable interfaces, registers explicit capabilities, declares permissions, is explicitly enabled, and avoids coupling to unrelated internals. Planning begins here so real use can validate the contracts.
+Official cloud modules initially live as supervised Elixir/OTP applications inside the Brain Cloud umbrella. Each implements explicit behaviours, registers capabilities, declares permissions, is explicitly enabled, and avoids coupling to unrelated internals. Planning begins here so real use can validate the contracts. Local Brain may use equivalent native contracts in its own runtime; the public module contract does not depend on a shared language ABI.
 
 ### Stage 2: external process modules
 
-Community modules eventually run as separate processes rather than Go native plugins. Connect RPC, gRPC, and JSON-RPC are candidates; no transport is selected yet. The process model provides language independence, isolation, independent releases, crash containment, and explicit permission mediation.
+Community modules eventually run as separate processes rather than sharing the server VM. Connect RPC, gRPC, and JSON-RPC are candidates; no transport is selected yet. The process model provides language independence, isolation, independent releases, crash containment, and explicit permission mediation.
 
 ### Stage 3: cloud services and UI extensions
 
@@ -128,7 +128,7 @@ PostgreSQL remains the likely transactional store; filesystem/object storage may
 
 ## Local, cloud, and hybrid behavior
 
-Local Brain loads enabled compiled official modules through stable local contracts. Brain Cloud manages enabled cloud modules and their configuration. Hybrid synchronization includes module data only when its module defines compatible identity, revision, visibility, conflict, and export semantics.
+Local Brain loads enabled official modules through stable local contracts. Brain Cloud supervises enabled official OTP applications and manages cloud module configuration. Hybrid synchronization includes module data only when its module defines compatible identity, revision, visibility, conflict, and export semantics.
 
 Planning must work without GitHub or another tracker. GitHub can remain a transitional import, publication, mirror, or execution target and later an optional module. No official Linear integration is planned.
 
@@ -142,4 +142,4 @@ The same server supports localhost, Docker Compose, single-server self-hosting, 
 
 ## Current implementation
 
-Phase 0 contains `cmd/api`, `cmd/worker`, `internal/config`, and `internal/server`. It implements health, readiness, system discovery, structured logging, and graceful shutdown. No module registry, Planning domain, arbitrary loading, or external process protocol exists yet.
+Phase 0 is a Phoenix umbrella. `apps/brain_cloud` owns Ecto/PostgreSQL, compatibility metadata, readiness, release migrations, and domain supervision. `apps/brain_cloud_web` owns Phoenix, Bandit, LiveView, JSON transport, and the minimal web shell. OTP handles graceful supervision; no separate worker application exists until real jobs require one. No module registry, Planning domain, arbitrary loading, or external process protocol exists yet.

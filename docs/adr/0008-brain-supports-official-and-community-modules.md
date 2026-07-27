@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted.
+Accepted; Stage 1 runtime wording is superseded by ADR 0013.
 
 ## Context
 
@@ -12,7 +12,7 @@ Brain needs workflow adaptation without absorbing every integration, knowledge m
 
 Brain supports official and community modules through formal lifecycle, capability, permission, configuration, event, migration, storage, API, and audit contracts. Official modules use the same declared contracts available to trusted community modules. Planning is the first major official module.
 
-Stage 1 compiles official Go modules in process to validate interfaces. Community execution and distribution arrive only after those contracts prove stable.
+Stage 1 originally proposed compiled Go modules in process. ADR 0013 replaces the Brain Cloud server runtime with Elixir/Phoenix and defines official cloud modules as supervised OTP applications implementing explicit behaviours. Community execution and distribution still arrive only after those contracts prove stable.
 
 ## Consequences
 

@@ -34,7 +34,7 @@ Official and community modules adapt Brain to different workflows without making
 
 The staged direction is:
 
-1. Compiled official modules validate stable interfaces inside Brain and Brain Cloud.
+1. Supervised official OTP applications validate stable interfaces inside Brain Cloud.
 2. Community modules later run as isolated external processes through a language-neutral protocol.
 3. Cloud module services, jobs, APIs, agent tools, and constrained web surfaces follow after the contracts and security model mature.
 
@@ -42,31 +42,37 @@ Planning must be optional. Brain works without Planning, with the official Plann
 
 ## Status
 
-Phase 0 foundation only. The repository currently provides configuration, structured logging, graceful shutdown, health/readiness checks, compatibility and empty module discovery, tests, CI, and development deployment scaffolding. Projects, memory, persistence, authentication, search, sync, Hive Mind, module execution, Planning, and the web application remain roadmap work.
+Phase 0 foundation only. The repository currently provides a Phoenix/LiveView web shell, structured logging, OTP supervision, PostgreSQL-backed readiness, compatibility and empty module discovery, tests, CI, and development deployment scaffolding. Projects, memory persistence, authentication, search, sync, Hive Mind, module execution, and Planning remain roadmap work.
 
 ## Local development
 
-Requirements: Go 1.26 or newer. Docker is optional.
+Requirements: Elixir 1.20.2 and Erlang/OTP 29.0.3. PostgreSQL 18 and Docker are optional for local development.
 
 ```bash
+docker compose up -d postgres
+make setup
 make check
 make run
 ```
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `BRAIN_CLOUD_ADDRESS` | `:8080` | API listen address |
-| `BRAIN_CLOUD_LOG_LEVEL` | `INFO` | structured log level |
-| `BRAIN_CLOUD_SHUTDOWN_TIMEOUT` | `10s` | graceful shutdown deadline |
+| `PORT` | `4000` | Phoenix HTTP port |
+| `DATABASE_URL` | local development config | PostgreSQL connection URL |
+| `SECRET_KEY_BASE` | development-only value | cookie and LiveView signing secret |
+| `PHX_HOST` | `localhost` | externally visible host |
+| `PHX_SERVER` | unset locally | start the endpoint in an OTP release |
+| `POOL_SIZE` | `10` | PostgreSQL connection pool size |
 
 ```bash
 docker compose up --build
-curl http://localhost:8080/healthz
-curl http://localhost:8080/readyz
-curl http://localhost:8080/v1/system/info
+curl http://localhost:4000/
+curl http://localhost:4000/healthz
+curl http://localhost:4000/readyz
+curl http://localhost:4000/v1/system/info
 ```
 
-The Compose file starts the API and PostgreSQL; persistence is intentionally not wired into the Phase 0 API.
+The Compose file starts the Phoenix release and PostgreSQL. `/readyz` returns `503` until PostgreSQL accepts a query; Phase 1 product persistence is not implemented yet.
 
 ## Project documents
 

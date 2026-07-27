@@ -3,25 +3,24 @@
 <!-- brain:begin project-doc-overview -->
 Project: `brain-cloud`
 
-Go module: `github.com/JimmyMcBride/brain-cloud`
-
-Primary runtime: `go`
+Primary runtime: `elixir`
 
 ## Manifests
 
-- `go.mod`
+- `mix.exs`
+- `mix.lock`
 - `Makefile`
 
 ## Repo Map
 
 - `.brain/`
 - `.plan/`
-- `cmd/`
+- `apps/`
+- `config/`
 - `deploy/`
 - `docs/`
-- `internal/`
-- `migrations/`
 - `openapi/`
+- `rel/`
 <!-- brain:end project-doc-overview -->
 
 ## Local Notes

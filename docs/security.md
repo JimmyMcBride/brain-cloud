@@ -22,4 +22,4 @@ The module trust model will require:
 - safe failure behavior and isolation where practical;
 - separate Planning read, write, and approve permissions from context and memory permissions.
 
-Compiled official modules run as trusted in-process code during the first stage but still follow formal contracts. Community modules later use external processes for stronger isolation and crash containment. Brain does not claim complete sandboxing. A module must not bypass tenant isolation, project permissions, content visibility, provenance, or Hive Mind query scope.
+Supervised official OTP applications run as trusted in-process code during the first stage but still follow formal behaviours and declared contracts. Community modules later use external processes for stronger isolation and crash containment. Brain does not claim complete sandboxing. A module must not bypass tenant isolation, project permissions, content visibility, provenance, or Hive Mind query scope.

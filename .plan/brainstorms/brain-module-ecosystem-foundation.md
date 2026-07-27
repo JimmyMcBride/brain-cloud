@@ -14,7 +14,7 @@ Started: 2026-07-27T21:20:04Z
 
 ## Focus Question
 
-What is the smallest formal module foundation that lets compiled official modules validate safe Brain extension contracts without prematurely building community module execution?
+What is the smallest formal module foundation that lets supervised official OTP applications validate safe Brain extension contracts without prematurely building community module execution?
 ## Desired Outcome
 
 Brain Core and Brain Cloud gain explicit, capability- and permission-aware module boundaries that support Planning as the first official module and preserve a later external-process path for community modules.
@@ -32,7 +32,7 @@ Modules adapt Brain to different workflows while Core stays independently useful
 
 ## Constraints
 
-- Stage 1 supports internal compiled official modules only; no arbitrary loading.
+- Stage 1 supports internal supervised official OTP applications only; no arbitrary loading.
 - Planning is optional, receives no private internal exceptions, and has permissions separate from context and memory.
 - Hive Mind remains core; modules cannot bypass permissions, visibility, scope, provenance, or tenant isolation.
 - External-process transport, package registry, web sandboxing, and final manifest schema remain deferred.
@@ -49,13 +49,13 @@ Modules adapt Brain to different workflows while Core stays independently useful
 
 Vision: modules adapt Brain to workflows while Core stays independently useful and secure. Official and community modules use formal capability and permission contracts; official status grants maintenance and trust, not private access.
 
-Candidate Stage 1 shape: module identity, enable/disable lifecycle, capability registration, permission declarations, configuration schema hook, event subscriptions, migration ownership, capability discovery, and audit events. Planning is the first compiled official consumer.
+Candidate Stage 1 shape: module identity, enable/disable lifecycle, capability registration, permission declarations, configuration schema hook, event subscriptions, migration ownership, capability discovery, and audit events. Planning is the first supervised official consumer.
 
 Stage 2 direction: community modules run as external processes through a later language-neutral protocol. Transport is deliberately undecided.
 
 Permission model: install approval plus per-capability grants; Planning read/write/approve remains separate from project context read and memory propose/edit.
 
-Explicit non-goals: no Planning-domain implementation or Plan migration, no arbitrary Go plugins, no unrestricted third-party in-process code, no external process runtime, no registry, no package signing implementation, no UI extension sandbox, no permanent GitHub planning dependency, and no official Linear integration.
+Explicit non-goals: no Planning-domain implementation or Plan migration, no unrestricted third-party in-process code, no external process runtime, no registry, no package signing implementation, no UI extension sandbox, no permanent GitHub planning dependency, and no official Linear integration.
 
 Supporting material: docs/product-vision.md, docs/architecture.md, docs/roadmap.md, docs/security.md, and ADRs 0007-0012.
 
@@ -71,7 +71,7 @@ Brain users can enable only the workflows they need; official teams and communit
 
 ### Appetite
 
-One contract-validation foundation for compiled official modules: identity, lifecycle, capabilities, permissions, configuration, events, migrations, discovery, and audit. Stop before Planning domain implementation, community process execution, packaging, registries, or UI extension security.
+One contract-validation foundation for supervised official OTP applications: identity, lifecycle, capabilities, permissions, configuration, events, migrations, discovery, and audit. Stop before Planning domain implementation, community process execution, packaging, registries, or UI extension security.
 
 ### Remaining Open Questions
 
@@ -82,14 +82,14 @@ One contract-validation foundation for compiled official modules: identity, life
 
 ### Candidate Approaches
 
-- Define small host-facing interfaces exercised by a minimal compiled official module test fixture before Planning implementation.
+- Define small OTP behaviours exercised by a minimal supervised official module test fixture before Planning implementation.
 - Model module identity, capabilities, permissions, configuration, migrations, and events as explicit descriptors owned by Core.
 - Keep module storage behind module-scoped repositories and migration ownership while Core enforces tenant/project/audit context.
 - Expose enabled module IDs and capabilities through system discovery; defer remote transport and packaging.
 
 ### Decision Snapshot
 
-Stage 1 should define only the compiled official-module host contract needed to make Planning optional and non-privileged. Validate identity, lifecycle, capability/permission declarations, configuration, events, migrations, discovery, and audit with small tests; design external-process community modules only after this contract survives real Planning use.
+Stage 1 should define only the supervised official-module host contract needed to make Planning optional and non-privileged. Validate identity, lifecycle, capability/permission declarations, configuration, events, migrations, discovery, and audit with small tests; design external-process community modules only after this contract survives real Planning use.
 
 ## Challenge
 
@@ -103,21 +103,21 @@ Stage 1 should define only the compiled official-module host contract needed to 
 ### No-Gos
 
 - No Planning domain migration or API design in this workstream.
-- No arbitrary Go plugins or third-party in-process loading.
+- No unrestricted third-party in-process loading.
 - No selected external-process transport.
 - No official Linear integration or permanent GitHub planning backend.
 - No moving Hive Mind out of Core.
 
 ### Assumptions
 
-- One compiled official module can reveal most host-contract gaps before externalization.
+- One supervised official module can reveal most host-contract gaps before externalization.
 - Core can mediate permissions and audit consistently across local and cloud runtimes.
 - Planning can keep its domain model behind module boundaries while using shared project identity and context.
 - External community compatibility matters, but it does not require freezing transport now.
 
 ### Likely Overengineering
 
-A universal manifest and runtime that attempts to support every language, deployment, provider, UI, permission, and migration scenario at once. Keep descriptors provisional and build only seams exercised by compiled official modules.
+A universal manifest and runtime that attempts to support every language, deployment, provider, UI, permission, and migration scenario at once. Keep descriptors provisional and build only seams exercised by supervised official modules.
 
 ### Simpler Alternative
 

@@ -19,8 +19,8 @@ Planning is the first major optional official Brain module. It is not a separate
 ### Module ecosystem
 
 - Core module lifecycle, registry, explicit enable/disable, capability registration, configuration, permissions, events, migrations, storage ownership, discovery, and audit.
-- Stage 1: internal compiled official modules validating stable contracts.
-- Stage 2: external-process community modules through a future language-neutral protocol; no Go native plugin dependency.
+- Stage 1: supervised official OTP applications validating stable behaviours and contracts.
+- Stage 2: external-process community modules through a future language-neutral protocol; no shared runtime ABI dependency.
 - Stage 3: hosted module services, jobs, APIs, agent tools, and constrained web extensions.
 - Candidate extension points: commands, context/search providers, memory types, agent tools, events, jobs, routes, web surfaces, and integration providers.
 - Manifest direction: stable ID/version, Brain API range, runtimes, capabilities, permissions, dependencies, configuration, migrations, network/secrets declarations, provenance, publisher, and integrity data.
@@ -46,7 +46,7 @@ Planning is the first major optional official Brain module. It is not a separate
 
 ### Phase 0 — Repository and server foundation
 
-**Complete.** Repository bootstrap, Go API/worker skeleton, health/readiness/system info, OpenAPI, Docker/Compose, CI, Brain and Plan initialization, temporary GitHub planning mode, and foundational product/architecture documentation.
+**Complete.** Repository bootstrap, Phoenix umbrella and LiveView shell, health/database readiness/system info, OpenAPI, OTP release, Docker/Compose, CI, Brain and Plan initialization, temporary GitHub planning mode, and foundational product/architecture documentation.
 
 ### Phase 1 — First Brain Cloud vertical slice
 

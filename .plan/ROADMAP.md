@@ -8,7 +8,7 @@ Brain Cloud hosts Brain Core plus explicitly enabled official/community modules.
 
 ## Phase 0 — Repository and server foundation
 
-**Complete.** Repository, Go API/worker, health/readiness/system discovery, OpenAPI, Docker/Compose, CI, Brain/Plan initialization, temporary GitHub planning mode, vision, architecture, and ADRs.
+**Complete.** Repository, Phoenix umbrella and LiveView shell, health/database readiness/system discovery, OpenAPI, OTP release, Docker/Compose, CI, Brain/Plan initialization, temporary GitHub planning mode, vision, architecture, and ADRs.
 
 ## Phase 1 — First Brain Cloud vertical slice
 
@@ -48,7 +48,7 @@ Team/org Hive, patterns, duplication, dependencies, contradictions, Hive Memory,
 
 ## Phase 10 — Core module framework
 
-Compiled internal module interface/registry, lifecycle, capabilities, configuration, permission declarations, events, migrations, discovery, and audit. No general community execution yet.
+Supervised official OTP application behaviours and registry, lifecycle, capabilities, configuration, permission declarations, events, migrations, discovery, and audit. No general community execution yet.
 
 ## Phase 11 — Official Planning module integration
 
