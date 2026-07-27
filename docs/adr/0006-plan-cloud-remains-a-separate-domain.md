@@ -1,5 +1,11 @@
 # 0006: Plan Cloud remains a separate domain
 
+## Status
+
+Superseded by [ADR 0007](0007-planning-becomes-an-official-optional-brain-module.md) and [ADR 0010](0010-one-brain-cloud-platform-and-web-application.md).
+
+This record preserves the earlier decision context. It is not current product direction.
+
 ## Context
 
 Brain knowledge improves planning, and completed plans can improve knowledge, but memory/retrieval and work coordination answer different questions.
