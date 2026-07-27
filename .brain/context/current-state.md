@@ -7,12 +7,12 @@ This file is a deterministic snapshot of the repository state at the last refres
 
 - Project: `brain-cloud`
 - Root: `.`
-- Runtime: `go`
-- Go module: `github.com/JimmyMcBride/brain-cloud`
+- Runtime: `elixir`
 - Current branch: `docs/revise-cloud-module-vision`
 - Default branch: `develop`
 - Remote: `https://github.com/JimmyMcBride/brain-cloud.git`
-- Go test files: `2`
+- Umbrella apps: `brain_cloud`, `brain_cloud_web`
+- ExUnit test files: `8`
 
 ## Docs
 

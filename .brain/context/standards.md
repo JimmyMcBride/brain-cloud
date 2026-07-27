@@ -5,9 +5,9 @@ Use this file for implementation and review expectations.
 
 ## Standards
 
-- Keep code idiomatic Go with small, concrete abstractions.
-- Prefer explicit tests for CLI behavior, indexing, retrieval, safety flows, and session enforcement.
-- Record required verification through `brain session run -- ...` so finish-stage enforcement can validate it.
+- Keep Elixir code formatted with `mix format`.
+- Compile with warnings treated as errors and test PostgreSQL behavior through ExUnit.
+- Keep OpenAPI synchronized with implemented Phoenix routes.
 
 ## CI
 

@@ -2,7 +2,7 @@ version: 1
 project:
     name: brain-cloud
     slug: brain-cloud
-    runtime: go
+    runtime: elixir
     memory:
         accepted_note_globs:
             - AGENTS.md
@@ -36,7 +36,10 @@ closeout:
     verification_profiles:
         - name: tests
           commands:
-            - go test ./...
+            - mix test
         - name: build
           commands:
-            - go build ./...
+            - mix compile --warnings-as-errors
+        - name: assets
+          commands:
+            - mix assets.deploy

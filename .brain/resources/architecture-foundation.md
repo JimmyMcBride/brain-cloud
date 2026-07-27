@@ -12,22 +12,21 @@ Planning is the first major optional official Brain module. The standalone `plan
 
 Brain Core owns project identity, context, memory, retrieval, compilation, provenance, sessions, security boundaries, permissions, configuration, events, audit, module lifecycle, and capability registration. Hive Mind remains Core.
 
-Official modules begin as compiled packages implementing formal lifecycle, capability, permission, configuration, event, migration, discovery, and audit contracts. They receive no private exceptions. Community modules later use an external process protocol; transport is undecided. Do not add Go native plugins or unrestricted in-process third-party loading.
+Official Brain Cloud modules begin as supervised OTP applications implementing formal lifecycle, capability, permission, configuration, event, migration, discovery, and audit behaviours. They receive no private exceptions. Community modules later use an external process protocol; transport is undecided. Do not load unrestricted third-party code in process.
 
 Planning must be optional, capability-discovered, tracker-independent, and permission-separated from context and memory. Detailed Planning domain/storage/CLI/migration design is deferred to a dedicated contract.
 
-## Entrypoints and packages
+## Umbrella applications
 
-- `cmd/api/main.go`: API composition root, structured JSON logging, signal handling, graceful HTTP shutdown.
-- `cmd/worker/main.go`: lifecycle-ready worker composition root; no queue or jobs exist in Phase 0.
-- `internal/config`: environment configuration and validation.
-- `internal/server`: HTTP routes, compatibility response, request logging, and handler tests.
+- `apps/brain_cloud`: Ecto/PostgreSQL, system information, readiness, release migrations, and domain supervision.
+- `apps/brain_cloud_web`: Phoenix, Bandit, LiveView, JSON routes, assets, and endpoint supervision.
+- No worker-only application or queue exists in Phase 0; future jobs run under explicit OTP supervision.
 
 ## Protocol and deployment
 
 Implemented routes are `GET /healthz`, `GET /readyz`, and `GET /v1/system/info`. Discovery advertises server/protocol capabilities and `modules: []`; no module runtime exists. `openapi/brain-cloud-v1.yaml` reserves module and Planning areas without speculative schemas.
 
-`Dockerfile` builds the non-root API image; `compose.yaml` provides development API plus currently unused PostgreSQL; `.github/workflows/ci.yml` verifies formatting, tests, vet, and builds.
+`Dockerfile` builds a non-root OTP release and runs migrations before startup; `compose.yaml` provides the Phoenix server plus PostgreSQL; `.github/workflows/ci.yml` verifies formatting, compilation, database tests, and assets.
 
 ## Roadmap boundary
 
