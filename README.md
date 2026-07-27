@@ -59,3 +59,7 @@ curl http://localhost:8080/v1/system/info
 - [Security direction](docs/security.md)
 - [Self-hosting direction](docs/self-hosting.md)
 - [Architecture decisions](docs/adr/)
+
+## Branches
+
+`develop` is the active integration/default branch, `release/vX.Y.Z` stabilizes releases, and `main` is the release branch. Recommended GitHub protections for `develop` and `main`: require pull requests, passing CI, resolved review conversations, and no force pushes or deletion. Phase 0 records these recommendations without imposing repository rules.
