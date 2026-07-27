@@ -63,3 +63,5 @@ Project-specific commands:
 - Runtime smoke check: call `/healthz`, `/readyz`, and `/v1/system/info`.
 
 Active delivery branch is `develop`; `main` is releases and `release/vX.Y.Z` is stabilization. Next implementation must remain Phase 1: one persistent cloud project, durable memory, retrieval, and keyword search.
+
+Plan currently uses GitHub source mode only as transitional repository coordination. All Plan-owned GitHub mutations still go through Plan. The target product architecture stores optional Planning data in local/cloud/hybrid Brain, not permanently in GitHub. Module ecosystem implementation is deferred until Phase 10; the Planning migration requires a separate follow-up contract.

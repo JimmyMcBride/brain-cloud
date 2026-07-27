@@ -119,6 +119,10 @@ After `brain adopt` creates starter context, the AI agent must scan the repo bef
 
 ## Local Notes
 
-Brain Cloud server only. Preserve one public `/v1` protocol across hosted and self-hosted deployments. Local Brain, SDKs, Plan Cloud, and autonomous agents are separate repositories/domains.
+Brain Cloud is the one hosted and self-hostable platform for Brain Core and enabled modules. Preserve one public `/v1` protocol across deployments. The primary repository family is `brain`, `brain-cloud`, and `brain-cloud-sdk-go`.
 
-Current Phase 0 implementation uses Go standard library packages in `internal/config` and `internal/server`; entrypoints are `cmd/api` and `cmd/worker`. Never imply roadmap features already work. Run `make check` plus runtime endpoint smoke tests after server changes. Next product work is Phase 1 only.
+Planning is moving into Brain as an optional official module. The standalone `plan` repository remains during migration, but agents must not implement Plan Cloud, a separate Plan frontend/SDK/identity system/agent gateway, or official Linear integration. GitHub planning support is transitional and optional, though this repository currently uses Plan GitHub mode for coordination.
+
+Official modules must use formal lifecycle, capability, permission, configuration, event, migration, discovery, and audit boundaries with no private exceptions. Planning permissions stay separate from context and memory. Community modules should eventually use an external process protocol; do not add Go native plugins or unrestricted in-process third-party loading. Hive Mind remains Core and mediates scope, retrieval, reranking, contradictions, and provenance.
+
+Current Phase 0 implementation uses Go standard library packages in `internal/config` and `internal/server`; entrypoints are `cmd/api` and `cmd/worker`. Never imply roadmap features already work. Run `make check` plus runtime endpoint smoke tests after server changes. Next implementation work remains Phase 1 only.

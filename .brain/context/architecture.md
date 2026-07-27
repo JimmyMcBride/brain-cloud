@@ -25,4 +25,8 @@ Brain Cloud is API-first and implements, but never imports, external SDKs.
 - `internal/config` validates environment configuration.
 - `internal/server` owns the standard-library HTTP transport and handler tests.
 - `openapi/brain-cloud-v1.yaml` records only implemented routes and reserves future `/v1` domain areas without speculative schemas.
-- Brain CLI/local filesystem behavior, SDKs, Plan Cloud, and autonomous agent execution remain outside this repository.
+- Brain CLI/local filesystem behavior and SDK implementations remain outside this repository.
+- Brain Cloud owns cloud module lifecycle, configuration, execution, discovery, and unified UI.
+- Planning is an optional official module, not Plan Cloud. It receives no private internal access and has separate permissions.
+- Compiled official modules validate Stage 1 contracts; community modules later use an external process protocol.
+- Hive Mind remains Core and modules cannot bypass its permission, scope, tenant, or provenance rules.

@@ -26,4 +26,4 @@ Primary runtime: `go`
 
 ## Local Notes
 
-Add repo-specific notes here. `brain context refresh` preserves content outside managed blocks.
+Brain Cloud hosts Brain Core plus optional official/community modules through one public protocol and, eventually, one unified web application. Planning is the first major optional official module; no separate Plan Cloud platform is planned. Hive Mind remains Core. Module framework implementation is Phase 10, after the Phase 1–9 core roadmap.

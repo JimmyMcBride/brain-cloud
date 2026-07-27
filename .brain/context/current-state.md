@@ -9,7 +9,9 @@ This file is a deterministic snapshot of the repository state at the last refres
 - Root: `.`
 - Runtime: `go`
 - Go module: `github.com/JimmyMcBride/brain-cloud`
-- Current branch: `main`
+- Current branch: `docs/revise-cloud-module-vision`
+- Default branch: `develop`
+- Remote: `https://github.com/JimmyMcBride/brain-cloud.git`
 - Go test files: `2`
 
 ## Docs
