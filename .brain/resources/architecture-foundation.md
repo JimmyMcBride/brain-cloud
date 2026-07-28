@@ -32,4 +32,4 @@ Implemented product routes are `POST /v1/projects`, `POST /v1/projects/{project_
 
 ## Roadmap boundary
 
-Phase 1 is the first persistent project/memory vertical slice. Phase 2 production identity and multi-tenancy is next. Core module framework is Phase 10. Official Planning integration is Phase 11 under a separate migration contract.
+Phase 1 is the first persistent project/memory vertical slice. Phase 2A is approved as GitHub spec [#5](https://github.com/JimmyMcBride/brain-cloud/issues/5): production API identity, organization tenancy, scoped revocable tokens, authorization on existing product routes, Phase 1 data migration, and minimal immutable audit events. Teams, agent credentials, interactive identity, and fine-grained project permissions remain later Phase 2 work. Core module framework is Phase 10. Official Planning integration is Phase 11 under a separate migration contract.

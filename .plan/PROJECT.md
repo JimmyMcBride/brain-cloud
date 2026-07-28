@@ -37,4 +37,4 @@ Brain Cloud is the hosted and self-hostable platform for Brain Core and optional
 
 ## Current focus
 
-Phase 1 implements one persistent project-memory-search slice with temporary development authentication. Phase 2 production identity and multi-tenancy is next. Module framework implementation begins later in Phase 10. Planning integration begins only after a dedicated contract.
+Phase 1 is complete. Phase 2A is approved as GitHub spec [#5](https://github.com/JimmyMcBride/brain-cloud/issues/5): persisted users and organizations, owner/member memberships, scoped revocable API tokens, tenant ownership on the existing project-memory-search path, deterministic Phase 1 data migration, and a minimal immutable audit foundation. Teams, agent credentials, interactive login, invitations, and fine-grained project ACLs remain later Phase 2 work. Module framework implementation begins later in Phase 10. Planning integration begins only after a dedicated contract.

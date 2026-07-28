@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "last_active_chain": "brainstorm/brain-module-ecosystem-foundation",
-  "last_updated_at": "2026-07-27T21:20:04Z",
+  "last_active_chain": "brainstorm/production-identity-and-organization-tenant-foundation",
+  "last_updated_at": "2026-07-28T19:25:29Z",
   "sessions": {
     "brainstorm/brain-cloud-first-vertical-slice": {
       "chain_id": "brainstorm/brain-cloud-first-vertical-slice",
@@ -30,6 +30,20 @@
       "next_action": "Capture the user's vision in plain language.",
       "created_at": "2026-07-27T21:20:04Z",
       "updated_at": "2026-07-27T21:20:04Z"
+    },
+    "brainstorm/production-identity-and-organization-tenant-foundation": {
+      "chain_id": "brainstorm/production-identity-and-organization-tenant-foundation",
+      "brainstorm": "production-identity-and-organization-tenant-foundation",
+      "current_stage": "brainstorm",
+      "current_cluster": 5,
+      "current_cluster_label": "handoff-epic",
+      "stage_statuses": {
+        "brainstorm": "in_progress"
+      },
+      "summary": "Recap:\nCurrent understanding: Phase 1 trusts one process-wide bearer token and actor UUID. It cannot identify real users, isolate organizations, revoke credentials, enforce permissions, or prove who performed durable writes. Existing project, memory, and search routes therefore cannot be exposed beyond trusted development networks. / A self-hosting administrator can bootstrap the first owner safely. Human API clients can use individually issued credentials. Every existing project, memory, and search operation is confined to organizations where the authenticated user has active membership and sufficient token scope.\nKey decisions: appetite captured.\nUnresolved risks or questions: none captured yet.\nParked items: none.\nRecommended next stage: Review recap and continue into the epic stage when ready.",
+      "next_action": "Review recap and continue into the epic stage when ready.",
+      "created_at": "2026-07-28T19:24:11Z",
+      "updated_at": "2026-07-28T19:25:29Z"
     }
   }
 }
