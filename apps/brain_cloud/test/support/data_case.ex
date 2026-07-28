@@ -40,6 +40,26 @@ defmodule BrainCloud.DataCase do
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
   end
 
+  def identity_fixture(overrides \\ %{}) do
+    suffix = Ecto.UUID.generate()
+
+    attrs =
+      Map.merge(
+        %{
+          email: "owner-#{suffix}@example.test",
+          display_name: "Test Owner",
+          organization_name: "Test Organization #{suffix}",
+          organization_slug: "test-#{suffix}"
+        },
+        Map.new(overrides)
+      )
+
+    {:ok, bootstrap} = BrainCloud.Accounts.bootstrap_owner(attrs)
+    {:ok, auth_context} = BrainCloud.Accounts.authenticate(bootstrap.raw_token)
+
+    Map.put(bootstrap, :auth_context, auth_context)
+  end
+
   @doc """
   A helper that transforms changeset errors into a map of messages.
 
