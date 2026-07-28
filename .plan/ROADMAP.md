@@ -4,178 +4,80 @@ Created: 2026-07-27T17:43:26Z
 
 ## Overview
 
-One public protocol supports hosted and self-hosted servers. Local, cloud-native, and hybrid Brain remain equal modes. SDKs stay external; project boundaries, permissions, provenance, portability, auditable durable writes, and the Brain/Plan domain boundary remain invariant.
+Brain Cloud hosts Brain Core plus explicitly enabled official/community modules. Planning is an optional official module—not Plan Cloud. GitHub remains transitional planning coordination; official Linear work is abandoned. See `docs/roadmap.md` for the full product capability inventory.
 
-The expanded human-readable roadmap is in `docs/roadmap.md`. This Plan roadmap records the same full product inventory and phase ordering so planning remains self-contained.
+## Phase 0 — Repository and server foundation
 
-## Complete feature inventory
+**Complete.** Repository, Phoenix umbrella and LiveView shell, health/database readiness/system discovery, OpenAPI, OTP release, Docker/Compose, CI, Brain/Plan initialization, temporary GitHub planning mode, vision, architecture, and ADRs.
 
-### A. Deployment and server configuration
+## Phase 1 — First Brain Cloud vertical slice
 
-Hosted, self-hosted, localhost, Compose, single-server, multi-service; configurable base URLs; discovery, protocol/capabilities, health/readiness; no hosted-service hard coding.
+Create one cloud project, store durable context/memory, retrieve it, and search it. Development auth, revision foundation, PostgreSQL persistence, OpenAPI expansion, and end-to-end restart tests.
 
-### B. Identity, authentication, and authorization
+## Phase 2 — Identity and multi-tenancy
 
-Users, personal workspaces, organizations, teams and memberships; user/org projects; sessions, API/device/agent tokens, service accounts, expiration/revocation, roles/capabilities, audit. Provider-independent future password, magic link, GitHub, Google, OAuth, OIDC, SAML, enterprise SSO.
+Users, organizations, teams, memberships, ownership, permissions, tokens, agent credentials, tenant isolation, and audit.
 
-### C. Cloud-native Brain projects
+## Phase 3 — Complete cloud-native project model
 
-Create/use without local repo; API/web knowledge; archive/restore/export/delete; repositories, metadata, relationships, tags, technologies, ownership, invitations, permissions. Stable ID, name, description, owner, visibility/status/timestamps, repositories, sync config, index status.
+Context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repositories, and project relationships.
 
-### D. Context and memory
+## Phase 4 — Hosted retrieval and context compilation
 
-Distinct context and curated memory: current state, architecture, decisions, conventions, constraints, history, summaries, custom categories, provenance, visibility, revisions. Non-Markdown storage allowed; human-readable Brain-compatible export required.
+Full-text/semantic retrieval, filters, reranking, bounded compilation, provenance, freshness, warnings, and permission-aware indexing.
 
-### E. Revision history
+## Phase 5 — `brain-cloud-sdk-go`
 
-Stable document IDs; immutable/parent revisions; hashes; user/agent/device actors; time, summary, diffs, restore, deletion/conflict history. Explain what, who/what, when, why, and evidence.
+Protocol models, handwritten client, authentication, capability negotiation, projects, context, memory, search, compilation, errors, retries, and pagination.
 
-### F. Search and retrieval
+## Phase 6 — Brain CLI cloud mode
 
-Single/selected/personal/team/org/custom-Hive scopes; keyword/semantic retrieval, metadata/recency/source filters, reranking, provenance/freshness. Filter unauthorized content before retrieval/model context.
+Profiles, auth, cloud projects, search, context, and cloud-native workflows in `brain`.
 
-### G. Context compilation
+## Phase 7 — Hybrid synchronization
 
-Inputs: task, scope, token budget, included/excluded categories, recency, required sources, format. Outputs: bounded selections, source/revision/freshness, rationale, contradictions, missing warnings. Never send all documents by default.
+Linking, push/pull, stable IDs, cursors, offline work, conflicts, selective sync, `.brainignore`, secret warnings, and local export.
 
-### H. Conversations and hosted chat
+## Phase 8 — Hive Mind
 
-Project, selected projects, personal/team/org/custom Hive scopes. Retain query, scope, sources, context, response, citations, proposals, related projects. Conversation history never automatically becomes durable memory; promotion is explicit.
+Personal Hive, selected projects, collections, cross-project retrieval/reranking, provenance, and permissions.
 
-### I. Hybrid synchronization
+## Phase 9 — Advanced Hive Mind
 
-Link, push/pull/two-way, offline edits, stable IDs, cursors, revision comparison, hashes, idempotency/retries, rename/delete/interruption/conflicts/resolution. Sync durable content/metadata, never SQLite/indexes. CLI uses external Go SDK.
+Team/org Hive, patterns, duplication, dependencies, contradictions, Hive Memory, portfolios, and freshness.
 
-### J. Selective synchronization
+## Phase 10 — Core module framework
 
-Local-only, cloud-private, project/team/org-shared policies; future `.brainignore` and pre-upload secret detection; content and project enforcement.
+Supervised official OTP application behaviours and registry, lifecycle, capabilities, configuration, permission declarations, events, migrations, discovery, and audit. No general community execution yet.
 
-### K. Conflict handling
+## Phase 11 — Official Planning module integration
 
-No silent overwrite. Three-way merge, unresolved conflict records, preserve both revisions, user resolution, agent-assisted proposals, auditable history.
+Separate contract required. High-level direction: optional local/cloud/hybrid Planning, migrated Plan concepts, Brain context access, memory proposals, planning permissions/APIs/UI, transitional GitHub support, no official Linear integration, and compatibility for the current `plan` command.
 
-### L. Hive Mind
+## Phase 12 — Agent and external client platform
 
-Personal/team/org/custom/selected-project scopes; cross-project questions, related projects, implementations, patterns, contradictions, duplication, dependencies, comparisons, portfolios, stale knowledge, bounded context, provenance. Identity/scope → authorized projects → per-project retrieval → cross-project rerank → analysis → bounded answer. Never flatten boundaries/globalize the pool.
+Agent-safe APIs, MCP, ChatGPT-compatible actions, scoped credentials, module tools, proposals, and audit.
 
-### M. Hive Memory
+## Phase 13 — Unified Brain Cloud web application
 
-Project memory says how one project works; Hive Memory says how projects relate: shared patterns, terminology, standards, infrastructure, inconsistencies, reusable approaches, constraints, decisions. Normally proposal/review driven.
+Core/Hive surfaces, module management, constrained module UI, Planning UI only when enabled, and administration.
 
-### N. Contradiction detection
+## Phase 14 — Community module protocol
 
-Across projects, architecture, decisions, current state, project/Hive memory. Record claims, projects/revisions, dates, confidence, suggestion, optional Plan reference. Never silently choose a winner.
+External process protocol, language-neutral SDK, discovery/install, permissions, compatibility, signing, registry direction, lifecycle, crash containment, and diagnostics—after official modules validate contracts.
 
-### O. Memory proposals and review
+## Phase 15 — Production self-hosting and hosted operations
 
-Proposal with rationale/evidence → authorized approve/edit/reject → auditable revision. Separate read/search/compile/propose/approve/edit/admin permissions. Agents do not directly mutate by default.
+Containers, Compose, migrations, backup/restore, upgrades, workers, observability, metrics, tracing, runbooks, and hosted operations.
 
-### P. Agent and integration APIs
+## Explicit removed direction
 
-List projects; metadata; project/Hive search; compile; read memory/source; propose/status; contradictions; scoped conversations. Initial surface is read-only plus proposals.
+- No separate Plan Cloud server, frontend, SDK, identity system, or agent gateway.
+- No official Linear integration.
+- No permanent GitHub dependency for Planning.
+- No arbitrary Go native plugins or unrestricted third-party in-process code.
+- No universal issue tracker, source host, CI replacement, or deployment replacement.
 
-### Q. ChatGPT, MCP, and external clients
+## Current non-goals
 
-ChatGPT/custom GPT, MCP, Claude, IDE/CI/GitHub agents, enterprise assistants, mobile, third-party frameworks; same hosted/self-hosted contract.
-
-### R. Brain CLI support
-
-Future connect/disconnect/servers/status; login/logout/whoami; cloud project create/list/show/archive/export; link/unlink and sync status/push/pull/conflicts/resolve; cloud search/ask/context; Hive ask/search/projects/create/list/memory/contradictions; agent create/list/revoke. Names are directional.
-
-### S. Brain Cloud web application
-
-Sign-in; projects; context/memory/revisions; search; project/Hive chat; collections; proposals/review; contradictions; teams/agents/audit/admin. Frontend framework waits for future ADR.
-
-### T. Self-hosting
-
-Images/Compose, environment docs, migrations, admin bootstrap, health, backup/restore, upgrades, storage/search/worker config, production guidance; target `docker compose up`.
-
-### U. Storage architecture
-
-Interfaces around PostgreSQL, filesystem/object durable content, search/vector indexes when justified, queue/workers, optional cache. No premature managed-provider commitment.
-
-### V. Security
-
-TLS/at-rest encryption, token security/revocation, tenant isolation, permissions, validation, rate limits, audit, secure delete, secrets, sensitive retrieval, prompt-injection defense, agent boundaries, redaction, backup security. Checks precede retrieval.
-
-### W. Encryption modes
-
-Server-readable, future end-to-end encrypted, or local-only. Server-readable enables hosted search/compilation/Hive/agents; E2EE may require trusted client/user retrieval and lose hosted features. Searchable E2EE is not initial scope.
-
-### X. Data portability
-
-Export/import projects, project/Hive memory, metadata, revisions; hosted ↔ self-hosted ↔ local-only; Brain-compatible human-readable cloud export.
-
-### Y. Auditability and events
-
-Audit auth/access/search/compilation/agents/proposals/permissions/sync/conflicts/exports/deletions. Events for project, conflicts, proposals, contradictions, token use, permissions, indexing, import/export. Future webhooks, notifications, Plan Cloud, GitHub, Slack, email.
-
-### Z. Plan Cloud integration
-
-Brain/Hive context → Plan work → agent execution → outcomes → Brain proposals → stronger Hive. Context references, planning-time Hive, contradiction-to-work, completion-to-memory. Shared platform only after demonstrated need.
-
-## Delivery phases
-
-### Phase 0 — Repository and architecture foundation
-
-Git/GitHub, Brain, Plan, GitHub source mode, Go API/worker, health/readiness/system info, OpenAPI, Docker/Compose, CI, vision, architecture, ADRs, roadmap. Current session only.
-
-### Phase 1 — First vertical cloud slice
-
-Goal: create one cloud project, store one durable memory, retrieve it through API, and search it. Development auth; project/document/memory creation; revisions; keyword search; PostgreSQL; OpenAPI; E2E tests. Acceptance: create/add/retrieve/search and survive restart.
-
-### Phase 2 — Identity and multi-tenancy
-
-Users, orgs, teams, membership, ownership, roles/capabilities, tokens/agent credentials, tenant isolation, audit.
-
-### Phase 3 — Complete cloud-native project model
-
-Categories, metadata, revisions/diffs/restore, archive/delete, import/export, repositories, relationships, visibility.
-
-### Phase 4 — Search and context compilation
-
-Full text/semantic, filters/reranking, token bounds, provenance/freshness/warnings, permission-aware indexes/retrieval.
-
-### Phase 5 — `brain-cloud-sdk-go`
-
-External generated protocol and handwritten client; auth/discovery/projects/memory/search/context/errors/pagination/retries/integration tests.
-
-### Phase 6 — Brain CLI cloud mode
-
-Profiles/base URLs, auth, cloud projects, cloud search/context; hosted default without exclusivity.
-
-### Phase 7 — Hybrid synchronization
-
-Linking, stable identities, push/pull/cursors/idempotency/offline/conflicts/selective sync/`.brainignore`/secret warnings/local export.
-
-### Phase 8 — Hive Mind foundation
-
-Personal/selected/custom scopes, per-project retrieval, cross-project reranking, provenance, consulted-project visibility, permissions.
-
-### Phase 9 — Advanced Hive Mind
-
-Team/org, patterns, duplication, dependencies, contradictions, Hive Memory proposals, portfolios, freshness.
-
-### Phase 10 — Agent and external integration platform
-
-Agent-safe APIs, MCP, ChatGPT actions, scoped tokens, proposals, limits, audit, docs.
-
-### Phase 11 — Brain Cloud web application
-
-Auth/dashboard/context/memory/search/project and Hive chat/review/revisions/contradictions/team and agent admin.
-
-### Phase 12 — Production self-hosting and operations
-
-Images/Compose/migrations/workers/backup/restore/upgrades/observability/metrics/tracing/logs/rate limits/runbooks.
-
-### Phase 13 — Hosted service and enterprise capabilities
-
-As justified: billing/quotas, SSO/OIDC/SAML, org policy, retention/compliance, regions, reporting.
-
-### Phase 14 — Plan Cloud ecosystem integration
-
-Separate Plan Cloud work: Brain context/references, Hive during planning, contradiction-to-work, completion-to-memory, shared project/repo references, unified agents.
-
-## Initial non-goals
-
-No full authentication, organizations/teams, semantic search/embeddings, hybrid sync, Hive Mind, ChatGPT/MCP, Brain CLI changes, SDK repository, frontend, billing, enterprise SSO, real-time collaboration, autonomous cloud agents, Plan Cloud, searchable E2EE, or multi-region deployment in Phase 0.
+This revision does not implement Planning, migrate standalone Plan, choose an external module transport, define the final manifest, load community code, or scaffold module UI.

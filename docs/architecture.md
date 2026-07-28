@@ -3,53 +3,143 @@
 ## System context
 
 ```mermaid
-flowchart LR
-    C["Brain CLI and external clients"] -->|public /v1 protocol| API["Brain Cloud API"]
-    SDK["External language SDKs"] -->|public /v1 protocol| API
-    PC["Plan Cloud"] -->|integration contracts| API
-    API --> D["Domain services"]
-    D --> S["Storage interfaces"]
-    D --> Q["Background jobs"]
-    Q --> W["Worker"]
-    S --> DB["PostgreSQL"]
-    S --> O["Content storage"]
-    S --> I["Search indexes"]
+flowchart TB
+    U["Users and agents"] --> C["Brain CLI / Brain Cloud Web / external clients"]
+    C --> SDK["brain-cloud-sdk-* / public API"]
+
+    subgraph COREBOX["Brain Cloud Core"]
+        G["Public API and capability discovery"]
+        P["Projects"]
+        CTX["Context and memory"]
+        R["Retrieval and compilation"]
+        H["Hive Mind"]
+        IAM["Permissions"]
+        E["Events and audit"]
+        MR["Module runtime"]
+    end
+
+    SDK --> G
+    G --> P
+    G --> CTX
+    G --> R
+    G --> H
+    G --> IAM
+    G --> E
+    G --> MR
+    MR --> OP["Official Planning module"]
+    MR --> OI["Official integration modules"]
+    MR --> CM["Future community module services"]
+    COREBOX --> S["Storage and background processing"]
 ```
 
-## Boundaries and modules
+## Core boundary
 
-`cmd/api` and `cmd/worker` are composition roots. `internal/config` owns environment configuration and `internal/server` owns HTTP transport. Future domain modules remain separated by responsibility: platform identity and tenancy; projects; memory and context; search; sync; Hive Mind; agents and proposals; audit; and storage adapters. Packages appear only when a working feature needs them.
+Brain Core supplies invariants every module needs: project identity, durable context and memory, retrieval, compilation, provenance, sessions, configuration, authentication boundaries, permissions, events, audit, module lifecycle, and capability registration. Brain Cloud supplies their cloud implementations plus organizations, collaboration, conversations, revisions, sync, Hive Mind, agents, workers, module management, and deployment.
 
-Brain Cloud implements the protocol and never imports its client SDKs. Generated protocol models and low-level transport belong in external language repositories, with handwritten ergonomic clients layered above them. The Brain CLI consumes `brain-cloud-sdk-go` and retains all local Markdown and `.brain/` behavior. Plan Cloud consumes explicit context, Hive, reference, contradiction, and proposal contracts but keeps planning domain models separate.
+Hive Mind stays core. Modules contribute bounded sources and tools through mediated contracts, while Hive Mind retains scope resolution, authorized project selection, per-project retrieval, cross-project reranking, relationship/contradiction analysis, compilation, and attribution.
 
-## API-first protocol
+## Module boundary
 
-All product APIs are base-URL configurable and versioned below `/v1`. `/v1/system/info` exposes server identity, protocol version, and capabilities for compatibility negotiation. The OpenAPI contract grows with implemented behavior and is intended to generate Go, TypeScript, and Python protocol layers. Unimplemented top-level areas are reserved but have no invented schemas.
+Planning is the first major official module. It remains optional, uses formal module interfaces, has planning-specific permissions, and receives no private access to unrelated Brain internals. Its cloud data is hosted by Brain Cloud only when enabled. The current standalone `plan` repository is transitional; no Plan Cloud service is part of the target architecture.
 
-## Persistence and revisions
+Expected official modules may cover Planning, Git/GitHub, agent access, notifications, secrets/redaction, import/export, and selected adapters. Community modules may provide additional context, search, memory types, tools, jobs, UI, approvals, or integrations. Expected does not mean committed for the first release.
 
-Storage is hidden behind domain-oriented interfaces. PostgreSQL is the likely transaction and metadata store; object or filesystem storage may hold large durable content; search and vector indexes remain derived state. Provider-specific managed services must not leak into domain contracts.
+## Staged runtime model
 
-Durable documents have stable IDs and immutable revisions with parent revision, content hash, actor identity, timestamp, summary, provenance, and deletion/conflict history. Restore creates a new revision. Indexes and local SQLite databases are never synchronization payloads.
+### Stage 1: supervised official modules
 
-## Authorization, retrieval, and indexing
+Official cloud modules initially live as supervised Elixir/OTP applications inside the Brain Cloud umbrella. Each implements explicit behaviours, registers capabilities, declares permissions, is explicitly enabled, and avoids coupling to unrelated internals. Planning begins here so real use can validate the contracts. Local Brain may use equivalent native contracts in its own runtime; the public module contract does not depend on a shared language ABI.
 
-Authentication resolves an actor; authorization resolves permitted operations and project/content visibility. Filtering happens before indexing selection, retrieval, context compilation, reranking, or model calls. Search executes within authorized project boundaries. Hive Mind retrieves per project, reranks across those results, and preserves source project and revision provenance rather than flattening all tenants into one global pool.
+### Stage 2: external process modules
 
-## Context and background work
+Community modules eventually run as separate processes rather than sharing the server VM. Connect RPC, gRPC, and JSON-RPC are candidates; no transport is selected yet. The process model provides language independence, isolation, independent releases, crash containment, and explicit permission mediation.
 
-Context compilation accepts a task, scope, token budget, categories, freshness, sources, and output format. It returns bounded selections, revisions, provenance, rationale, contradictions, and missing-information warnings.
+### Stage 3: cloud services and UI extensions
 
-Workers eventually process indexing, imports, exports, contradiction discovery, and events through idempotent, retry-safe jobs. Phase 0 provides only a lifecycle-ready worker process; no queue is selected until a feature needs it.
+Brain Cloud may later host module services and workers, route module APIs, deliver events, expose module-defined agent tools, and render constrained navigation, settings, panels, and dashboards. Web extension sandboxing and trust require a separate design.
 
-## Synchronization
+## Candidate extension points
 
-Hybrid sync exchanges durable content and metadata using stable document IDs, immutable revisions, cursors, hashes, and idempotency keys. Push, pull, offline edits, renames, deletions, interruption, and retries are explicit protocol concerns. Divergent durable edits create conflict records; neither side is silently overwritten. Selective visibility policy controls what may leave a device.
+Contracts remain provisional until official modules validate them:
 
-## Deployment model
+- CLI command groups such as `brain plan ...` or `brain github ...`;
+- bounded, permission-aware context providers;
+- searchable records with provenance and visibility;
+- structured memory types;
+- typed agent tools;
+- event subscriptions;
+- idempotent background jobs;
+- controlled versioned API registration;
+- constrained trusted web surfaces;
+- integration providers that do not become mandatory sources of truth.
 
-One server codebase supports localhost, Docker Compose, single-server self-hosting, scalable multi-service deployments, and the official hosted service. Environment variables configure external dependencies and base behavior. Phase 0 Compose includes API and PostgreSQL only. Production packaging will later add migrations, backups, observability, worker deployment, upgrades, and operational guidance.
+Events may include project creation, context updates, memory revisions, sync completion, contradictions, planning approval, and pull-request merge.
 
-## Future decisions
+## Conceptual manifest
 
-Frontend framework, production queue, object storage, search engine, vector retrieval, authentication providers, and encryption implementation remain undecided until their phases supply concrete requirements.
+```yaml
+id: official.planning
+name: Brain Planning
+version: 0.1.0
+brain_api: ">=1.0 <2.0"
+
+runtime:
+  local: true
+  cloud: true
+  web: true
+
+capabilities:
+  - commands
+  - context_provider
+  - search_provider
+  - event_consumer
+  - agent_tools
+  - web_routes
+
+permissions:
+  - project.context.read
+  - project.memory.propose
+  - planning.read
+  - planning.write
+  - planning.approve
+```
+
+The final manifest may also declare optional dependencies, configuration schema, data migrations, network access, secret access, provenance, publisher identity, and signatures or checksums. This is direction, not an implemented schema.
+
+## Capability and API discovery
+
+All product APIs remain configurable by base URL and versioned below `/v1`. `/v1/system/info` reports protocol compatibility, core capabilities, and enabled module IDs. An empty module list and absent `planning` capability are valid.
+
+Future reserved areas include `/v1/modules`, `/v1/modules/{module_id}`, `/v1/modules/{module_id}/config`, and `/v1/planning`. Detailed Planning schemas wait for the dedicated module contract. Trusted modules register routes only through controlled routing and capability discovery.
+
+`brain-cloud-sdk-go` exposes core clients and capability-gated optional clients, conceptually `Projects`, `Context`, `Memory`, `Search`, `Hive`, `Modules`, and `Planning`. SDKs contain transport/client logic, not local filesystem behavior or module implementations.
+
+## Permissions and security
+
+Core mediates every module capability. Planning read/write/approve permissions remain distinct from context read, memory propose, or memory edit. Module installation requires explicit approval; organizations can restrict publishers and versions. Network, filesystem, secret, and event access must be declared and audited.
+
+In-process official modules are trusted code but still respect declared boundaries. External modules gain process isolation where practical. Brain does not claim full sandboxing. Failure must degrade the module safely without corrupting core data or bypassing authorization.
+
+## Data ownership and storage
+
+Core and modules have explicit storage ownership. Module migrations run through controlled lifecycle hooks; modules cannot mutate unrelated schemas. Module records retain project/tenant scope, revision and audit data, and export behavior.
+
+PostgreSQL remains the likely transactional store; filesystem/object storage may hold large durable content; search indexes remain derived. Workers run retryable, idempotent core and module jobs. Storage/search providers stay behind interfaces and avoid managed-cloud lock-in.
+
+## Local, cloud, and hybrid behavior
+
+Local Brain loads enabled official modules through stable local contracts. Brain Cloud supervises enabled official OTP applications and manages cloud module configuration. Hybrid synchronization includes module data only when its module defines compatible identity, revision, visibility, conflict, and export semantics.
+
+Planning must work without GitHub or another tracker. GitHub can remain a transitional import, publication, mirror, or execution target and later an optional module. No official Linear integration is planned.
+
+## Unified frontend
+
+One Brain Cloud web application owns core navigation: projects, context, memory, search, conversations, Hive Mind, revisions, proposals, teams, agents, modules, and administration. Enabled trusted modules may contribute constrained surfaces. Planning surfaces appear only when the Planning module is enabled.
+
+## Deployment
+
+The same server supports localhost, Docker Compose, single-server self-hosting, scalable multi-service deployments, and the official hosted service. Self-hosters control enabled modules and policy. Production module execution, signing, updates, isolation, and diagnostics arrive only through staged roadmap work.
+
+## Current implementation
+
+Phase 0 is a Phoenix umbrella. `apps/brain_cloud` owns Ecto/PostgreSQL, compatibility metadata, readiness, release migrations, and domain supervision. `apps/brain_cloud_web` owns Phoenix, Bandit, LiveView, JSON transport, and the minimal web shell. OTP handles graceful supervision; no separate worker application exists until real jobs require one. No module registry, Planning domain, arbitrary loading, or external process protocol exists yet.

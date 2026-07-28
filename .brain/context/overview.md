@@ -3,27 +3,26 @@
 <!-- brain:begin context-overview -->
 Project: `brain-cloud`
 
-Go module: `github.com/JimmyMcBride/brain-cloud`
-
-Primary runtime: `go`
+Primary runtime: `elixir`
 
 ## Manifests
 
-- `go.mod`
+- `mix.exs`
+- `mix.lock`
 - `Makefile`
 
 ## Repo Map
 
 - `.brain/`
 - `.plan/`
-- `cmd/`
+- `apps/`
+- `config/`
 - `deploy/`
 - `docs/`
-- `internal/`
-- `migrations/`
 - `openapi/`
+- `rel/`
 <!-- brain:end context-overview -->
 
 ## Local Notes
 
-Add repo-specific notes here. `brain context refresh` preserves content outside managed blocks.
+Brain Cloud hosts Brain Core plus optional official/community modules through one public protocol and, eventually, one unified web application. Planning is the first major optional official module; no separate Plan Cloud platform is planned. Hive Mind remains Core. Module framework implementation is Phase 10, after the Phase 1–9 core roadmap.

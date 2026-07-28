@@ -2,9 +2,14 @@ openapi: 3.1.0
 info:
   title: Brain Cloud API
   version: 0.0.0-dev
-  description: Public, versioned protocol shared by hosted and self-hosted Brain Cloud servers.
+  description: Public, versioned protocol shared by hosted and self-hosted Brain Cloud servers, including capability-gated optional modules.
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:4000
+x-reserved-paths:
+  - /v1/modules
+  - /v1/modules/{module_id}
+  - /v1/modules/{module_id}/config
+  - /v1/planning
 paths:
   /healthz:
     get:
@@ -28,10 +33,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Status"
+        "503":
+          description: PostgreSQL is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+              examples:
+                notReady:
+                  value:
+                    status: not_ready
   /v1/system/info:
     get:
       operationId: getSystemInfo
-      summary: Discover protocol compatibility and server capabilities
+      summary: Discover protocol compatibility, server capabilities, and enabled modules
       responses:
         "200":
           description: Server compatibility information.
@@ -51,7 +66,7 @@ components:
     SystemInfo:
       type: object
       additionalProperties: false
-      required: [server, server_version, protocol_version, capabilities]
+      required: [server, server_version, protocol_version, capabilities, modules]
       properties:
         server:
           const: brain-cloud
@@ -63,7 +78,14 @@ components:
           type: array
           items:
             type: string
+        modules:
+          type: array
+          description: Enabled module IDs. An empty list is valid.
+          items:
+            type: string
 
 # Reserved v1 areas: auth, users, organizations, teams, projects, documents,
 # memory, search, context, sync, hive, conversations, proposals, agents,
-# audit, and system. Schemas will be added only with implemented operations.
+# audit, system, modules, modules/{module_id}, modules/{module_id}/config, and
+# planning. Schemas will be added only with implemented operations. Planning
+# remains an optional capability; its absence is valid.

@@ -119,6 +119,10 @@ After `brain adopt` creates starter context, the AI agent must scan the repo bef
 
 ## Local Notes
 
-Brain Cloud server only. Preserve one public `/v1` protocol across hosted and self-hosted deployments. Local Brain, SDKs, Plan Cloud, and autonomous agents are separate repositories/domains.
+Brain Cloud is the one hosted and self-hostable platform for Brain Core and enabled modules. Preserve one public `/v1` protocol across deployments. The primary repository family is `brain`, `brain-cloud`, and `brain-cloud-sdk-go`.
 
-Current Phase 0 implementation uses Go standard library packages in `internal/config` and `internal/server`; entrypoints are `cmd/api` and `cmd/worker`. Never imply roadmap features already work. Run `make check` plus runtime endpoint smoke tests after server changes. Next product work is Phase 1 only.
+Planning is moving into Brain as an optional official module. The standalone `plan` repository remains during migration, but agents must not implement Plan Cloud, a separate Plan frontend/SDK/identity system/agent gateway, or official Linear integration. GitHub planning support is transitional and optional, though this repository currently uses Plan GitHub mode for coordination.
+
+Official modules must use formal lifecycle, capability, permission, configuration, event, migration, discovery, and audit boundaries with no private exceptions. Planning permissions stay separate from context and memory. Brain Cloud official modules begin as supervised OTP applications; community modules should eventually use an external process protocol. Do not load unrestricted third-party code in process. Hive Mind remains Core and mediates scope, retrieval, reranking, contradictions, and provenance.
+
+Current Phase 0 implementation is a Phoenix umbrella: `apps/brain_cloud` owns Ecto/PostgreSQL and domain supervision, while `apps/brain_cloud_web` owns Phoenix, Bandit, LiveView, and HTTP transport. There is no separate worker application until jobs exist. Never imply roadmap features already work. Run `make check` plus runtime endpoint smoke tests after server changes. Next implementation work remains Phase 1 only.

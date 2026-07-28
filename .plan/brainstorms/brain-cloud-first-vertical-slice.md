@@ -28,7 +28,7 @@ Prove Brain Cloud as a real durable knowledge service through one complete, inte
 - `docs/architecture.md`
 - `docs/roadmap.md`
 - `openapi/brain-cloud-v1.yaml`
-- `docs/adr/0001-brain-cloud-repository-boundaries.md` through `0006-plan-cloud-remains-a-separate-domain.md`
+- `docs/adr/0001-brain-cloud-repository-boundaries.md` through `0012-github-planning-support-is-transitional-and-optional.md`; ADR 0006 is historical and superseded by ADRs 0007 and 0010.
 
 ## Constraints
 
@@ -56,7 +56,7 @@ API operations: POST /v1/projects; POST /v1/projects/{project_id}/memory; GET /v
 
 Persistence model: PostgreSQL projects, stable document/memory identities, immutable first revision with content hash/actor/timestamps, migration-owned schema, and project-scoped keyword indexing.
 
-Testing strategy: unit-test domain/handlers, integration-test repositories against PostgreSQL, and run an end-to-end create-store-retrieve-search flow with process restart before the final retrieval.
+Testing strategy: unit-test Phoenix contexts/controllers, integration-test Ecto repositories against PostgreSQL, and run an end-to-end create-store-retrieve-search flow with process restart before the final retrieval.
 
 Explicit exclusions: production authentication, organizations, teams, fine-grained authorization, semantic/vector search, sync, Hive Mind, SDK/CLI work, MCP/ChatGPT, web UI, queue/worker jobs, proposals, collaboration, and generalized platform extraction.
 
@@ -85,7 +85,7 @@ One small vertical slice: schema and migrations, minimal domain/storage interfac
 
 ### Candidate Approaches
 
-- Build a thin domain slice with projects, documents/memory revisions, and PostgreSQL repositories behind narrow interfaces.
+- Build a thin Phoenix context slice with projects, documents/memory revisions, and Ecto repositories behind narrow interfaces.
 - Expose POST /v1/projects, POST /v1/projects/{project_id}/memory, GET /v1/projects/{project_id}/memory/{memory_id}, and GET /v1/projects/{project_id}/search?q=... plus existing system discovery.
 - Use SQL migrations, database-generated persistence timestamps, stable opaque IDs, immutable first revisions, and PostgreSQL text search scoped by project.
 - Test handlers with fakes, repositories against PostgreSQL, and the complete create-store-retrieve-search path including service restart durability.

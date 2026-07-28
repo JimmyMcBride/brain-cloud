@@ -1,19 +1,41 @@
-.PHONY: fmt test vet build run docker-build compose-up compose-down check
+.PHONY: setup fmt format-check compile test assets build release run ecto-create ecto-migrate docker-build compose-up compose-down check
+
+setup:
+	mix deps.get
+	mix assets.setup
 
 fmt:
-	gofmt -w $$(find . -name '*.go' -not -path './.git/*')
+	mix format
+
+format-check:
+	mix format --check-formatted
+
+compile:
+	mix compile --warnings-as-errors
 
 test:
-	go test ./...
+	MIX_ENV=test mix ecto.create --quiet
+	MIX_ENV=test mix ecto.migrate --quiet
+	MIX_ENV=test mix test
 
-vet:
-	go vet ./...
+assets:
+	MIX_ENV=prod mix assets.deploy
 
 build:
-	go build ./...
+	mix compile
+
+release:
+	MIX_ENV=prod mix assets.deploy
+	MIX_ENV=prod mix release brain_cloud --overwrite
 
 run:
-	go run ./cmd/api
+	mix phx.server
+
+ecto-create:
+	mix ecto.create
+
+ecto-migrate:
+	mix ecto.migrate
 
 docker-build:
 	docker build -t brain-cloud:dev .
@@ -25,8 +47,9 @@ compose-down:
 	docker compose down
 
 check:
-	test -z "$$(gofmt -l .)"
-	go test ./...
-	go vet ./...
-	go build ./cmd/api
-	go build ./cmd/worker
+	mix format --check-formatted
+	MIX_ENV=test mix compile --warnings-as-errors
+	MIX_ENV=test mix ecto.create --quiet
+	MIX_ENV=test mix ecto.migrate --quiet
+	MIX_ENV=test mix test
+	MIX_ENV=prod mix assets.deploy

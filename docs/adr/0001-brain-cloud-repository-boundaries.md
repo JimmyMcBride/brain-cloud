@@ -1,5 +1,9 @@
 # 0001: Brain Cloud repository boundaries
 
+## Status
+
+Superseded in part by [ADR 0007](0007-planning-becomes-an-official-optional-brain-module.md) and [ADR 0010](0010-one-brain-cloud-platform-and-web-application.md). The server/SDK/CLI dependency boundaries remain accepted; the separate Plan Cloud boundary does not.
+
 ## Context
 
 Brain, Brain Cloud, their SDKs, Plan, and Plan Cloud have related but distinct responsibilities. Combining them would couple release cycles and blur ownership.
