@@ -51,8 +51,8 @@ defmodule BrainCloud.Umbrella.MixProject do
     [
       # run `mix setup` in all child apps
       setup: ["cmd mix setup"],
-      "assets.setup": ["do --app brain_cloud_web cmd mix assets.setup"],
-      "assets.deploy": ["do --app brain_cloud_web cmd mix assets.deploy"],
+      "assets.setup": ["do --app brain_cloud_web assets.setup"],
+      "assets.deploy": ["do --app brain_cloud_web assets.deploy"],
       check: [
         "format --check-formatted",
         "compile --warnings-as-errors",
