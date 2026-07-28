@@ -54,7 +54,7 @@ Planning is the first major optional official Brain module. It is not a separate
 
 ### Phase 2 — Identity and multi-tenancy
 
-The first approved slice is [production identity and organization tenant foundation](https://github.com/JimmyMcBride/brain-cloud/issues/5): persisted users and organizations, owner/member memberships, scoped revocable API tokens, tenant ownership and authorization on existing project/memory/search routes, deterministic Phase 1 data migration, and minimal immutable audit events.
+**Phase 2A complete.** [Production identity and organization tenant foundation](https://github.com/JimmyMcBride/brain-cloud/issues/5) adds persisted users and organizations, owner/member memberships, scoped revocable API tokens, tenant ownership and authorization on existing project/memory/search routes, deterministic Phase 1 data migration, release owner bootstrap/recovery, and minimal immutable audit events.
 
 Later Phase 2 slices add teams, broader membership administration, agent credentials, interactive identity, invitations, and fine-grained project permissions.
 
@@ -134,4 +134,4 @@ Planning remains focused on turning durable project understanding into structure
 
 ## Current implementation non-goals
 
-The current implementation does not include production identity or multi-tenancy, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format. Phase 2 identity and multi-tenancy is next.
+The current implementation does not include teams, broader membership administration, agent credentials, interactive login, invitations, fine-grained project permissions, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.

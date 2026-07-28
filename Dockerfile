@@ -19,6 +19,7 @@ RUN mix deps.get --only prod
 RUN mix deps.compile
 
 COPY apps apps
+COPY rel rel
 
 RUN mix compile
 RUN mix assets.deploy
@@ -35,7 +36,7 @@ WORKDIR /app
 RUN chown brain:brain /app
 
 COPY --from=build --chown=brain:brain /src/_build/prod/rel/brain_cloud ./
-COPY --chown=brain:brain rel/entrypoint.sh /app/entrypoint.sh
+COPY --from=build --chown=brain:brain /src/rel/entrypoint.sh /app/entrypoint.sh
 
 ENV HOME=/app
 ENV LANG=C.UTF-8

@@ -42,7 +42,7 @@ Planning must be optional. Brain works without Planning, with the official Plann
 
 ## Status
 
-Phase 1 implements the first persistent Brain Cloud API slice. An authenticated development client can create a project, store and retrieve one immutable Markdown memory revision, and search project-scoped memory through PostgreSQL full-text search. The Phoenix/LiveView shell remains an honest bootstrap surface; production identity, multi-tenancy, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
+Phase 2A implements production API identity and organization tenancy for the first persistent Brain Cloud slice. Release operators can bootstrap an organization owner, issue/revoke scoped API tokens, and use organization-isolated project, immutable Markdown memory, and PostgreSQL keyword-search APIs. The Phoenix/LiveView shell remains an honest bootstrap surface; teams, interactive login, agent credentials, fine-grained project ACLs, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
 
 ## Local development
 
@@ -59,30 +59,44 @@ make run
 | --- | --- | --- |
 | `PORT` | `4000` | Phoenix HTTP port |
 | `DATABASE_URL` | local development config | PostgreSQL connection URL |
-| `DEV_API_TOKEN` | `development-only-token` in development/test | Temporary bearer token for Phase 1 product routes |
-| `DEV_ACTOR_ID` | `00000000-0000-0000-0000-000000000001` in development/test | Temporary UUID recorded as project and revision provenance |
 | `SECRET_KEY_BASE` | development-only value | cookie and LiveView signing secret |
 | `PHX_HOST` | `localhost` | externally visible host |
 | `PHX_SERVER` | unset locally | start the endpoint in an OTP release |
 | `POOL_SIZE` | `10` | PostgreSQL connection pool size |
 
 ```bash
-docker compose up --build
-make smoke-phase1
+docker compose up --build -d
+make smoke-phase2
 curl http://localhost:4000/
 curl http://localhost:4000/healthz
 curl http://localhost:4000/readyz
 curl http://localhost:4000/v1/system/info
 ```
 
-The Compose file starts the Phoenix release and PostgreSQL. `/readyz` returns `503` until PostgreSQL accepts a query. Product routes require the development bearer token:
+The Compose file starts the Phoenix release and PostgreSQL. `/readyz` returns `503` until PostgreSQL accepts a query. Bootstrap the first owner after the release starts:
 
 ```bash
-export DEV_API_TOKEN=development-only-token
+bootstrap_response="$(
+  docker compose exec -T \
+    -e OWNER_EMAIL=owner@example.com \
+    -e OWNER_DISPLAY_NAME="Example Owner" \
+    -e ORGANIZATION_NAME="Example Organization" \
+    -e ORGANIZATION_SLUG=example \
+    api /app/bin/bootstrap_owner
+)"
+
+export BRAIN_CLOUD_TOKEN="$(printf '%s' "${bootstrap_response}" | jq -r '.token')"
+```
+
+The command creates or reuses the user, organization, and owner membership transactionally. Its initial full-scope token is displayed once. Repeating the same command returns `"status":"existing"` and `"token":null`; it cannot recover the prior secret. If that secret is lost, repeat the command with `-e ROTATE_TOKEN=true` to revoke it and display one replacement. Add `-e ADOPT_PHASE_ONE=true` and omit organization name/slug only when explicitly adopting data migrated into the deterministic `phase-1-import` organization.
+
+Use the token on protected API routes:
+
+```bash
 
 project_response="$(
   curl --fail-with-body \
-    --header "Authorization: Bearer ${DEV_API_TOKEN}" \
+    --header "Authorization: Bearer ${BRAIN_CLOUD_TOKEN}" \
     --header "Content-Type: application/json" \
     --data '{"name":"Research"}' \
     http://localhost:4000/v1/projects
@@ -91,17 +105,17 @@ project_response="$(
 project_id="$(printf '%s' "${project_response}" | jq -r '.project.id')"
 
 curl --fail-with-body \
-  --header "Authorization: Bearer ${DEV_API_TOKEN}" \
+  --header "Authorization: Bearer ${BRAIN_CLOUD_TOKEN}" \
   --header "Content-Type: application/json" \
   --data '{"title":"Phoenix","content":"# Durable memory","content_type":"text/markdown"}' \
   "http://localhost:4000/v1/projects/${project_id}/memories"
 
 curl --fail-with-body \
-  --header "Authorization: Bearer ${DEV_API_TOKEN}" \
+  --header "Authorization: Bearer ${BRAIN_CLOUD_TOKEN}" \
   "http://localhost:4000/v1/projects/${project_id}/search?q=durable"
 ```
 
-`DEV_API_TOKEN` and `DEV_ACTOR_ID` are deliberately temporary development authentication. They are not production identity, authorization, or multi-tenancy.
+Tokens use `bc1_<public_id>_<secret>`, are permanently bound to one organization membership, and are stored only as SHA-256 digests. Token-management endpoints require an owner membership plus `tokens.manage`; product routes require their advertised fixed scope. See [self-hosting](docs/self-hosting.md) for bootstrap and recovery details.
 
 ## Project documents
 

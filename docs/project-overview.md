@@ -25,4 +25,4 @@ Primary runtime: `elixir`
 
 ## Local Notes
 
-Brain Cloud is the API-first hosted and self-hostable platform for Brain Core and optional official/community modules. Planning is an optional official module, not a separate cloud platform; Hive Mind remains Core. Phase 1 implements development-authenticated project creation, immutable Markdown memory persistence/retrieval, and PostgreSQL keyword search. Product scope and current limitations are in `README.md`; full direction is in `docs/product-vision.md` and `docs/roadmap.md`.
+Brain Cloud is the API-first hosted and self-hostable platform for Brain Core and optional official/community modules. Planning is an optional official module, not a separate cloud platform; Hive Mind remains Core. Phase 2A implements persisted API identity, organization tenancy, scoped revocable tokens, immutable audit events, organization-owned project creation, immutable Markdown memory persistence/retrieval, and PostgreSQL keyword search. Product scope and current limitations are in `README.md`; full direction is in `docs/product-vision.md` and `docs/roadmap.md`.
