@@ -36,7 +36,7 @@ defmodule BrainCloud.Accounts.ApiToken do
       :bootstrap
     ])
     |> update_change(:name, &String.trim/1)
-    |> update_change(:scopes, &Enum.uniq/1)
+    |> update_change(:scopes, &normalize_scopes/1)
     |> validate_required([:membership_id, :public_id, :token_digest, :name, :scopes])
     |> validate_length(:name, min: 1, max: 120)
     |> validate_length(:public_id, is: 32)
@@ -45,4 +45,7 @@ defmodule BrainCloud.Accounts.ApiToken do
     |> unique_constraint(:public_id)
     |> unique_constraint(:membership_id, name: :api_tokens_active_bootstrap_index)
   end
+
+  defp normalize_scopes(scopes) when is_list(scopes), do: Enum.uniq(scopes)
+  defp normalize_scopes(scopes), do: scopes
 end

@@ -18,6 +18,8 @@ defmodule BrainCloud.Accounts do
 
   @phase_one_organization_id "00000000-0000-0000-0000-0000000000f1"
   @token_pattern ~r/\Abc1_([0-9a-f]{32})_([A-Za-z0-9_-]{43})\z/
+  @validation_public_id String.duplicate("0", 32)
+  @validation_digest :binary.copy(<<0>>, 32)
 
   def bootstrap_owner(attrs, opts \\ []) do
     attrs = Map.new(attrs)
@@ -64,8 +66,8 @@ defmodule BrainCloud.Accounts do
         {:error, _operation, changeset, _changes} -> {:error, changeset}
       end
     else
-      nil -> {:error, token_changeset(attrs, auth.membership_id)}
-      :error -> {:error, token_changeset(attrs, auth.membership_id)}
+      nil -> {:error, validation_token_changeset(attrs, auth.membership_id)}
+      :error -> {:error, validation_token_changeset(attrs, auth.membership_id)}
       false -> {:error, scope_subset_changeset(attrs, auth.membership_id)}
       {:error, reason} -> {:error, reason}
     end
@@ -334,8 +336,16 @@ defmodule BrainCloud.Accounts do
 
   defp scope_subset_changeset(attrs, membership_id) do
     attrs
-    |> token_changeset(membership_id)
+    |> validation_token_changeset(membership_id)
     |> Changeset.add_error(:scopes, "must be a subset of the current token scopes")
+  end
+
+  defp validation_token_changeset(attrs, membership_id) do
+    attrs
+    |> Map.new()
+    |> Map.put(:public_id, @validation_public_id)
+    |> Map.put(:token_digest, @validation_digest)
+    |> token_changeset(membership_id)
   end
 
   defp authorize_token_management(%AuthContext{role: "owner"} = auth) do

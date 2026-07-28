@@ -94,6 +94,22 @@ defmodule BrainCloudWeb.TokenControllerTest do
              })
              |> json_response(422)
 
+    assert %{
+             "error" => %{
+               "code" => "validation_failed",
+               "details" => %{"scopes" => ["can't be blank"]}
+             }
+           } =
+             missing_scopes_response =
+             conn
+             |> recycle()
+             |> authenticate(identity)
+             |> post(~p"/v1/auth/tokens", %{name: "Missing scopes"})
+             |> json_response(422)
+
+    refute inspect(missing_scopes_response) =~ "public_id"
+    refute inspect(missing_scopes_response) =~ "token_digest"
+
     identity.membership
     |> OrganizationMembership.changeset(%{role: "member"})
     |> BrainCloud.Repo.update!()

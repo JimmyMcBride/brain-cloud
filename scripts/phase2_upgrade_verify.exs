@@ -40,8 +40,8 @@ true = result.memory_id == memory.id
 true = result.actor_id == revision.actor_id
 true = result.content_hash == revision.content_hash
 
-true = Repo.aggregate(User, :count) == 3
-true = Repo.aggregate(OrganizationMembership, :count) == 3
+true = Repo.aggregate(User, :count, :id) == 3
+true = Repo.aggregate(OrganizationMembership, :count, :id) == 3
 
 synthetic_ids =
   Repo.all(

@@ -40,7 +40,7 @@ defmodule BrainCloud.AccountsTest do
     assert {:error, :unauthorized} = Accounts.authenticate(first.raw_token)
     assert {:ok, _auth} = Accounts.authenticate(rotated.raw_token)
 
-    assert Repo.aggregate(AuditEvent, :count) == 3
+    assert Repo.aggregate(AuditEvent, :count, :id) == 3
   end
 
   test "creates, lists, expires, and revokes scoped organization tokens" do
@@ -161,7 +161,7 @@ defmodule BrainCloud.AccountsTest do
     assert errors_on(changeset).email
     assert errors_on(changeset).display_name
 
-    assert Repo.aggregate(User, :count) == 0
-    assert Repo.aggregate(ApiToken, :count) == 0
+    assert Repo.aggregate(User, :count, :id) == 0
+    assert Repo.aggregate(ApiToken, :count, :id) == 0
   end
 end

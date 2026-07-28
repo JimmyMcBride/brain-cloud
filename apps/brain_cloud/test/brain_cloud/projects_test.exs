@@ -29,7 +29,7 @@ defmodule BrainCloud.ProjectsTest do
   end
 
   test "validates project names", %{identity: identity} do
-    audit_count = Repo.aggregate(AuditEvent, :count)
+    audit_count = Repo.aggregate(AuditEvent, :count, :id)
 
     assert {:error, changeset} =
              Projects.create_project(%{"name" => "   "}, identity.auth_context)
@@ -43,6 +43,6 @@ defmodule BrainCloud.ProjectsTest do
              )
 
     assert "should be at most 120 character(s)" in errors_on(changeset).name
-    assert Repo.aggregate(AuditEvent, :count) == audit_count
+    assert Repo.aggregate(AuditEvent, :count, :id) == audit_count
   end
 end

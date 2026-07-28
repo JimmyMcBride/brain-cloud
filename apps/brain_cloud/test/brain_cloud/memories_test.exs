@@ -52,8 +52,8 @@ defmodule BrainCloud.MemoriesTest do
     identity: identity,
     project: project
   } do
-    memory_count = Repo.aggregate(Memory, :count)
-    audit_count = Repo.aggregate(AuditEvent, :count)
+    memory_count = Repo.aggregate(Memory, :count, :id)
+    audit_count = Repo.aggregate(AuditEvent, :count, :id)
 
     assert {:error, changeset} =
              Memories.create_memory(
@@ -63,7 +63,7 @@ defmodule BrainCloud.MemoriesTest do
              )
 
     assert "must be between 1 byte and 1 MiB" in errors_on(changeset).content
-    assert Repo.aggregate(Memory, :count) == memory_count
+    assert Repo.aggregate(Memory, :count, :id) == memory_count
 
     assert {:error, changeset} =
              Memories.create_memory(
@@ -73,8 +73,8 @@ defmodule BrainCloud.MemoriesTest do
              )
 
     assert "is invalid" in errors_on(changeset).content_type
-    assert Repo.aggregate(Memory, :count) == memory_count
-    assert Repo.aggregate(AuditEvent, :count) == audit_count
+    assert Repo.aggregate(Memory, :count, :id) == memory_count
+    assert Repo.aggregate(AuditEvent, :count, :id) == audit_count
   end
 
   test "enforces title and byte-size limits", %{identity: identity, project: project} do
