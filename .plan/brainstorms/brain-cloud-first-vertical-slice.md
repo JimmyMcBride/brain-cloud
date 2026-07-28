@@ -28,7 +28,7 @@ Prove Brain Cloud as a real durable knowledge service through one complete, inte
 - `docs/architecture.md`
 - `docs/roadmap.md`
 - `openapi/brain-cloud-v1.yaml`
-- `docs/adr/0001-brain-cloud-repository-boundaries.md` through `0012-github-planning-support-is-transitional-and-optional.md`; ADR 0006 is historical and superseded by ADRs 0007 and 0010.
+- `docs/adr/0001-brain-cloud-repository-boundaries.md` through `0013-elixir-phoenix-is-the-brain-cloud-server-runtime.md`; ADR 0006 is historical and superseded by ADRs 0007 and 0010.
 
 ## Constraints
 
@@ -56,7 +56,7 @@ Prove Brain Cloud as a real durable knowledge service through one complete, inte
 
 Vision: prove Brain Cloud as a real durable knowledge service through one complete, intentionally narrow path rather than broad placeholder architecture.
 
-Supporting material: docs/product-vision.md, docs/architecture.md, docs/roadmap.md, openapi/brain-cloud-v1.yaml, and ADRs 0001-0006.
+Supporting material: docs/product-vision.md, docs/architecture.md, docs/roadmap.md, openapi/brain-cloud-v1.yaml, and ADRs 0001-0013; ADR 0006 is historical and superseded by ADRs 0007 and 0010.
 
 API operations: POST /v1/projects; POST
 /v1/projects/{project_id}/memories; GET
