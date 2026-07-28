@@ -54,7 +54,221 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemInfo"
+  /v1/projects:
+    post:
+      operationId: createProject
+      summary: Create a cloud project
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectCreate"
+      responses:
+        "201":
+          description: Project created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectEnvelope"
+              examples:
+                created:
+                  $ref: "#/components/examples/ProjectCreated"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+  /v1/projects/{project_id}/memories:
+    post:
+      operationId: createMemory
+      summary: Create a memory with immutable revision 1
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoryCreate"
+      responses:
+        "201":
+          description: Memory and revision created atomically.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryEnvelope"
+              examples:
+                created:
+                  $ref: "#/components/examples/MemoryCreated"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+  /v1/projects/{project_id}/memories/{memory_id}:
+    get:
+      operationId: getMemory
+      summary: Retrieve a project-scoped memory and revision 1
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MemoryId"
+      responses:
+        "200":
+          description: Memory and immutable revision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryEnvelope"
+              examples:
+                found:
+                  $ref: "#/components/examples/MemoryCreated"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/projects/{project_id}/search:
+    get:
+      operationId: searchProjectMemories
+      summary: Search memory revisions by project-scoped keyword
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - name: q
+          in: query
+          required: true
+          description: Trimmed keyword query.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 256
+      responses:
+        "200":
+          description: Ranked project-scoped keyword results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchEnvelope"
+              examples:
+                match:
+                  $ref: "#/components/examples/SearchResults"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Phase 1 development token supplied through DEV_API_TOKEN.
+  parameters:
+    ProjectId:
+      name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MemoryId:
+      name: memory_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Unauthorized:
+      description: The development bearer token is missing or invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: unauthorized
+              message: Authentication required
+              details: {}
+    NotFound:
+      description: The requested project or memory does not exist in the requested scope.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          examples:
+            project:
+              value:
+                error:
+                  code: project_not_found
+                  message: Project not found
+                  details: {}
+            memory:
+              value:
+                error:
+                  code: memory_not_found
+                  message: Memory not found
+                  details: {}
+    ValidationFailed:
+      description: Request values failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: validation_failed
+              message: Request validation failed
+              details:
+                title:
+                  - should be at most 200 character(s)
+  examples:
+    ProjectCreated:
+      value:
+        project:
+          id: 11111111-1111-4111-8111-111111111111
+          name: Research
+          creator_actor_id: 00000000-0000-0000-0000-000000000001
+          inserted_at: "2026-07-28T05:00:00.000000Z"
+          updated_at: "2026-07-28T05:00:00.000000Z"
+    MemoryCreated:
+      value:
+        memory:
+          id: 22222222-2222-4222-8222-222222222222
+          project_id: 11111111-1111-4111-8111-111111111111
+          inserted_at: "2026-07-28T05:01:00.000000Z"
+          updated_at: "2026-07-28T05:01:00.000000Z"
+          revision:
+            id: 33333333-3333-4333-8333-333333333333
+            memory_id: 22222222-2222-4222-8222-222222222222
+            revision_number: 1
+            title: Phoenix Notes
+            content: "# Durable\nPhoenix cloud memory"
+            content_type: text/markdown
+            content_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+            actor_id: 00000000-0000-0000-0000-000000000001
+            inserted_at: "2026-07-28T05:01:00.000000Z"
+    SearchResults:
+      value:
+        results:
+          - memory_id: 22222222-2222-4222-8222-222222222222
+            revision_id: 33333333-3333-4333-8333-333333333333
+            revision_number: 1
+            title: Phoenix Notes
+            content_type: text/markdown
+            content_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+            excerpt: Durable Phoenix cloud memory
+            rank: 0.06079271
+            actor_id: 00000000-0000-0000-0000-000000000001
+            inserted_at: "2026-07-28T05:01:00.000000Z"
   schemas:
     Status:
       type: object
@@ -83,9 +297,192 @@ components:
           description: Enabled module IDs. An empty list is valid.
           items:
             type: string
+    ProjectCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+    ProjectEnvelope:
+      type: object
+      additionalProperties: false
+      required: [project]
+      properties:
+        project:
+          $ref: "#/components/schemas/Project"
+    Project:
+      type: object
+      additionalProperties: false
+      required: [id, name, creator_actor_id, inserted_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        creator_actor_id:
+          type: string
+          format: uuid
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    MemoryCreate:
+      type: object
+      required: [title, content, content_type]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        content:
+          type: string
+          minLength: 1
+          maxLength: 1048576
+          description: Exact, untrimmed UTF-8 Markdown from 1 byte through 1 MiB.
+          x-max-bytes: 1048576
+        content_type:
+          const: text/markdown
+    MemoryEnvelope:
+      type: object
+      additionalProperties: false
+      required: [memory]
+      properties:
+        memory:
+          $ref: "#/components/schemas/Memory"
+    Memory:
+      type: object
+      additionalProperties: false
+      required: [id, project_id, inserted_at, updated_at, revision]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        revision:
+          $ref: "#/components/schemas/MemoryRevision"
+    MemoryRevision:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - memory_id
+        - revision_number
+        - title
+        - content
+        - content_type
+        - content_hash
+        - actor_id
+        - inserted_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        memory_id:
+          type: string
+          format: uuid
+        revision_number:
+          const: 1
+        title:
+          type: string
+        content:
+          type: string
+        content_type:
+          const: text/markdown
+        content_hash:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        actor_id:
+          type: string
+          format: uuid
+        inserted_at:
+          type: string
+          format: date-time
+    SearchEnvelope:
+      type: object
+      additionalProperties: false
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchResult"
+    SearchResult:
+      type: object
+      additionalProperties: false
+      required:
+        - memory_id
+        - revision_id
+        - revision_number
+        - title
+        - content_type
+        - content_hash
+        - excerpt
+        - rank
+        - actor_id
+        - inserted_at
+      properties:
+        memory_id:
+          type: string
+          format: uuid
+        revision_id:
+          type: string
+          format: uuid
+        revision_number:
+          const: 1
+        title:
+          type: string
+        content_type:
+          const: text/markdown
+        content_hash:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        excerpt:
+          type: string
+        rank:
+          type: number
+          format: float
+        actor_id:
+          type: string
+          format: uuid
+        inserted_at:
+          type: string
+          format: date-time
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, details]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
 
-# Reserved v1 areas: auth, users, organizations, teams, projects, documents,
-# memory, search, context, sync, hive, conversations, proposals, agents,
-# audit, system, modules, modules/{module_id}, modules/{module_id}/config, and
-# planning. Schemas will be added only with implemented operations. Planning
-# remains an optional capability; its absence is valid.
+# Reserved v1 areas: auth, users, organizations, teams, documents, context,
+# sync, hive, conversations, proposals, agents, audit, modules,
+# modules/{module_id}, modules/{module_id}/config, and planning. Schemas are
+# added only with implemented operations. Planning remains optional; its
+# absence is valid.

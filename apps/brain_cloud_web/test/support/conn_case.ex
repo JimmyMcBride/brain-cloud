@@ -35,4 +35,13 @@ defmodule BrainCloudWeb.ConnCase do
     BrainCloud.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
+
+  def authenticate(conn) do
+    token =
+      :brain_cloud_web
+      |> Application.fetch_env!(:dev_auth)
+      |> Keyword.fetch!(:token)
+
+    Plug.Conn.put_req_header(conn, "authorization", "Bearer #{token}")
+  end
 end
