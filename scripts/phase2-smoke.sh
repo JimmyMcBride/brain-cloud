@@ -64,7 +64,7 @@ curl --fail --silent --show-error "$base_url/readyz" |
   jq -e '. == {"status":"ready"}' >/dev/null
 
 curl --fail --silent --show-error "$base_url/v1/system/info" |
-  jq -e '.modules == [] and (.capabilities | contains(["system.info", "projects.create", "memory.write", "memory.read", "search.keyword", "tokens.manage"]))' >/dev/null
+  jq -e '.modules == [] and (.capabilities | contains(["system.info", "projects.create", "memory.write", "memory.read", "search.keyword", "members.manage", "tokens.manage"]))' >/dev/null
 
 organization_a_slug="smoke-a-$run_suffix"
 organization_b_slug="smoke-b-$run_suffix"
@@ -97,6 +97,38 @@ bootstrap_b="$(
     "$organization_b_slug"
 )"
 token_b="$(printf '%s' "$bootstrap_b" | jq -er '.token')"
+
+second_owner_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data "{\"email\":\"second-owner-$run_suffix@example.test\",\"display_name\":\"Second Owner\",\"role\":\"owner\"}" \
+    "$base_url/v1/organization/memberships"
+)"
+second_owner_id="$(printf '%s' "$second_owner_response" | jq -er '.membership.id')"
+
+second_owner_token_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Second owner","scopes":["projects.create","memory.write","memory.read","search.keyword","members.manage","tokens.manage"]}' \
+    "$base_url/v1/organization/memberships/$second_owner_id/tokens"
+)"
+second_owner_token="$(printf '%s' "$second_owner_token_response" | jq -er '.token.token')"
+
+member_response="$(
+  authorized_curl "$second_owner_token" \
+    --header 'Content-Type: application/json' \
+    --data "{\"email\":\"member-$run_suffix@example.test\",\"display_name\":\"Smoke Member\",\"role\":\"member\"}" \
+    "$base_url/v1/organization/memberships"
+)"
+member_id="$(printf '%s' "$member_response" | jq -er '.membership.id')"
+
+member_token_response="$(
+  authorized_curl "$second_owner_token" \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Member reader","scopes":["memory.read","search.keyword"]}' \
+    "$base_url/v1/organization/memberships/$member_id/tokens"
+)"
+member_token="$(printf '%s' "$member_token_response" | jq -er '.token.token')"
 
 unauthorized_status="$(
   curl --silent --show-error \
@@ -186,6 +218,76 @@ authorized_curl "$reader_token" \
   "$base_url/v1/projects/$project_id/memories/$memory_id" |
   jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
 
+authorized_curl "$member_token" \
+  "$base_url/v1/projects/$project_id/memories/$memory_id" |
+  jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
+
+authorized_curl "$second_owner_token" \
+  --request DELETE \
+  "$base_url/v1/organization/memberships/$member_id" >/dev/null
+
+suspended_status="$(
+  curl --silent --show-error \
+    --output "$scratch_dir/suspended.json" \
+    --write-out '%{http_code}' \
+    --header "Authorization: Bearer $member_token" \
+    "$base_url/v1/projects/$project_id/memories/$memory_id"
+)"
+test "$suspended_status" = "401"
+
+authorized_curl "$token_a" \
+  --request POST \
+  "$base_url/v1/organization/memberships/$member_id/reactivate" |
+  jq -e '.membership.active == true and .membership.deactivated_at == null' >/dev/null
+
+restored_status="$(
+  curl --silent --show-error \
+    --output "$scratch_dir/not-restored.json" \
+    --write-out '%{http_code}' \
+    --header "Authorization: Bearer $member_token" \
+    "$base_url/v1/projects/$project_id/memories/$memory_id"
+)"
+test "$restored_status" = "401"
+
+replacement_member_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Replacement member reader","scopes":["memory.read","search.keyword"]}' \
+    "$base_url/v1/organization/memberships/$member_id/tokens"
+)"
+replacement_member_token="$(
+  printf '%s' "$replacement_member_response" | jq -er '.token.token'
+)"
+
+authorized_curl "$token_a" \
+  --request PATCH \
+  --header 'Content-Type: application/json' \
+  --data '{"role":"member"}' \
+  "$base_url/v1/organization/memberships/$second_owner_id" |
+  jq -e '.membership.role == "member"' >/dev/null
+
+demoted_owner_status="$(
+  curl --silent --show-error \
+    --output "$scratch_dir/demoted-owner.json" \
+    --write-out '%{http_code}' \
+    --header "Authorization: Bearer $second_owner_token" \
+    "$base_url/v1/organization/memberships"
+)"
+test "$demoted_owner_status" = "401"
+
+last_owner_status="$(
+  curl --silent --show-error \
+    --output "$scratch_dir/last-owner.json" \
+    --write-out '%{http_code}' \
+    --request PATCH \
+    --header "Authorization: Bearer $token_a" \
+    --header 'Content-Type: application/json' \
+    --data '{"role":"member"}' \
+    "$base_url/v1/organization/memberships/$(printf '%s' "$bootstrap_a" | jq -er '.membership_id')"
+)"
+test "$last_owner_status" = "409"
+jq -e '.error.code == "last_owner_required"' "$scratch_dir/last-owner.json" >/dev/null
+
 authorized_curl "$token_a" \
   --request DELETE \
   "$base_url/v1/auth/tokens/$reader_id" >/dev/null
@@ -213,6 +315,10 @@ done
 test "$attempt" -le 60
 
 authorized_curl "$token_a" \
+  "$base_url/v1/projects/$project_id/memories/$memory_id" |
+  jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
+
+authorized_curl "$replacement_member_token" \
   "$base_url/v1/projects/$project_id/memories/$memory_id" |
   jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
 
@@ -269,5 +375,9 @@ authorized_curl "$replacement_token" \
   "$base_url/v1/projects/$project_id/memories/$memory_id" |
   jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
 
-printf 'Phase 2A smoke passed: organization=%s project=%s memory=%s\n' \
-  "$organization_a_id" "$project_id" "$memory_id"
+authorized_curl "$replacement_member_token" \
+  "$base_url/v1/projects/$project_id/memories/$memory_id" |
+  jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
+
+printf 'Phase 2B smoke passed: organization=%s project=%s memory=%s member=%s\n' \
+  "$organization_a_id" "$project_id" "$memory_id" "$member_id"
