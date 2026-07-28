@@ -13,7 +13,8 @@ defmodule BrainCloudWeb.SystemInfoControllerTest do
                "projects.create",
                "memory.write",
                "memory.read",
-               "search.keyword"
+               "search.keyword",
+               "tokens.manage"
              ],
              "modules" => []
            }

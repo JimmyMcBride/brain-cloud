@@ -7,14 +7,16 @@ defmodule BrainCloud.Memories do
 
   alias BrainCloud.Memories.Memory
   alias BrainCloud.Memories.MemoryRevision
+  alias BrainCloud.Accounts
+  alias BrainCloud.Accounts.AuthContext
   alias BrainCloud.Projects
   alias BrainCloud.Repo
   alias Ecto.Multi
 
   @maximum_query_length 256
 
-  def create_memory(project_id, attrs, actor_id) do
-    case Projects.get_project(project_id) do
+  def create_memory(project_id, attrs, %AuthContext{} = auth) do
+    case Projects.get_project(project_id, auth.organization_id) do
       nil ->
         {:error, :project_not_found}
 
@@ -30,9 +32,12 @@ defmodule BrainCloud.Memories do
             title: attribute(attrs, :title),
             content: attribute(attrs, :content),
             content_type: attribute(attrs, :content_type),
-            actor_id: actor_id
+            actor_id: auth.user_id
           }
           |> then(&MemoryRevision.changeset(%MemoryRevision{}, &1))
+        end)
+        |> Multi.insert(:audit_event, fn %{memory: memory} ->
+          Accounts.audit_changeset(auth, "memory.create", "memory", memory.id)
         end)
         |> Repo.transaction()
         |> case do
@@ -44,18 +49,24 @@ defmodule BrainCloud.Memories do
 
           {:error, :memory, changeset, _changes} ->
             {:error, changeset}
+
+          {:error, :audit_event, changeset, _changes} ->
+            {:error, changeset}
         end
     end
   end
 
-  def get_memory(project_id, memory_id) do
+  def get_memory(project_id, memory_id, organization_id) do
     with {:ok, project_id} <- Ecto.UUID.cast(project_id),
-         {:ok, memory_id} <- Ecto.UUID.cast(memory_id) do
+         {:ok, memory_id} <- Ecto.UUID.cast(memory_id),
+         {:ok, organization_id} <- Ecto.UUID.cast(organization_id) do
       revisions = from revision in MemoryRevision, order_by: revision.revision_number
 
       Repo.one(
         from memory in Memory,
+          join: project in assoc(memory, :project),
           where: memory.id == ^memory_id and memory.project_id == ^project_id,
+          where: project.organization_id == ^organization_id,
           preload: [revisions: ^revisions]
       )
     else
@@ -63,15 +74,17 @@ defmodule BrainCloud.Memories do
     end
   end
 
-  def search(project_id, query) do
-    with project when not is_nil(project) <- Projects.get_project(project_id),
+  def search(project_id, query, organization_id) do
+    with project when not is_nil(project) <- Projects.get_project(project_id, organization_id),
          {:ok, query} <- validate_query(query) do
       results =
         Repo.all(
           from revision in MemoryRevision,
             join: memory in Memory,
             on: memory.id == revision.memory_id,
+            join: scoped_project in assoc(memory, :project),
             where: memory.project_id == ^project.id,
+            where: scoped_project.organization_id == ^organization_id,
             where:
               fragment(
                 "? @@ plainto_tsquery('simple', ?)",

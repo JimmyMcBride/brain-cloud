@@ -8,12 +8,20 @@ defmodule BrainCloudWeb.APIError do
     render(conn, :unauthorized, "unauthorized", "Authentication required")
   end
 
+  def forbidden(conn) do
+    render(conn, :forbidden, "forbidden", "Permission denied")
+  end
+
   def project_not_found(conn) do
     render(conn, :not_found, "project_not_found", "Project not found")
   end
 
   def memory_not_found(conn) do
     render(conn, :not_found, "memory_not_found", "Memory not found")
+  end
+
+  def token_not_found(conn) do
+    render(conn, :not_found, "token_not_found", "API token not found")
   end
 
   def validation_failed(conn, %Ecto.Changeset{} = changeset) do

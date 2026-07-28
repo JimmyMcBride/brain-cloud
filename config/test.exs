@@ -19,11 +19,18 @@ database_config =
       [url: url]
   end
 
+pool_config =
+  if System.get_env("PHASE2_UPGRADE") == "true" do
+    []
+  else
+    [pool: Ecto.Adapters.SQL.Sandbox]
+  end
+
 config :brain_cloud,
        BrainCloud.Repo,
-       Keyword.merge(database_config,
-         pool: Ecto.Adapters.SQL.Sandbox,
-         pool_size: System.schedulers_online() * 2
+       Keyword.merge(
+         database_config,
+         pool_config ++ [pool_size: System.schedulers_online() * 2]
        )
 
 # We don't run a server during test. If one is required,

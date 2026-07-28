@@ -1,3 +1,6 @@
+---
+updated: "2026-07-28T20:00:24Z"
+---
 # Workflows
 
 <!-- brain:begin context-workflows -->
@@ -59,9 +62,10 @@ Project-specific commands:
 - `make check`: formatting, warnings-as-errors compilation, database migrations/tests, and production assets.
 - `make run`: Phoenix and LiveView on `PORT` (default `4000`).
 - `Dockerfile`: multi-stage, non-root OTP release image with migration entrypoint.
-- `compose.yaml`: development Phoenix release and PostgreSQL with deterministic `DEV_API_TOKEN` and `DEV_ACTOR_ID` defaults.
-- `make smoke-phase1`: against a running Compose project, verify public endpoints, exact unauthorized behavior, create/retrieve/search, API-only restart durability, PostgreSQL outage health/readiness behavior, recovery, and persisted retrieval/search.
+- `compose.yaml`: Phoenix release and PostgreSQL; operators create the initial organization owner through `/app/bin/bootstrap_owner`.
+- `make upgrade-phase2`: with PostgreSQL running, verify deterministic Phase 1 data migration, synthetic principals, explicit legacy adoption, and preserved retrieval/search.
+- `make smoke-phase2`: against a running Compose project, verify public endpoints, owner bootstrap/recovery, exact authorization behavior, scoped token lifecycle, two-organization isolation, create/retrieve/search, API-only restart durability, PostgreSQL outage health/readiness behavior, recovery, and persisted retrieval/search.
 
-Active delivery branch is `develop`; `main` is releases and `release/vX.Y.Z` is stabilization. Phase 1 is the first persistent project/memory/search slice. Production identity and multi-tenancy remain Phase 2.
+Active delivery branch is `develop`; `main` is releases and `release/vX.Y.Z` is stabilization. Phase 1 provides persistent project/memory/search. Phase 2A adds production API identity and organization tenancy; broader identity features remain later Phase 2 work.
 
 Plan currently uses GitHub source mode only as transitional repository coordination. All Plan-owned GitHub mutations still go through Plan. The target product architecture stores optional Planning data in local/cloud/hybrid Brain, not permanently in GitHub. Module ecosystem implementation is deferred until Phase 10; the Planning migration requires a separate follow-up contract.

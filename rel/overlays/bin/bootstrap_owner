@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+
+exec "$(dirname "$0")/brain_cloud" eval 'BrainCloud.Release.bootstrap_owner_from_env()'
