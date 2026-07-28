@@ -1,3 +1,6 @@
+---
+updated: "2026-07-28T21:34:35Z"
+---
 # Project Agent Contract
 
 <!-- brain:begin agents-contract -->
@@ -125,4 +128,4 @@ Planning is moving into Brain as an optional official module. The standalone `pl
 
 Official modules must use formal lifecycle, capability, permission, configuration, event, migration, discovery, and audit boundaries with no private exceptions. Planning permissions stay separate from context and memory. Brain Cloud official modules begin as supervised OTP applications; community modules should eventually use an external process protocol. Do not load unrestricted third-party code in process. Hive Mind remains Core and mediates scope, retrieval, reranking, contradictions, and provenance.
 
-Current Phase 2A implementation is a Phoenix umbrella: `apps/brain_cloud` owns Ecto/PostgreSQL, accounts, organization tenancy, scoped token digests, immutable audit events, organization-owned projects, immutable memory revisions, tenant/project-scoped keyword search, release bootstrap/migrations, and domain supervision; `apps/brain_cloud_web` owns Phoenix, Bandit, persisted bearer authentication, fixed-scope enforcement, LiveView, and HTTP transport. There is no separate worker application until jobs exist. Never imply later roadmap features already work. Run `make check`, `make upgrade-phase2`, and runtime `make smoke-phase2` after server changes. Teams, interactive login, agent credentials, invitations, and fine-grained project ACLs remain later Phase 2 work.
+Current Phase 2B implementation is a Phoenix umbrella: `apps/brain_cloud` owns Ecto/PostgreSQL, accounts, organization tenancy, owner-managed human memberships, scoped token digests, final-owner locking, transactional credential revocation, immutable audit events, organization-owned projects, immutable memory revisions, tenant/project-scoped keyword search, release bootstrap/migrations, and domain supervision; `apps/brain_cloud_web` owns Phoenix, Bandit, persisted bearer authentication, owner/fixed-scope enforcement, LiveView, and HTTP transport. There is no separate worker application until jobs exist. Never imply later roadmap features already work. Run `make check`, `make upgrade-phase2`, and runtime `make smoke-phase2` after server changes. Invitations, teams, interactive login, agent credentials, and fine-grained project ACLs remain later Phase 2 work.

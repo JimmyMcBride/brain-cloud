@@ -1,3 +1,6 @@
+---
+updated: "2026-07-28T21:34:35Z"
+---
 # Brain Cloud
 
 Brain Cloud is the hosted and self-hostable cloud platform for Brain: an extensible context and memory platform for people, teams, and AI agents.
@@ -42,7 +45,7 @@ Planning must be optional. Brain works without Planning, with the official Plann
 
 ## Status
 
-Phase 2A implements production API identity and organization tenancy for the first persistent Brain Cloud slice. Release operators can bootstrap an organization owner, issue/revoke scoped API tokens, and use organization-isolated project, immutable Markdown memory, and PostgreSQL keyword-search APIs. The Phoenix/LiveView shell remains an honest bootstrap surface; teams, interactive login, agent credentials, fine-grained project ACLs, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
+Phase 2B implements owner-managed human organization memberships on top of the Phase 2A identity and tenant foundation. Release operators bootstrap the first owner; owners can add and list members, change owner/member roles, deactivate or reactivate access, and issue one-time scoped credentials for a target membership. Organization-isolated project, immutable Markdown memory, and PostgreSQL keyword-search APIs remain the product slice. The Phoenix/LiveView shell remains an honest bootstrap surface; invitations, teams, interactive login, agent credentials, fine-grained project ACLs, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
 
 ## Local development
 
@@ -115,7 +118,29 @@ curl --fail-with-body \
   "http://localhost:4000/v1/projects/${project_id}/search?q=durable"
 ```
 
-Tokens use `bc1_<public_id>_<secret>`, are permanently bound to one organization membership, and are stored only as SHA-256 digests. Token-management endpoints require an owner membership plus `tokens.manage`; product routes require their advertised fixed scope. See [self-hosting](docs/self-hosting.md) for bootstrap and recovery details.
+Tokens use `bc1_<public_id>_<secret>`, are permanently bound to one organization membership, and are stored only as SHA-256 digests. Token-management endpoints require an owner membership plus `tokens.manage`; membership lifecycle endpoints require owner plus `members.manage`, and target-member issuance requires both management scopes. Product routes require their advertised fixed scope.
+
+Create a human member and issue a one-time credential explicitly:
+
+```bash
+membership_response="$(
+  curl --fail-with-body \
+    --header "Authorization: Bearer ${BRAIN_CLOUD_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --data '{"email":"member@example.com","display_name":"Example Member","role":"member"}' \
+    http://localhost:4000/v1/organization/memberships
+)"
+
+membership_id="$(printf '%s' "${membership_response}" | jq -r '.membership.id')"
+
+curl --fail-with-body \
+  --header "Authorization: Bearer ${BRAIN_CLOUD_TOKEN}" \
+  --header "Content-Type: application/json" \
+  --data '{"name":"Member reader","scopes":["memory.read","search.keyword"]}' \
+  "http://localhost:4000/v1/organization/memberships/${membership_id}/tokens"
+```
+
+Deactivation and owner-to-member demotion revoke all target credentials immediately. Reactivation never restores them. The final active owner cannot be demoted or deactivated. See [self-hosting](docs/self-hosting.md) for bootstrap, recovery, and membership administration details.
 
 ## Project documents
 
