@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-28T05:20:54Z"
+updated: "2026-07-28T19:34:58Z"
 ---
 # Current State
 
@@ -11,7 +11,7 @@ This file is a deterministic snapshot of the repository state at the last refres
 - Project: `brain-cloud`
 - Root: `.`
 - Runtime: `elixir`
-- Current branch: `codex/brain-cloud-first-vertical-slice`
+- Current branch: `codex/phase-2-identity-tenant-foundation`
 - Default branch: `develop`
 - Remote: `https://github.com/JimmyMcBride/brain-cloud.git`
 - Umbrella apps: `brain_cloud`, `brain_cloud_web`
@@ -32,6 +32,8 @@ This file is a deterministic snapshot of the repository state at the last refres
 
 ## Local Notes
 
-Phase 1 is implemented from GitHub spec [#2](https://github.com/JimmyMcBride/brain-cloud/issues/2), `brain-cloud-first-vertical-slice`: development bearer authentication, projects, one immutable Markdown memory revision, PostgreSQL `simple` full-text search, structured errors, OpenAPI coverage, and restart durability. Production identity and multi-tenancy remain Phase 2.
+Phase 1 is implemented from GitHub spec [#2](https://github.com/JimmyMcBride/brain-cloud/issues/2), `brain-cloud-first-vertical-slice`: development bearer authentication, projects, one immutable Markdown memory revision, PostgreSQL `simple` full-text search, structured errors, OpenAPI coverage, and restart durability.
+
+Phase 2A is approved as GitHub spec [#5](https://github.com/JimmyMcBride/brain-cloud/issues/5), `production-identity-and-organization-tenant-foundation`: persisted users and organizations, owner/member memberships, scoped revocable API tokens, tenant enforcement on existing product routes, deterministic Phase 1 data migration, and minimal immutable audit events. Teams, agent credentials, interactive login, invitations, and fine-grained project ACLs remain deferred.
 
 When a local brainstorm has already been promoted in GitHub source mode, update the existing issue with `plan github adopt --issues <number>`; do not reapply `plan discuss promote`, whose preview does not reconcile local brainstorm sources to existing issues.
