@@ -42,7 +42,7 @@ Planning must be optional. Brain works without Planning, with the official Plann
 
 ## Status
 
-Phase 0 foundation only. The repository currently provides a Phoenix/LiveView web shell, structured logging, OTP supervision, PostgreSQL-backed readiness, compatibility and empty module discovery, tests, CI, and development deployment scaffolding. Projects, memory persistence, authentication, search, sync, Hive Mind, module execution, and Planning remain roadmap work.
+Phase 1 implements the first persistent Brain Cloud API slice. An authenticated development client can create a project, store and retrieve one immutable Markdown memory revision, and search project-scoped memory through PostgreSQL full-text search. The Phoenix/LiveView shell remains an honest bootstrap surface; production identity, multi-tenancy, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
 
 ## Local development
 
@@ -59,6 +59,8 @@ make run
 | --- | --- | --- |
 | `PORT` | `4000` | Phoenix HTTP port |
 | `DATABASE_URL` | local development config | PostgreSQL connection URL |
+| `DEV_API_TOKEN` | `development-only-token` in development/test | Temporary bearer token for Phase 1 product routes |
+| `DEV_ACTOR_ID` | `00000000-0000-0000-0000-000000000001` in development/test | Temporary UUID recorded as project and revision provenance |
 | `SECRET_KEY_BASE` | development-only value | cookie and LiveView signing secret |
 | `PHX_HOST` | `localhost` | externally visible host |
 | `PHX_SERVER` | unset locally | start the endpoint in an OTP release |
@@ -66,13 +68,40 @@ make run
 
 ```bash
 docker compose up --build
+make smoke-phase1
 curl http://localhost:4000/
 curl http://localhost:4000/healthz
 curl http://localhost:4000/readyz
 curl http://localhost:4000/v1/system/info
 ```
 
-The Compose file starts the Phoenix release and PostgreSQL. `/readyz` returns `503` until PostgreSQL accepts a query; Phase 1 product persistence is not implemented yet.
+The Compose file starts the Phoenix release and PostgreSQL. `/readyz` returns `503` until PostgreSQL accepts a query. Product routes require the development bearer token:
+
+```bash
+export DEV_API_TOKEN=development-only-token
+
+project_response="$(
+  curl --fail-with-body \
+    --header "Authorization: Bearer ${DEV_API_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --data '{"name":"Research"}' \
+    http://localhost:4000/v1/projects
+)"
+
+project_id="$(printf '%s' "${project_response}" | jq -r '.project.id')"
+
+curl --fail-with-body \
+  --header "Authorization: Bearer ${DEV_API_TOKEN}" \
+  --header "Content-Type: application/json" \
+  --data '{"title":"Phoenix","content":"# Durable memory","content_type":"text/markdown"}' \
+  "http://localhost:4000/v1/projects/${project_id}/memories"
+
+curl --fail-with-body \
+  --header "Authorization: Bearer ${DEV_API_TOKEN}" \
+  "http://localhost:4000/v1/projects/${project_id}/search?q=durable"
+```
+
+`DEV_API_TOKEN` and `DEV_ACTOR_ID` are deliberately temporary development authentication. They are not production identity, authorization, or multi-tenancy.
 
 ## Project documents
 

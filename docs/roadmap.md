@@ -50,9 +50,7 @@ Planning is the first major optional official Brain module. It is not a separate
 
 ### Phase 1 — First Brain Cloud vertical slice
 
-Goal: create one cloud project, store one durable memory, retrieve it, and search it.
-
-Deliver development authentication, project creation, durable context and memory, revision foundation, basic search, PostgreSQL persistence, OpenAPI expansion, and end-to-end restart tests.
+**Complete.** Development authentication, project creation, one immutable Markdown memory revision, exact content hashing and actor provenance, project-scoped PostgreSQL keyword search, structured API errors, OpenAPI coverage, and restart-durability verification.
 
 ### Phase 2 — Identity and multi-tenancy
 
@@ -134,4 +132,4 @@ Planning remains focused on turning durable project understanding into structure
 
 ## Current implementation non-goals
 
-This architecture revision does not implement the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format. Phase 1 remains the next implementation slice.
+The current implementation does not include production identity or multi-tenancy, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format. Phase 2 identity and multi-tenancy is next.

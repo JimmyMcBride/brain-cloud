@@ -37,4 +37,4 @@ Brain Cloud is the hosted and self-hostable platform for Brain Core and optional
 
 ## Current focus
 
-Phase 1 remains the next implementation slice: create a cloud project, store durable context/memory, retrieve it, search it, and preserve it across restart. Module framework implementation begins later in Phase 10. Planning integration begins only after a dedicated contract.
+Phase 1 implements one persistent project-memory-search slice with temporary development authentication. Phase 2 production identity and multi-tenancy is next. Module framework implementation begins later in Phase 10. Planning integration begins only after a dedicated contract.

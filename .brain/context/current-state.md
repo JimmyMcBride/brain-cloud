@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-28T04:55:19Z"
+updated: "2026-07-28T05:20:54Z"
 ---
 # Current State
 
@@ -11,11 +11,11 @@ This file is a deterministic snapshot of the repository state at the last refres
 - Project: `brain-cloud`
 - Root: `.`
 - Runtime: `elixir`
-- Current branch: `codex/phase-1-first-vertical-slice-spec`
+- Current branch: `codex/brain-cloud-first-vertical-slice`
 - Default branch: `develop`
 - Remote: `https://github.com/JimmyMcBride/brain-cloud.git`
 - Umbrella apps: `brain_cloud`, `brain_cloud_web`
-- ExUnit test files: `8`
+- ExUnit test files: `12`
 
 ## Docs
 
@@ -32,6 +32,6 @@ This file is a deterministic snapshot of the repository state at the last refres
 
 ## Local Notes
 
-Phase 1 is approved as GitHub spec [#2](https://github.com/JimmyMcBride/brain-cloud/issues/2), `brain-cloud-first-vertical-slice`: development bearer authentication, projects, one immutable Markdown memory revision, PostgreSQL `simple` full-text search, structured errors, OpenAPI coverage, and restart durability. Its planning source is `.plan/brainstorms/brain-cloud-first-vertical-slice.md` on `codex/phase-1-first-vertical-slice-spec`.
+Phase 1 is implemented from GitHub spec [#2](https://github.com/JimmyMcBride/brain-cloud/issues/2), `brain-cloud-first-vertical-slice`: development bearer authentication, projects, one immutable Markdown memory revision, PostgreSQL `simple` full-text search, structured errors, OpenAPI coverage, and restart durability. Production identity and multi-tenancy remain Phase 2.
 
 When a local brainstorm has already been promoted in GitHub source mode, update the existing issue with `plan github adopt --issues <number>`; do not reapply `plan discuss promote`, whose preview does not reconcile local brainstorm sources to existing issues.

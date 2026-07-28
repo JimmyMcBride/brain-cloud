@@ -142,4 +142,6 @@ The same server supports localhost, Docker Compose, single-server self-hosting, 
 
 ## Current implementation
 
-Phase 0 is a Phoenix umbrella. `apps/brain_cloud` owns Ecto/PostgreSQL, compatibility metadata, readiness, release migrations, and domain supervision. `apps/brain_cloud_web` owns Phoenix, Bandit, LiveView, JSON transport, and the minimal web shell. OTP handles graceful supervision; no separate worker application exists until real jobs require one. No module registry, Planning domain, arbitrary loading, or external process protocol exists yet.
+Phase 1 is a Phoenix umbrella with one persistent vertical slice. `apps/brain_cloud` owns Ecto/PostgreSQL, projects, immutable memory revisions, synchronous project-scoped `simple` full-text search, compatibility metadata, readiness, release migrations, and domain supervision. `apps/brain_cloud_web` owns Phoenix, Bandit, temporary bearer authentication, JSON controllers, LiveView, and the minimal web shell.
+
+The server exposes project creation, memory creation/retrieval, and keyword search under `/v1`. Development actor provenance and exact content hashes establish future identity and revision seams without implementing production authorization or revision history. OTP handles graceful supervision; no separate worker application exists until real jobs require one. No module registry, Planning domain, arbitrary loading, or external process protocol exists yet.

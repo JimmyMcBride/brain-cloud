@@ -59,9 +59,9 @@ Project-specific commands:
 - `make check`: formatting, warnings-as-errors compilation, database migrations/tests, and production assets.
 - `make run`: Phoenix and LiveView on `PORT` (default `4000`).
 - `Dockerfile`: multi-stage, non-root OTP release image with migration entrypoint.
-- `compose.yaml`: development Phoenix release and PostgreSQL.
-- Runtime smoke check: call `/`, `/healthz`, `/readyz`, and `/v1/system/info`.
+- `compose.yaml`: development Phoenix release and PostgreSQL with deterministic `DEV_API_TOKEN` and `DEV_ACTOR_ID` defaults.
+- `make smoke-phase1`: against a running Compose project, verify public endpoints, exact unauthorized behavior, create/retrieve/search, API-only restart durability, PostgreSQL outage health/readiness behavior, recovery, and persisted retrieval/search.
 
-Active delivery branch is `develop`; `main` is releases and `release/vX.Y.Z` is stabilization. Next implementation must remain Phase 1: one persistent cloud project, durable memory, retrieval, and keyword search.
+Active delivery branch is `develop`; `main` is releases and `release/vX.Y.Z` is stabilization. Phase 1 is the first persistent project/memory/search slice. Production identity and multi-tenancy remain Phase 2.
 
 Plan currently uses GitHub source mode only as transitional repository coordination. All Plan-owned GitHub mutations still go through Plan. The target product architecture stores optional Planning data in local/cloud/hybrid Brain, not permanently in GitHub. Module ecosystem implementation is deferred until Phase 10; the Planning migration requires a separate follow-up contract.

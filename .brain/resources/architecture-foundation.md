@@ -1,6 +1,6 @@
 ---
 title: Brain Cloud architecture foundation
-updated: "2026-07-27T21:22:34Z"
+updated: "2026-07-28T05:25:43Z"
 ---
 ## Repository boundary
 
@@ -18,16 +18,18 @@ Planning must be optional, capability-discovered, tracker-independent, and permi
 
 ## Umbrella applications
 
-- `apps/brain_cloud`: Ecto/PostgreSQL, system information, readiness, release migrations, and domain supervision.
-- `apps/brain_cloud_web`: Phoenix, Bandit, LiveView, JSON routes, assets, and endpoint supervision.
-- No worker-only application or queue exists in Phase 0; future jobs run under explicit OTP supervision.
+- `apps/brain_cloud`: Ecto/PostgreSQL, projects, immutable memory revisions, exact content hashes, project-scoped keyword search, system information, readiness, release migrations, and domain supervision.
+- `apps/brain_cloud_web`: Phoenix, Bandit, temporary development bearer authentication, LiveView, structured JSON routes, assets, and endpoint supervision.
+- No worker-only application or queue exists; future jobs run under explicit OTP supervision.
 
 ## Protocol and deployment
 
-Implemented routes are `GET /healthz`, `GET /readyz`, and `GET /v1/system/info`. Discovery advertises server/protocol capabilities and `modules: []`; no module runtime exists. `openapi/brain-cloud-v1.yaml` reserves module and Planning areas without speculative schemas.
+Implemented product routes are `POST /v1/projects`, `POST /v1/projects/{project_id}/memories`, `GET /v1/projects/{project_id}/memories/{memory_id}`, and `GET /v1/projects/{project_id}/search`. `GET /healthz`, `GET /readyz`, and `GET /v1/system/info` remain public. Discovery advertises the Phase 1 capabilities and `modules: []`; no module runtime exists. `openapi/brain-cloud-v1.yaml` documents the product contract and reserves module and Planning areas without speculative schemas.
 
-`Dockerfile` builds a non-root OTP release and runs migrations before startup; `compose.yaml` provides the Phoenix server plus PostgreSQL; `.github/workflows/ci.yml` verifies formatting, compilation, database tests, and assets.
+`DEV_API_TOKEN` and `DEV_ACTOR_ID` provide development-only authentication and actor provenance. They do not implement production identity, authorization, or multi-tenancy.
+
+`Dockerfile` builds a non-root OTP release and runs migrations before startup; `compose.yaml` provides the Phoenix server plus PostgreSQL; `.github/workflows/ci.yml` verifies formatting, compilation, database tests, and assets. `make smoke-phase1` verifies create/retrieve/search, API restart durability, and PostgreSQL outage/recovery against a running Compose project.
 
 ## Roadmap boundary
 
-Phase 1 remains next: one persistent cloud project, durable memory, retrieval, and search. Core module framework is Phase 10. Official Planning integration is Phase 11 under a separate migration contract.
+Phase 1 is the first persistent project/memory vertical slice. Phase 2 production identity and multi-tenancy is next. Core module framework is Phase 10. Official Planning integration is Phase 11 under a separate migration contract.

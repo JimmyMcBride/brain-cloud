@@ -54,4 +54,4 @@ After `brain adopt` creates starter context, the AI agent must scan the repo bef
 
 ## Local Notes
 
-Use `make check` for formatting, warnings-as-errors compilation, database migrations/tests, and production assets. Smoke-test `/`, `/healthz`, `/readyz`, and `/v1/system/info` after transport changes. Active integration work targets `develop`; release stabilization uses `release/vX.Y.Z`; `main` contains releases. Plan owns GitHub planning artifacts whenever source mode is `github`.
+Use `make check` for formatting, warnings-as-errors compilation, database migrations/tests, and production assets. Against a running Compose project, use `make smoke-phase1` to verify public endpoints, development authentication, create/retrieve/search, API restart durability, PostgreSQL outage readiness, and recovery. Active integration work targets `develop`; release stabilization uses `release/vX.Y.Z`; `main` contains releases. Plan owns GitHub planning artifacts whenever source mode is `github`.
