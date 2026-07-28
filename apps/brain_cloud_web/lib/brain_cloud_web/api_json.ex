@@ -4,10 +4,29 @@ defmodule BrainCloudWeb.APIJSON do
   def project(project) do
     %{
       id: project.id,
+      organization_id: project.organization_id,
       name: project.name,
       creator_actor_id: project.creator_actor_id,
       inserted_at: timestamp(project.inserted_at),
       updated_at: timestamp(project.updated_at)
+    }
+  end
+
+  def created_token(token, raw_token) do
+    token
+    |> token()
+    |> Map.put(:token, raw_token)
+  end
+
+  def token(token) do
+    %{
+      id: token.id,
+      name: token.name,
+      scopes: token.scopes,
+      expires_at: optional_timestamp(token.expires_at),
+      revoked_at: optional_timestamp(token.revoked_at),
+      bootstrap: token.bootstrap,
+      inserted_at: timestamp(token.inserted_at)
     }
   end
 
@@ -51,4 +70,6 @@ defmodule BrainCloudWeb.APIJSON do
   end
 
   defp timestamp(value), do: DateTime.to_iso8601(value)
+  defp optional_timestamp(nil), do: nil
+  defp optional_timestamp(value), do: timestamp(value)
 end

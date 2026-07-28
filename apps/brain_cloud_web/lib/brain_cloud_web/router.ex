@@ -15,7 +15,7 @@ defmodule BrainCloudWeb.Router do
   end
 
   pipeline :authenticated_api do
-    plug BrainCloudWeb.Plugs.DevAuth
+    plug BrainCloudWeb.Plugs.ApiAuth
   end
 
   scope "/", BrainCloudWeb do
@@ -35,6 +35,9 @@ defmodule BrainCloudWeb.Router do
   scope "/v1", BrainCloudWeb do
     pipe_through [:api, :authenticated_api]
 
+    post "/auth/tokens", TokenController, :create
+    get "/auth/tokens", TokenController, :index
+    delete "/auth/tokens/:id", TokenController, :delete
     post "/projects", ProjectController, :create
     post "/projects/:project_id/memories", MemoryController, :create
     get "/projects/:project_id/memories/:id", MemoryController, :show

@@ -3,23 +3,22 @@ defmodule BrainCloudWeb.MemoryControllerTest do
 
   alias BrainCloud.Projects
 
-  @actor_id "00000000-0000-0000-0000-000000000001"
-
-  setup do
-    {:ok, project} = Projects.create_project(%{name: "Research"}, @actor_id)
-    {:ok, other_project} = Projects.create_project(%{name: "Other"}, @actor_id)
+  setup %{identity: identity} do
+    {:ok, project} = Projects.create_project(%{name: "Research"}, identity.auth_context)
+    {:ok, other_project} = Projects.create_project(%{name: "Other"}, identity.auth_context)
     %{project: project, other_project: other_project}
   end
 
   test "creates, retrieves, and searches an exact immutable revision", %{
     conn: conn,
-    project: project
+    project: project,
+    identity: identity
   } do
     content = "# Durable\nPhoenix cloud memory"
 
     create_response =
       conn
-      |> authenticate()
+      |> authenticate(identity)
       |> post(~p"/v1/projects/#{project.id}/memories", %{
         title: "  Phoenix Notes  ",
         content: content,
@@ -39,13 +38,14 @@ defmodule BrainCloudWeb.MemoryControllerTest do
                  "content" => ^content,
                  "content_type" => "text/markdown",
                  "content_hash" => content_hash,
-                 "actor_id" => @actor_id,
+                 "actor_id" => actor_id,
                  "inserted_at" => revision_inserted_at
                }
              }
            } = create_response
 
     assert project_id == project.id
+    assert actor_id == identity.user.id
     assert revision_memory_id == memory_id
     assert content_hash == Base.encode16(:crypto.hash(:sha256, content), case: :lower)
     assert {:ok, _, _} = DateTime.from_iso8601(revision_inserted_at)
@@ -53,7 +53,7 @@ defmodule BrainCloudWeb.MemoryControllerTest do
     get_response =
       conn
       |> recycle()
-      |> authenticate()
+      |> authenticate(identity)
       |> get(~p"/v1/projects/#{project.id}/memories/#{memory_id}")
       |> json_response(200)
 
@@ -70,14 +70,14 @@ defmodule BrainCloudWeb.MemoryControllerTest do
                  "content_hash" => ^content_hash,
                  "excerpt" => "Durable Phoenix cloud memory",
                  "rank" => rank,
-                 "actor_id" => @actor_id,
+                 "actor_id" => ^actor_id,
                  "inserted_at" => ^revision_inserted_at
                }
              ]
            } =
              conn
              |> recycle()
-             |> authenticate()
+             |> authenticate(identity)
              |> get(~p"/v1/projects/#{project.id}/search?q=phoenix")
              |> json_response(200)
 
@@ -87,11 +87,12 @@ defmodule BrainCloudWeb.MemoryControllerTest do
   test "keeps retrieval and search scoped to the requested project", %{
     conn: conn,
     project: project,
-    other_project: other_project
+    other_project: other_project,
+    identity: identity
   } do
     %{"memory" => %{"id" => memory_id}} =
       conn
-      |> authenticate()
+      |> authenticate(identity)
       |> post(~p"/v1/projects/#{project.id}/memories", %{
         title: "Private",
         content: "project-only keyword",
@@ -108,24 +109,28 @@ defmodule BrainCloudWeb.MemoryControllerTest do
            } =
              conn
              |> recycle()
-             |> authenticate()
+             |> authenticate(identity)
              |> get(~p"/v1/projects/#{other_project.id}/memories/#{memory_id}")
              |> json_response(404)
 
     assert %{"results" => []} =
              conn
              |> recycle()
-             |> authenticate()
+             |> authenticate(identity)
              |> get(~p"/v1/projects/#{other_project.id}/search?q=project-only")
              |> json_response(200)
   end
 
-  test "returns exact missing-resource and validation errors", %{conn: conn, project: project} do
+  test "returns exact missing-resource and validation errors", %{
+    conn: conn,
+    project: project,
+    identity: identity
+  } do
     missing_project_id = Ecto.UUID.generate()
 
     assert %{"error" => %{"code" => "project_not_found"}} =
              conn
-             |> authenticate()
+             |> authenticate(identity)
              |> post(~p"/v1/projects/#{missing_project_id}/memories", %{
                title: "Title",
                content: "Body",
@@ -142,7 +147,7 @@ defmodule BrainCloudWeb.MemoryControllerTest do
            } =
              conn
              |> recycle()
-             |> authenticate()
+             |> authenticate(identity)
              |> post(~p"/v1/projects/#{project.id}/memories", %{
                title: "Title",
                content: "Body",
@@ -158,8 +163,29 @@ defmodule BrainCloudWeb.MemoryControllerTest do
            } =
              conn
              |> recycle()
-             |> authenticate()
+             |> authenticate(identity)
              |> get(~p"/v1/projects/#{project.id}/search?q=%20")
              |> json_response(422)
+  end
+
+  test "conceals cross-organization projects", %{conn: conn, project: project} do
+    other_identity = BrainCloud.DataCase.identity_fixture()
+
+    assert %{"error" => %{"code" => "project_not_found"}} =
+             conn
+             |> authenticate(other_identity)
+             |> post(~p"/v1/projects/#{project.id}/memories", %{
+               title: "Title",
+               content: "Body",
+               content_type: "text/markdown"
+             })
+             |> json_response(404)
+
+    assert %{"error" => %{"code" => "project_not_found"}} =
+             conn
+             |> recycle()
+             |> authenticate(other_identity)
+             |> get(~p"/v1/projects/#{project.id}/search?q=body")
+             |> json_response(404)
   end
 end
