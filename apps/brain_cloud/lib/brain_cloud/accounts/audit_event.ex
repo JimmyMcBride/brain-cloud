@@ -3,7 +3,17 @@ defmodule BrainCloud.Accounts.AuditEvent do
 
   import Ecto.Changeset
 
-  @actions ~w(identity.bootstrap token.create token.revoke project.create memory.create)
+  @actions ~w(
+    identity.bootstrap
+    membership.create
+    membership.role_change
+    membership.deactivate
+    membership.reactivate
+    token.create
+    token.revoke
+    project.create
+    memory.create
+  )
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   @timestamps_opts [type: :utc_datetime_usec]

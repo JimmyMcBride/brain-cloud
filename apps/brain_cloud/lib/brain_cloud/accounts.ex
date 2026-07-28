@@ -43,6 +43,202 @@ defmodule BrainCloud.Accounts do
     |> unwrap_transaction()
   end
 
+  def create_organization_membership(%AuthContext{} = auth, attrs) do
+    attrs = Map.new(attrs)
+
+    with :ok <- authorize_membership_management(auth),
+         {:ok, user_attrs} <- validate_membership_user(attrs) do
+      Repo.transaction(fn ->
+        with {:ok, user} <- find_or_create_membership_user(user_attrs),
+             :ok <- ensure_membership_absent(user.id, auth.organization_id),
+             {:ok, membership} <-
+               %OrganizationMembership{}
+               |> OrganizationMembership.changeset(%{
+                 user_id: user.id,
+                 organization_id: auth.organization_id,
+                 role: attribute(attrs, :role)
+               })
+               |> Repo.insert(),
+             {:ok, _event} <-
+               audit_changeset(
+                 auth,
+                 "membership.create",
+                 "organization_membership",
+                 membership.id,
+                 %{"role" => membership.role, "user_id" => user.id}
+               )
+               |> Repo.insert() do
+          Repo.preload(membership, :user)
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+      |> unwrap_transaction()
+    end
+  end
+
+  def list_organization_memberships(%AuthContext{} = auth) do
+    with :ok <- authorize_membership_management(auth) do
+      memberships =
+        Repo.all(
+          from membership in OrganizationMembership,
+            join: user in assoc(membership, :user),
+            where: membership.organization_id == ^auth.organization_id,
+            preload: [user: user],
+            order_by: [asc: membership.inserted_at, asc: membership.id]
+        )
+
+      {:ok, memberships}
+    end
+  end
+
+  def update_organization_membership_role(%AuthContext{} = auth, membership_id, role) do
+    with :ok <- authorize_membership_management(auth),
+         {:ok, membership_id} <- Ecto.UUID.cast(membership_id) do
+      Repo.transaction(fn ->
+        active_owners = lock_active_owners(auth.organization_id)
+
+        with %OrganizationMembership{} = membership <-
+               organization_membership_for_update(auth.organization_id, membership_id),
+             :ok <- preserve_active_owner(membership, role, active_owners),
+             {:ok, updated_membership} <- update_membership_role(membership, role),
+             :ok <- revoke_tokens_after_demotion(membership, updated_membership),
+             {:ok, _event} <-
+               audit_role_change(auth, membership, updated_membership) do
+          Repo.preload(updated_membership, :user)
+        else
+          nil -> Repo.rollback(:membership_not_found)
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+      |> unwrap_transaction()
+    else
+      :error -> {:error, :membership_not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def deactivate_organization_membership(%AuthContext{} = auth, membership_id) do
+    with :ok <- authorize_membership_management(auth),
+         {:ok, membership_id} <- Ecto.UUID.cast(membership_id) do
+      Repo.transaction(fn ->
+        active_owners = lock_active_owners(auth.organization_id)
+
+        case organization_membership_for_update(auth.organization_id, membership_id) do
+          nil ->
+            Repo.rollback(:membership_not_found)
+
+          %OrganizationMembership{deactivated_at: deactivated_at} = membership
+          when not is_nil(deactivated_at) ->
+            Repo.preload(membership, :user)
+
+          %OrganizationMembership{} = membership ->
+            with :ok <- preserve_active_owner(membership, nil, active_owners),
+                 {:ok, deactivated_membership} <-
+                   membership
+                   |> Changeset.change(deactivated_at: DateTime.utc_now(:microsecond))
+                   |> Repo.update(),
+                 {_count, _tokens} <- revoke_membership_tokens(membership.id),
+                 {:ok, _event} <-
+                   audit_changeset(
+                     auth,
+                     "membership.deactivate",
+                     "organization_membership",
+                     membership.id,
+                     %{"role" => membership.role}
+                   )
+                   |> Repo.insert() do
+              Repo.preload(deactivated_membership, :user)
+            else
+              {:error, reason} -> Repo.rollback(reason)
+            end
+        end
+      end)
+      |> unwrap_transaction()
+    else
+      :error -> {:error, :membership_not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def reactivate_organization_membership(%AuthContext{} = auth, membership_id) do
+    with :ok <- authorize_membership_management(auth),
+         {:ok, membership_id} <- Ecto.UUID.cast(membership_id) do
+      Repo.transaction(fn ->
+        case organization_membership_for_update(auth.organization_id, membership_id) do
+          nil ->
+            Repo.rollback(:membership_not_found)
+
+          %OrganizationMembership{deactivated_at: nil} = membership ->
+            Repo.preload(membership, :user)
+
+          %OrganizationMembership{} = membership ->
+            with {:ok, reactivated_membership} <-
+                   membership
+                   |> Changeset.change(deactivated_at: nil)
+                   |> Repo.update(),
+                 {:ok, _event} <-
+                   audit_changeset(
+                     auth,
+                     "membership.reactivate",
+                     "organization_membership",
+                     membership.id,
+                     %{"role" => membership.role}
+                   )
+                   |> Repo.insert() do
+              Repo.preload(reactivated_membership, :user)
+            else
+              {:error, reason} -> Repo.rollback(reason)
+            end
+        end
+      end)
+      |> unwrap_transaction()
+    else
+      :error -> {:error, :membership_not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def create_membership_api_token(%AuthContext{} = auth, membership_id, attrs) do
+    attrs = Map.new(attrs)
+
+    with :ok <- authorize_target_token_management(auth),
+         {:ok, membership_id} <- Ecto.UUID.cast(membership_id) do
+      Repo.transaction(fn ->
+        case organization_membership_for_update(auth.organization_id, membership_id) do
+          nil ->
+            Repo.rollback(:membership_not_found)
+
+          %OrganizationMembership{deactivated_at: deactivated_at}
+          when not is_nil(deactivated_at) ->
+            Repo.rollback(:membership_inactive)
+
+          %OrganizationMembership{} = membership ->
+            with :ok <- validate_target_token_scopes(auth, membership, attrs),
+                 {:ok, {token, raw_token}} <- issue_token(membership.id, attrs, false),
+                 {:ok, _event} <-
+                   audit_changeset(auth, "token.create", "api_token", token.id, %{
+                     "name" => token.name,
+                     "scopes" => token.scopes,
+                     "target_membership_id" => membership.id
+                   })
+                   |> Repo.insert() do
+              {token, raw_token}
+            else
+              {:error, reason} -> Repo.rollback(reason)
+            end
+        end
+      end)
+      |> case do
+        {:ok, {token, raw_token}} -> {:ok, token, raw_token}
+        {:error, reason} -> {:error, reason}
+      end
+    else
+      :error -> {:error, :membership_not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   def create_api_token(%AuthContext{} = auth, attrs) do
     attrs = Map.new(attrs)
 
@@ -174,6 +370,59 @@ defmodule BrainCloud.Accounts do
           display_name: attribute(attrs, :display_name)
         })
         |> Repo.insert()
+    end
+  end
+
+  defp validate_membership_user(attrs) do
+    changeset =
+      User.changeset(%User{}, %{
+        email: attribute(attrs, :email),
+        display_name: attribute(attrs, :display_name)
+      })
+
+    case Changeset.apply_action(changeset, :insert) do
+      {:ok, user} -> {:ok, %{email: user.email, display_name: user.display_name}}
+      {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  defp find_or_create_membership_user(attrs) do
+    Ecto.Adapters.SQL.query!(
+      Repo,
+      "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
+      [attrs.email]
+    )
+
+    case Repo.get_by(User, email: attrs.email) do
+      %User{} = user ->
+        {:ok, lock_user(user.id)}
+
+      nil ->
+        with {:ok, user} <-
+               %User{}
+               |> User.changeset(attrs)
+               |> Repo.insert() do
+          {:ok, lock_user(user.id)}
+        end
+    end
+  end
+
+  defp lock_user(user_id) do
+    Repo.one!(
+      from user in User,
+        where: user.id == ^user_id,
+        lock: "FOR UPDATE"
+    )
+  end
+
+  defp ensure_membership_absent(user_id, organization_id) do
+    case Repo.get_by(OrganizationMembership,
+           user_id: user_id,
+           organization_id: organization_id
+         ) do
+      nil -> :ok
+      %OrganizationMembership{deactivated_at: nil} -> {:error, :membership_exists}
+      %OrganizationMembership{} -> {:error, :membership_inactive}
     end
   end
 
@@ -353,6 +602,128 @@ defmodule BrainCloud.Accounts do
   end
 
   defp authorize_token_management(_auth), do: {:error, :forbidden}
+
+  defp authorize_membership_management(%AuthContext{role: "owner"} = auth) do
+    if authorized?(auth, "members.manage"), do: :ok, else: {:error, :forbidden}
+  end
+
+  defp authorize_membership_management(_auth), do: {:error, :forbidden}
+
+  defp authorize_target_token_management(%AuthContext{role: "owner"} = auth) do
+    if authorized?(auth, "members.manage") and authorized?(auth, "tokens.manage") do
+      :ok
+    else
+      {:error, :forbidden}
+    end
+  end
+
+  defp authorize_target_token_management(_auth), do: {:error, :forbidden}
+
+  defp organization_membership_for_update(organization_id, membership_id) do
+    Repo.one(
+      from membership in OrganizationMembership,
+        where:
+          membership.id == ^membership_id and
+            membership.organization_id == ^organization_id,
+        lock: "FOR UPDATE"
+    )
+  end
+
+  defp lock_active_owners(organization_id) do
+    Repo.all(
+      from membership in OrganizationMembership,
+        where:
+          membership.organization_id == ^organization_id and membership.role == "owner" and
+            is_nil(membership.deactivated_at),
+        order_by: [asc: membership.id],
+        lock: "FOR UPDATE"
+    )
+  end
+
+  defp preserve_active_owner(
+         %OrganizationMembership{role: "owner", deactivated_at: nil},
+         next_role,
+         [_only_owner]
+       )
+       when next_role != "owner" and next_role in [nil, "member"] do
+    {:error, :last_owner_required}
+  end
+
+  defp preserve_active_owner(_membership, _next_role, _active_owners), do: :ok
+
+  defp update_membership_role(%OrganizationMembership{role: role} = membership, role),
+    do: {:ok, membership}
+
+  defp update_membership_role(membership, role) do
+    membership
+    |> OrganizationMembership.changeset(%{role: role})
+    |> Repo.update()
+  end
+
+  defp revoke_tokens_after_demotion(
+         %OrganizationMembership{role: "owner"},
+         %OrganizationMembership{role: "member"} = membership
+       ) do
+    revoke_membership_tokens(membership.id)
+    :ok
+  end
+
+  defp revoke_tokens_after_demotion(_membership, _updated_membership), do: :ok
+
+  defp revoke_membership_tokens(membership_id) do
+    now = DateTime.utc_now(:microsecond)
+
+    Repo.update_all(
+      from(token in ApiToken,
+        where: token.membership_id == ^membership_id and is_nil(token.revoked_at)
+      ),
+      set: [revoked_at: now, updated_at: now]
+    )
+  end
+
+  defp audit_role_change(
+         _auth,
+         %OrganizationMembership{role: role},
+         %OrganizationMembership{role: role}
+       ),
+       do: {:ok, nil}
+
+  defp audit_role_change(auth, membership, updated_membership) do
+    audit_changeset(
+      auth,
+      "membership.role_change",
+      "organization_membership",
+      membership.id,
+      %{"previous_role" => membership.role, "role" => updated_membership.role}
+    )
+    |> Repo.insert()
+  end
+
+  defp validate_target_token_scopes(auth, membership, attrs) do
+    case attribute(attrs, :scopes) do
+      scopes when is_list(scopes) ->
+        cond do
+          not Scopes.subset?(scopes, auth.scopes) ->
+            {:error, scope_subset_changeset(attrs, membership.id)}
+
+          membership.role == "member" and
+              Enum.any?(scopes, &(&1 in ["members.manage", "tokens.manage"])) ->
+            {:error, member_management_scope_changeset(attrs, membership.id)}
+
+          true ->
+            :ok
+        end
+
+      _missing ->
+        {:error, validation_token_changeset(attrs, membership.id)}
+    end
+  end
+
+  defp member_management_scope_changeset(attrs, membership_id) do
+    attrs
+    |> validation_token_changeset(membership_id)
+    |> Changeset.add_error(:scopes, "cannot include management scopes for a member")
+  end
 
   defp active_bootstrap_token(membership_id) do
     Repo.one(

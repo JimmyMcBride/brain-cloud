@@ -15,6 +15,7 @@ defmodule BrainCloud.SystemInfo do
         "memory.write",
         "memory.read",
         "search.keyword",
+        "members.manage",
         "tokens.manage"
       ],
       modules: []
