@@ -1,4 +1,4 @@
-.PHONY: setup fmt format-check compile test assets build release run ecto-create ecto-migrate docker-build compose-up compose-down check
+.PHONY: setup fmt format-check compile test assets build release run ecto-create ecto-migrate docker-build compose-up compose-down smoke-phase1 check
 
 setup:
 	mix deps.get
@@ -45,6 +45,9 @@ compose-up:
 
 compose-down:
 	docker compose down
+
+smoke-phase1:
+	sh scripts/phase1-smoke.sh
 
 check:
 	mix format --check-formatted
