@@ -6,7 +6,13 @@ defmodule BrainCloud.SystemInfoTest do
              server: "brain-cloud",
              server_version: "0.0.0-dev",
              protocol_version: "v1",
-             capabilities: ["system.info"],
+             capabilities: [
+               "system.info",
+               "projects.create",
+               "memory.write",
+               "memory.read",
+               "search.keyword"
+             ],
              modules: []
            }
   end

@@ -6,6 +6,12 @@ Required controls include encryption in transit and at rest, secure token storag
 
 Permission checks occur before search, retrieval, reranking, context compilation, or model invocation. Display-time filtering is insufficient because unauthorized material must never enter generated context. Separate capabilities cover read, search, compile, propose memory, approve memory, direct edit, and administration.
 
+## Phase 1 development authentication
+
+Phase 1 product routes use one fixed bearer token from `DEV_API_TOKEN` and one actor UUID from `DEV_ACTOR_ID`. Phoenix compares the token in constant time and records the actor UUID on project creation and immutable memory revisions. Operational endpoints and system discovery remain public.
+
+This mechanism establishes a narrow authentication and provenance seam only. It has no users, organizations, tenant isolation, expiry, rotation, revocation, scoped permissions, or audit log, and must not be treated as production access control. Production identity and multi-tenancy begin in Phase 2.
+
 Future encryption modes are server-readable, end-to-end encrypted, and local-only. Server-readable projects can use hosted search and Hive Mind. End-to-end encrypted projects may require trusted client-side or user-controlled retrieval and will explicitly disclose lost server features. Searchable end-to-end encryption is not an initial requirement.
 
 ## Module security

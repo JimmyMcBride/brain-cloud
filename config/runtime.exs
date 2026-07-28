@@ -11,6 +11,40 @@ config :brain_cloud_web, BrainCloudWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))],
   server: System.get_env("PHX_SERVER") in ~w(true 1)
 
+development_auth_defaults =
+  if config_env() in [:dev, :test] do
+    [
+      token: "development-only-token",
+      actor_id: "00000000-0000-0000-0000-000000000001"
+    ]
+  else
+    []
+  end
+
+dev_api_token =
+  System.get_env("DEV_API_TOKEN") ||
+    development_auth_defaults[:token] ||
+    raise "environment variable DEV_API_TOKEN is missing"
+
+dev_actor_id =
+  System.get_env("DEV_ACTOR_ID") ||
+    development_auth_defaults[:actor_id] ||
+    raise "environment variable DEV_ACTOR_ID is missing"
+
+if String.trim(dev_api_token) == "" do
+  raise "environment variable DEV_API_TOKEN must not be empty"
+end
+
+case Ecto.UUID.cast(dev_actor_id) do
+  {:ok, actor_id} ->
+    config :brain_cloud_web, :dev_auth,
+      token: dev_api_token,
+      actor_id: actor_id
+
+  :error ->
+    raise "environment variable DEV_ACTOR_ID must be a UUID"
+end
+
 if config_env() == :dev do
   # Reload browser tabs when matching files change.
   config :brain_cloud_web, BrainCloudWeb.Endpoint,

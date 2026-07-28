@@ -14,6 +14,10 @@ defmodule BrainCloudWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :authenticated_api do
+    plug BrainCloudWeb.Plugs.DevAuth
+  end
+
   scope "/", BrainCloudWeb do
     pipe_through :browser
 
@@ -26,6 +30,15 @@ defmodule BrainCloudWeb.Router do
     get "/healthz", HealthController, :show
     get "/readyz", ReadinessController, :show
     get "/v1/system/info", SystemInfoController, :show
+  end
+
+  scope "/v1", BrainCloudWeb do
+    pipe_through [:api, :authenticated_api]
+
+    post "/projects", ProjectController, :create
+    post "/projects/:project_id/memories", MemoryController, :create
+    get "/projects/:project_id/memories/:id", MemoryController, :show
+    get "/projects/:project_id/search", SearchController, :index
   end
 
   # Enable LiveDashboard in development

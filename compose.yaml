@@ -3,6 +3,8 @@ services:
     build: .
     environment:
       DATABASE_URL: ecto://brain:brain@postgres/brain
+      DEV_ACTOR_ID: 00000000-0000-0000-0000-000000000001
+      DEV_API_TOKEN: development-only-token
       PHX_HOST: localhost
       PHX_SERVER: "true"
       POOL_SIZE: "10"

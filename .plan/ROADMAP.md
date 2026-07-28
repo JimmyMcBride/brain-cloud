@@ -12,7 +12,7 @@ Brain Cloud hosts Brain Core plus explicitly enabled official/community modules.
 
 ## Phase 1 — First Brain Cloud vertical slice
 
-Create one cloud project, store durable context/memory, retrieve it, and search it. Development auth, revision foundation, PostgreSQL persistence, OpenAPI expansion, and end-to-end restart tests.
+**Complete.** Create one cloud project, store and retrieve one immutable Markdown memory revision, and search it through project-scoped PostgreSQL full-text search. Includes development auth, provenance, structured errors, OpenAPI, and restart durability.
 
 ## Phase 2 — Identity and multi-tenancy
 
