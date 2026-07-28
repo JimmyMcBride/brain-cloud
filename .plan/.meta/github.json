@@ -3,7 +3,21 @@
   "repo_url": "https://github.com/JimmyMcBride/brain-cloud",
   "default_branch": "develop",
   "last_enabled_at": "2026-07-27T17:50:25Z",
-  "last_updated_at": "2026-07-27T17:50:25Z",
+  "last_updated_at": "2026-07-28T04:52:41Z",
   "stories": {},
-  "planning": {}
+  "planning": {
+    "brain-cloud-first-vertical-slice": {
+      "slug": "brain-cloud-first-vertical-slice",
+      "kind": "spec",
+      "title": "Brain Cloud first vertical slice",
+      "issue_number": 2,
+      "issue_url": "https://github.com/JimmyMcBride/brain-cloud/issues/2",
+      "remote_state": "open",
+      "readiness": "ready",
+      "ownership_mode": "github",
+      "entry_mode": "local_promotion",
+      "source_mode": "local",
+      "updated_at": "2026-07-28T04:52:41Z"
+    }
+  }
 }
