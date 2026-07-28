@@ -31,7 +31,7 @@ dev_actor_id =
     development_auth_defaults[:actor_id] ||
     raise "environment variable DEV_ACTOR_ID is missing"
 
-if dev_api_token == "" do
+if String.trim(dev_api_token) == "" do
   raise "environment variable DEV_API_TOKEN must not be empty"
 end
 
