@@ -11,7 +11,7 @@ defmodule BrainCloudWeb.SearchController do
     case Memories.search(
            project_id,
            Map.get(params, "q"),
-           conn.assigns.auth_context.organization_id
+           conn.assigns.auth_context
          ) do
       {:ok, results} ->
         json(conn, %{results: Enum.map(results, &APIJSON.search_result/1)})

@@ -311,7 +311,10 @@ defmodule BrainCloud.AccountsTest do
              Accounts.create_membership_api_token(
                identity.auth_context,
                membership.id,
-               %{name: "Invalid manager", scopes: ["members.manage"]}
+               %{
+                 name: "Invalid manager",
+                 scopes: ["members.manage", "projects.manage_access"]
+               }
              )
 
     assert "cannot include management scopes for a member" in errors_on(changeset).scopes

@@ -13,6 +13,7 @@ defmodule BrainCloud.Projects.Project do
 
     belongs_to :organization, BrainCloud.Accounts.Organization
     has_many :memories, BrainCloud.Memories.Memory
+    has_many :access_grants, BrainCloud.Projects.ProjectAccessGrant
 
     timestamps()
   end

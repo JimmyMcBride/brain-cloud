@@ -16,6 +16,9 @@ defmodule BrainCloud.Accounts.OrganizationMembership do
     belongs_to :organization, BrainCloud.Accounts.Organization
     has_many :api_tokens, BrainCloud.Accounts.ApiToken, foreign_key: :membership_id
 
+    has_many :project_access_grants, BrainCloud.Projects.ProjectAccessGrant,
+      foreign_key: :organization_membership_id
+
     timestamps()
   end
 

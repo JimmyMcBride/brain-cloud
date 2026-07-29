@@ -1,6 +1,7 @@
 defmodule BrainCloudWeb.MemoryControllerTest do
   use BrainCloudWeb.ConnCase, async: true
 
+  alias BrainCloud.Accounts
   alias BrainCloud.Projects
 
   setup %{identity: identity} do
@@ -187,5 +188,111 @@ defmodule BrainCloudWeb.MemoryControllerTest do
              |> authenticate(other_identity)
              |> get(~p"/v1/projects/#{project.id}/search?q=body")
              |> json_response(404)
+  end
+
+  test "combines fixed token scopes with reader and editor project grants", %{
+    conn: conn,
+    project: project,
+    identity: identity
+  } do
+    {:ok, memory} =
+      BrainCloud.Memories.create_memory(
+        project.id,
+        %{title: "Existing", content: "Project boundary", content_type: "text/markdown"},
+        identity.auth_context
+      )
+
+    suffix = Ecto.UUID.generate()
+
+    {:ok, membership} =
+      Accounts.create_organization_membership(identity.auth_context, %{
+        email: "project-reader-#{suffix}@example.test",
+        display_name: "Project Reader",
+        role: "member"
+      })
+
+    {:ok, _token, raw_token} =
+      Accounts.create_membership_api_token(identity.auth_context, membership.id, %{
+        name: "Project operations",
+        scopes: ["memory.write", "memory.read", "search.keyword"]
+      })
+
+    denied_conn = put_req_header(conn, "authorization", "Bearer #{raw_token}")
+
+    assert %{"error" => %{"code" => "project_not_found"}} =
+             denied_conn
+             |> get(~p"/v1/projects/#{project.id}/memories/not-a-uuid")
+             |> json_response(404)
+
+    assert {:ok, _grant} =
+             Projects.put_project_access_grant(
+               project.id,
+               membership.id,
+               "reader",
+               identity.auth_context
+             )
+
+    assert %{"memory" => %{"id" => memory_id}} =
+             denied_conn
+             |> recycle()
+             |> put_req_header("authorization", "Bearer #{raw_token}")
+             |> get(~p"/v1/projects/#{project.id}/memories/#{memory.id}")
+             |> json_response(200)
+
+    assert memory_id == memory.id
+
+    assert %{"results" => [_result]} =
+             denied_conn
+             |> recycle()
+             |> put_req_header("authorization", "Bearer #{raw_token}")
+             |> get(~p"/v1/projects/#{project.id}/search?q=boundary")
+             |> json_response(200)
+
+    assert %{"error" => %{"code" => "project_not_found"}} =
+             denied_conn
+             |> recycle()
+             |> put_req_header("authorization", "Bearer #{raw_token}")
+             |> post(~p"/v1/projects/#{project.id}/memories", %{
+               title: "Reader denied",
+               content: "Denied",
+               content_type: "text/markdown"
+             })
+             |> json_response(404)
+
+    assert {:ok, _grant} =
+             Projects.put_project_access_grant(
+               project.id,
+               membership.id,
+               "editor",
+               identity.auth_context
+             )
+
+    assert %{"memory" => %{"revision" => %{"title" => "Editor allowed"}}} =
+             denied_conn
+             |> recycle()
+             |> put_req_header("authorization", "Bearer #{raw_token}")
+             |> post(~p"/v1/projects/#{project.id}/memories", %{
+               title: "Editor allowed",
+               content: "Allowed",
+               content_type: "text/markdown"
+             })
+             |> json_response(201)
+
+    {:ok, _token, read_only_raw} =
+      Accounts.create_membership_api_token(identity.auth_context, membership.id, %{
+        name: "Fixed-scope reader",
+        scopes: ["memory.read"]
+      })
+
+    assert %{"error" => %{"code" => "forbidden"}} =
+             denied_conn
+             |> recycle()
+             |> put_req_header("authorization", "Bearer #{read_only_raw}")
+             |> post(~p"/v1/projects/#{project.id}/memories", %{
+               title: "Scope denied",
+               content: "Denied",
+               content_type: "text/markdown"
+             })
+             |> json_response(403)
   end
 end

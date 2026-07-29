@@ -1,3 +1,6 @@
+---
+updated: "2026-07-29T07:04:36Z"
+---
 # Project Workflows
 
 <!-- brain:begin project-doc-workflows -->
@@ -54,4 +57,4 @@ After `brain adopt` creates starter context, the AI agent must scan the repo bef
 
 ## Local Notes
 
-Use `make check` for formatting, warnings-as-errors compilation, database migrations/tests, and production assets. Use `make upgrade-phase2` with PostgreSQL running to verify the Phase 1 data upgrade/adoption path. Against a running Compose project, use `make smoke-phase2` to verify release bootstrap/recovery, scoped token lifecycle, two-organization isolation, create/retrieve/search, API restart durability, PostgreSQL outage readiness, and recovery. Active integration work targets `develop`; release stabilization uses `release/vX.Y.Z`; `main` contains releases. Plan owns GitHub planning artifacts whenever source mode is `github`.
+Use `make check` for formatting, warnings-as-errors compilation, database migrations/tests, and production assets. Use `make upgrade-phase2` with PostgreSQL running to verify the Phase 1 data upgrade/adoption path plus Phase 2C scope/grant backfill. Against a running Compose project, use `make smoke-phase2` to verify release bootstrap/recovery, scoped token lifecycle, direct project access, two-organization isolation, create/retrieve/search, API restart durability, PostgreSQL outage readiness, and recovery. Active integration work targets `develop`; release stabilization uses `release/vX.Y.Z`; `main` contains releases. Plan owns GitHub planning artifacts whenever source mode is `github`.

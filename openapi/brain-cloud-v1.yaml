@@ -185,7 +185,7 @@ paths:
     post:
       operationId: createOrganizationMembershipToken
       summary: Create a one-time credential for an organization membership
-      description: The raw token appears only in this successful response. Requested scopes must be a subset of caller scopes; member memberships cannot receive members.manage or tokens.manage.
+      description: The raw token appears only in this successful response. Requested scopes must be a subset of caller scopes; member memberships cannot receive members.manage, projects.manage_access, or tokens.manage.
       x-required-role: owner
       x-required-scopes: [members.manage, tokens.manage]
       security:
@@ -222,7 +222,7 @@ paths:
     post:
       operationId: createProject
       summary: Create a cloud project
-      description: Creates the project in the organization bound to the bearer token.
+      description: Creates the project in the organization bound to the bearer token. Member creators receive an editor grant atomically; owners have implicit access and receive no grant.
       x-required-scope: projects.create
       security:
         - bearerAuth: []
@@ -248,10 +248,90 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "422":
           $ref: "#/components/responses/ValidationFailed"
+  /v1/projects/{project_id}/access:
+    get:
+      operationId: listProjectAccessGrants
+      summary: List direct human-membership access grants for a project
+      description: Owners have implicit full access and are not represented by grants. Results are ordered by inserted_at and id.
+      x-required-role: owner
+      x-required-scope: projects.manage_access
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Direct grants for the project.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectAccessGrantListEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ProjectNotFound"
+  /v1/projects/{project_id}/access/{membership_id}:
+    put:
+      operationId: putProjectAccessGrant
+      summary: Create or replace a direct project access grant
+      description: Repeating the same grant is idempotent. Inactive memberships cannot receive grants.
+      x-required-role: owner
+      x-required-scope: projects.manage_access
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MembershipId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectAccessGrantPut"
+      responses:
+        "200":
+          description: Grant created, changed, or already in the requested state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectAccessGrantEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ProjectOrMembershipNotFound"
+        "409":
+          $ref: "#/components/responses/MembershipInactive"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+    delete:
+      operationId: deleteProjectAccessGrant
+      summary: Revoke a direct project access grant
+      description: A valid project and membership target returns 204 whether or not a grant exists. Inactive memberships are valid deletion targets.
+      x-required-role: owner
+      x-required-scope: projects.manage_access
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MembershipId"
+      responses:
+        "204":
+          description: Grant absent after the operation.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ProjectOrMembershipNotFound"
   /v1/projects/{project_id}/memories:
     post:
       operationId: createMemory
       summary: Create a memory with immutable revision 1
+      description: Requires owner access or a direct editor grant in addition to memory.write.
       x-required-scope: memory.write
       security:
         - bearerAuth: []
@@ -285,6 +365,7 @@ paths:
     get:
       operationId: getMemory
       summary: Retrieve a project-scoped memory and revision 1
+      description: Requires owner access or a direct reader/editor grant in addition to memory.read.
       x-required-scope: memory.read
       security:
         - bearerAuth: []
@@ -311,6 +392,7 @@ paths:
     get:
       operationId: searchProjectMemories
       summary: Search memory revisions by project-scoped keyword
+      description: Requires owner access or a direct reader/editor grant in addition to search.keyword.
       x-required-scope: search.keyword
       security:
         - bearerAuth: []
@@ -483,6 +565,36 @@ components:
                   code: project_not_found
                   message: Project not found
                   details: {}
+    ProjectNotFound:
+      description: The project is missing, malformed, inaccessible, or belongs to another organization.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: project_not_found
+              message: Project not found
+              details: {}
+    ProjectOrMembershipNotFound:
+      description: The project or membership is missing, malformed, inaccessible, or belongs to another organization.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          examples:
+            project:
+              value:
+                error:
+                  code: project_not_found
+                  message: Project not found
+                  details: {}
+            membership:
+              value:
+                error:
+                  code: membership_not_found
+                  message: Organization membership not found
+                  details: {}
             memory:
               value:
                 error:
@@ -531,7 +643,7 @@ components:
                   message: Organization membership is inactive
                   details: {}
     MembershipInactive:
-      description: The target membership is inactive and cannot receive a credential.
+      description: The target membership is inactive and cannot receive a credential or project grant.
       content:
         application/json:
           schema:
@@ -681,6 +793,54 @@ components:
         updated_at:
           type: string
           format: date-time
+    ProjectAccessGrantPut:
+      type: object
+      additionalProperties: false
+      required: [access]
+      properties:
+        access:
+          $ref: "#/components/schemas/ProjectAccessLevel"
+    ProjectAccessLevel:
+      type: string
+      enum: [reader, editor]
+    ProjectAccessGrant:
+      type: object
+      additionalProperties: false
+      required: [id, project_id, membership_id, access, inserted_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        membership_id:
+          type: string
+          format: uuid
+        access:
+          $ref: "#/components/schemas/ProjectAccessLevel"
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ProjectAccessGrantEnvelope:
+      type: object
+      additionalProperties: false
+      required: [access_grant]
+      properties:
+        access_grant:
+          $ref: "#/components/schemas/ProjectAccessGrant"
+    ProjectAccessGrantListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [access_grants]
+      properties:
+        access_grants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectAccessGrant"
     TokenCreate:
       type: object
       required: [name, scopes]
@@ -701,6 +861,7 @@ components:
       type: string
       enum:
         - projects.create
+        - projects.manage_access
         - memory.write
         - memory.read
         - search.keyword

@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-28T21:34:35Z"
+updated: "2026-07-29T07:04:36Z"
 ---
 # Project Architecture
 
@@ -20,4 +20,4 @@ Use this file for the structural shape of the repository.
 
 ## Local Notes
 
-The Phase 2B server is a Phoenix umbrella. `brain_cloud` owns Ecto/PostgreSQL, accounts and organization tenancy, owner-managed human memberships, scoped credentials, final-owner locking, transactional credential revocation, immutable audit events, organization-owned projects, memories, immutable revisions, tenant/project-scoped keyword search, system information, readiness, release migrations/bootstrap, and domain supervision. `brain_cloud_web` owns Phoenix, Bandit, persisted bearer authentication and owner/scope enforcement, LiveView, JSON controllers, and assets. System discovery includes implemented core capabilities and an empty enabled-module list; no module registry exists. Planning begins later as an optional supervised official OTP application; community process execution follows only after official contract validation. See `docs/architecture.md` and ADRs 0007–0013.
+The Phase 2C server is a Phoenix umbrella. `brain_cloud` owns Ecto/PostgreSQL, accounts and organization tenancy, owner-managed human memberships, scoped credentials, direct reader/editor project grants, implicit owner project access, final-owner locking, transactional credential revocation, immutable audit events, organization-owned projects, memories, immutable revisions, tenant/project-scoped keyword search, system information, readiness, release migrations/bootstrap, and domain supervision. `brain_cloud_web` owns Phoenix, Bandit, persisted bearer authentication, owner/scope/project-access enforcement, LiveView, JSON controllers, and assets. System discovery includes implemented core capabilities and an empty enabled-module list; no module registry exists. Planning begins later as an optional supervised official OTP application; community process execution follows only after official contract validation. See `docs/architecture.md` and ADRs 0007–0013.

@@ -12,6 +12,17 @@ defmodule BrainCloudWeb.APIJSON do
     }
   end
 
+  def project_access_grant(grant) do
+    %{
+      id: grant.id,
+      project_id: grant.project_id,
+      membership_id: grant.organization_membership_id,
+      access: grant.access,
+      inserted_at: timestamp(grant.inserted_at),
+      updated_at: timestamp(grant.updated_at)
+    }
+  end
+
   def created_token(token, raw_token) do
     token
     |> token()

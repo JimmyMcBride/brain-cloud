@@ -701,7 +701,10 @@ defmodule BrainCloud.Accounts do
             {:error, scope_subset_changeset(attrs, membership.id)}
 
           membership.role == "member" and
-              Enum.any?(scopes, &(&1 in ["members.manage", "tokens.manage"])) ->
+              Enum.any?(
+                scopes,
+                &(&1 in ["members.manage", "projects.manage_access", "tokens.manage"])
+              ) ->
             {:error, member_management_scope_changeset(attrs, membership.id)}
 
           true ->
