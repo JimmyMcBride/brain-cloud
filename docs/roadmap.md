@@ -1,3 +1,6 @@
+---
+updated: "2026-07-28T21:34:35Z"
+---
 # Brain Cloud roadmap
 
 ## Direction
@@ -56,7 +59,9 @@ Planning is the first major optional official Brain module. It is not a separate
 
 **Phase 2A complete.** [Production identity and organization tenant foundation](https://github.com/JimmyMcBride/brain-cloud/issues/5) adds persisted users and organizations, owner/member memberships, scoped revocable API tokens, tenant ownership and authorization on existing project/memory/search routes, deterministic Phase 1 data migration, release owner bootstrap/recovery, and minimal immutable audit events.
 
-Later Phase 2 slices add teams, broader membership administration, agent credentials, interactive identity, invitations, and fine-grained project permissions.
+**Phase 2B complete.** [Organization membership administration foundation](https://github.com/JimmyMcBride/brain-cloud/issues/9) adds owner-only membership create/list/role/deactivate/reactivate operations, one-time target-member credentials, non-enumerating tenant boundaries, transactional credential revocation, final-owner concurrency protection, and membership audit events.
+
+Later Phase 2 slices add invitations, teams, agent credentials, interactive identity, and fine-grained project permissions.
 
 ### Phase 3 — Complete cloud-native Brain project model
 
@@ -134,4 +139,4 @@ Planning remains focused on turning durable project understanding into structure
 
 ## Current implementation non-goals
 
-The current implementation does not include teams, broader membership administration, agent credentials, interactive login, invitations, fine-grained project permissions, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.
+The current implementation does not include invitations, teams, agent credentials, interactive login, fine-grained project permissions, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.

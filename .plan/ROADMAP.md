@@ -16,7 +16,9 @@ Brain Cloud hosts Brain Core plus explicitly enabled official/community modules.
 
 ## Phase 2 — Identity and multi-tenancy
 
-Phase 2A complete from [#5](https://github.com/JimmyMcBride/brain-cloud/issues/5): persisted users and organizations, owner/member memberships, scoped revocable API tokens, tenant ownership and authorization on existing project/memory/search routes, Phase 1 data migration, release owner bootstrap/recovery, and minimal immutable audit events. Later Phase 2 slices add teams, broader membership administration, agent credentials, interactive identity, and fine-grained project permissions.
+Phase 2A complete from [#5](https://github.com/JimmyMcBride/brain-cloud/issues/5): persisted users and organizations, owner/member memberships, scoped revocable API tokens, tenant ownership and authorization on existing project/memory/search routes, Phase 1 data migration, release owner bootstrap/recovery, and minimal immutable audit events.
+
+Phase 2B complete from [#9](https://github.com/JimmyMcBride/brain-cloud/issues/9): owner-managed human membership lifecycle, one-time target-member credentials, non-enumerating tenant boundaries, final-owner concurrency protection, transactional credential revocation, and membership audit events. Later Phase 2 slices add invitations, teams, agent credentials, interactive identity, and fine-grained project permissions.
 
 ## Phase 3 — Complete cloud-native project model
 

@@ -54,6 +54,170 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemInfo"
+  /v1/organization/memberships:
+    post:
+      operationId: createOrganizationMembership
+      summary: Create a human organization membership
+      description: Reuses an existing normalized user without exposing a user lookup. Active and inactive duplicates require explicit caller handling.
+      x-required-role: owner
+      x-required-scope: members.manage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MembershipCreate"
+      responses:
+        "201":
+          description: Membership created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembershipEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/MembershipConflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+    get:
+      operationId: listOrganizationMemberships
+      summary: List memberships in the caller's organization
+      x-required-role: owner
+      x-required-scope: members.manage
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Caller-organization membership metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembershipListEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /v1/organization/memberships/{membership_id}:
+    patch:
+      operationId: updateOrganizationMembershipRole
+      summary: Change an organization membership role
+      description: Demoting an owner revokes every credential bound to that membership. The final active owner cannot be demoted.
+      x-required-role: owner
+      x-required-scope: members.manage
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/MembershipId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MembershipRoleUpdate"
+      responses:
+        "200":
+          description: Membership role changed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembershipEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/MembershipNotFound"
+        "409":
+          $ref: "#/components/responses/LastOwnerRequired"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+    delete:
+      operationId: deactivateOrganizationMembership
+      summary: Deactivate an organization membership
+      description: Immediately revokes every credential bound to the membership. Repeating a completed deactivation is idempotent. The final active owner cannot be deactivated.
+      x-required-role: owner
+      x-required-scope: members.manage
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/MembershipId"
+      responses:
+        "204":
+          description: Membership deactivated.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/MembershipNotFound"
+        "409":
+          $ref: "#/components/responses/LastOwnerRequired"
+  /v1/organization/memberships/{membership_id}/reactivate:
+    post:
+      operationId: reactivateOrganizationMembership
+      summary: Reactivate an organization membership
+      description: Reactivation never restores previously revoked credentials. Repeating a completed reactivation is idempotent.
+      x-required-role: owner
+      x-required-scope: members.manage
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/MembershipId"
+      responses:
+        "200":
+          description: Membership active; fresh credentials must be issued explicitly.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembershipEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/MembershipNotFound"
+  /v1/organization/memberships/{membership_id}/tokens:
+    post:
+      operationId: createOrganizationMembershipToken
+      summary: Create a one-time credential for an organization membership
+      description: The raw token appears only in this successful response. Requested scopes must be a subset of caller scopes; member memberships cannot receive members.manage or tokens.manage.
+      x-required-role: owner
+      x-required-scopes: [members.manage, tokens.manage]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/MembershipId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenCreate"
+      responses:
+        "201":
+          description: Target-member token created; copy its one-time secret now.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatedTokenEnvelope"
+              examples:
+                created:
+                  $ref: "#/components/examples/TokenCreated"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/MembershipNotFound"
+        "409":
+          $ref: "#/components/responses/MembershipInactive"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
   /v1/projects:
     post:
       operationId: createProject
@@ -276,6 +440,13 @@ components:
       schema:
         type: string
         format: uuid
+    MembershipId:
+      name: membership_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
   responses:
     Unauthorized:
       description: The bearer token is missing, malformed, unknown, expired, revoked, digest-mismatched, or bound to an inactive membership.
@@ -328,6 +499,58 @@ components:
             error:
               code: token_not_found
               message: API token not found
+              details: {}
+    MembershipNotFound:
+      description: The membership does not exist in the caller's organization. Missing, malformed, and cross-tenant IDs share this response.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: membership_not_found
+              message: Organization membership not found
+              details: {}
+    MembershipConflict:
+      description: The normalized user already has an active or inactive membership in the caller's organization.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          examples:
+            active:
+              value:
+                error:
+                  code: membership_exists
+                  message: Organization membership already exists
+                  details: {}
+            inactive:
+              value:
+                error:
+                  code: membership_inactive
+                  message: Organization membership is inactive
+                  details: {}
+    MembershipInactive:
+      description: The target membership is inactive and cannot receive a credential.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: membership_inactive
+              message: Organization membership is inactive
+              details: {}
+    LastOwnerRequired:
+      description: The requested change would remove the final active organization owner.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: last_owner_required
+              message: At least one active owner is required
               details: {}
     ValidationFailed:
       description: Request values failed validation.
@@ -481,7 +704,87 @@ components:
         - memory.write
         - memory.read
         - search.keyword
+        - members.manage
         - tokens.manage
+    MembershipCreate:
+      type: object
+      additionalProperties: false
+      required: [email, display_name, role]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+    MembershipRoleUpdate:
+      type: object
+      additionalProperties: false
+      required: [role]
+      properties:
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+    MembershipRole:
+      type: string
+      enum: [owner, member]
+    Membership:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - user_id
+        - email
+        - display_name
+        - role
+        - active
+        - deactivated_at
+        - inserted_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+        active:
+          type: boolean
+        deactivated_at:
+          type: [string, "null"]
+          format: date-time
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    MembershipEnvelope:
+      type: object
+      additionalProperties: false
+      required: [membership]
+      properties:
+        membership:
+          $ref: "#/components/schemas/Membership"
+    MembershipListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [memberships]
+      properties:
+        memberships:
+          type: array
+          items:
+            $ref: "#/components/schemas/Membership"
     TokenMetadata:
       type: object
       additionalProperties: false

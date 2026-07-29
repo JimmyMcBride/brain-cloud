@@ -24,6 +24,22 @@ defmodule BrainCloudWeb.APIError do
     render(conn, :not_found, "token_not_found", "API token not found")
   end
 
+  def membership_not_found(conn) do
+    render(conn, :not_found, "membership_not_found", "Organization membership not found")
+  end
+
+  def membership_exists(conn) do
+    render(conn, :conflict, "membership_exists", "Organization membership already exists")
+  end
+
+  def membership_inactive(conn) do
+    render(conn, :conflict, "membership_inactive", "Organization membership is inactive")
+  end
+
+  def last_owner_required(conn) do
+    render(conn, :conflict, "last_owner_required", "At least one active owner is required")
+  end
+
   def validation_failed(conn, %Ecto.Changeset{} = changeset) do
     validation_failed(conn, changeset_details(changeset))
   end

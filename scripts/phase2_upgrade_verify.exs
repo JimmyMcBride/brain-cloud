@@ -61,4 +61,20 @@ true =
       "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
     ])
 
-IO.puts("Phase 2A upgrade passed")
+{:ok, membership} =
+  Accounts.create_organization_membership(auth, %{
+    email: "upgraded-member@example.test",
+    display_name: "Upgraded Member",
+    role: "member"
+  })
+
+{:ok, _token, raw_token} =
+  Accounts.create_membership_api_token(auth, membership.id, %{
+    name: "Upgrade reader",
+    scopes: ["memory.read"]
+  })
+
+{:ok, member_auth} = Accounts.authenticate(raw_token)
+true = member_auth.membership_id == membership.id
+
+IO.puts("Phase 2B upgrade passed")

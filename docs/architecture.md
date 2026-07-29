@@ -1,3 +1,6 @@
+---
+updated: "2026-07-28T21:35:18Z"
+---
 # Architecture
 
 ## System context
@@ -142,6 +145,6 @@ The same server supports localhost, Docker Compose, single-server self-hosting, 
 
 ## Current implementation
 
-Phase 2A is a Phoenix umbrella with one identity- and tenant-protected persistent vertical slice. `apps/brain_cloud` owns Ecto/PostgreSQL, users, organizations, memberships, scoped token digests, immutable audit events, organization-owned projects, immutable memory revisions, synchronous organization/project-scoped `simple` full-text search, compatibility metadata, readiness, release migrations/bootstrap, and domain supervision. `apps/brain_cloud_web` owns Phoenix, Bandit, persisted bearer authentication and scope plugs, JSON controllers, LiveView, and the minimal web shell.
+Phase 2B is a Phoenix umbrella with one identity- and tenant-protected persistent vertical slice. `apps/brain_cloud` owns Ecto/PostgreSQL, users, organizations, owner-managed memberships, scoped token digests, final-owner locking, transactional credential revocation, immutable audit events, organization-owned projects, immutable memory revisions, synchronous organization/project-scoped `simple` full-text search, compatibility metadata, readiness, release migrations/bootstrap, and domain supervision. `apps/brain_cloud_web` owns Phoenix, Bandit, persisted bearer authentication, owner/scope plugs, JSON controllers, LiveView, and the minimal web shell.
 
-The server exposes token create/list/revoke plus project creation, memory creation/retrieval, and keyword search under `/v1`. Authentication derives user and organization provenance; Ecto queries enforce tenant scope before content retrieval. Exact content hashes and immutable revision 1 remain wire compatible with Phase 1. OTP handles graceful supervision; no separate worker application exists until real jobs require one. No interactive identity, team administration, project ACL, module registry, Planning domain, arbitrary loading, or external process protocol exists yet.
+The server exposes token create/list/revoke, owner-managed membership lifecycle and target credentials, project creation, memory creation/retrieval, and keyword search under `/v1`. Authentication derives user and organization provenance; Ecto queries enforce tenant scope before membership or content retrieval. Exact content hashes and immutable revision 1 remain wire compatible with Phase 1. OTP handles graceful supervision; no separate worker application exists until real jobs require one. No invitations, interactive identity, teams, project ACL, module registry, Planning domain, arbitrary loading, or external process protocol exists yet.

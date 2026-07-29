@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-28T20:00:18Z"
+updated: "2026-07-28T21:35:18Z"
 ---
 # Architecture
 
@@ -22,9 +22,9 @@ Use this file for the structural shape of the repository.
 
 Brain Cloud is API-first and implements, but never imports, external SDKs.
 
-- `apps/brain_cloud` owns Ecto/PostgreSQL, users, organizations, memberships, scoped token digests, immutable audit events, organization-owned projects, immutable memory revisions, exact SHA-256 content hashes, tenant/project-scoped `simple` full-text search, system information, readiness, release migrations/bootstrap, and domain supervision.
-- `apps/brain_cloud_web` owns Phoenix, Bandit, persisted bearer authentication and scope enforcement, structured JSON controllers, LiveView, assets, and the HTTP endpoint.
-- Implemented protected routes are token create/list/revoke, project creation, memory creation/retrieval, and keyword search. Root, health, readiness, and system discovery remain public.
+- `apps/brain_cloud` owns Ecto/PostgreSQL, users, organizations, owner-managed memberships, scoped token digests, final-owner locking, transactional credential revocation, immutable audit events, organization-owned projects, immutable memory revisions, exact SHA-256 content hashes, tenant/project-scoped `simple` full-text search, system information, readiness, release migrations/bootstrap, and domain supervision.
+- `apps/brain_cloud_web` owns Phoenix, Bandit, persisted bearer authentication and owner/scope enforcement, structured JSON controllers, LiveView, assets, and the HTTP endpoint.
+- Implemented protected routes are token create/list/revoke, membership create/list/role/deactivate/reactivate/target-token, project creation, memory creation/retrieval, and keyword search. Root, health, readiness, and system discovery remain public.
 - Every authenticated request derives user, organization, membership, role, credential, and fixed scopes. Tenant-aware Ecto predicates run before protected content loads.
 - Production releases emit JSON logs and run Ecto migrations before startup.
 - `openapi/brain-cloud-v1.yaml` records only implemented routes and reserves future `/v1` domain areas without speculative schemas.

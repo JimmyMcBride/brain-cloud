@@ -30,6 +30,20 @@ defmodule BrainCloudWeb.APIJSON do
     }
   end
 
+  def membership(membership) do
+    %{
+      id: membership.id,
+      user_id: membership.user_id,
+      email: membership.user.email,
+      display_name: membership.user.display_name,
+      role: membership.role,
+      active: is_nil(membership.deactivated_at),
+      deactivated_at: optional_timestamp(membership.deactivated_at),
+      inserted_at: timestamp(membership.inserted_at),
+      updated_at: timestamp(membership.updated_at)
+    }
+  end
+
   def memory(memory) do
     %{
       id: memory.id,
