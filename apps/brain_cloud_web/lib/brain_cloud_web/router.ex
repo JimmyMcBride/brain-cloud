@@ -45,6 +45,9 @@ defmodule BrainCloudWeb.Router do
     post "/organization/memberships/:id/reactivate", MembershipController, :reactivate
     post "/organization/memberships/:id/tokens", MembershipController, :create_token
     post "/projects", ProjectController, :create
+    get "/projects/:project_id/access", ProjectAccessController, :index
+    put "/projects/:project_id/access/:membership_id", ProjectAccessController, :update
+    delete "/projects/:project_id/access/:membership_id", ProjectAccessController, :delete
     post "/projects/:project_id/memories", MemoryController, :create
     get "/projects/:project_id/memories/:id", MemoryController, :show
     get "/projects/:project_id/search", SearchController, :index

@@ -46,7 +46,7 @@ jobs:
           MIX_ENV=test mix ecto.migrate
       - name: Test
         run: MIX_ENV=test mix test
-      - name: Verify Phase 1 upgrade
+      - name: Verify Phase 2 upgrade
         run: make upgrade-phase2
       - name: Build production assets
         run: MIX_ENV=prod mix assets.deploy

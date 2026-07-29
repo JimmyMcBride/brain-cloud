@@ -16,11 +16,11 @@ defmodule BrainCloud.Memories do
   @maximum_query_length 256
 
   def create_memory(project_id, attrs, %AuthContext{} = auth) do
-    case Projects.get_project(project_id, auth.organization_id) do
-      nil ->
+    case Projects.authorize_project(project_id, auth, :editor) do
+      {:error, :project_not_found} ->
         {:error, :project_not_found}
 
-      project ->
+      {:ok, project} ->
         attrs = Map.new(attrs)
 
         Multi.new()
@@ -56,35 +56,34 @@ defmodule BrainCloud.Memories do
     end
   end
 
-  def get_memory(project_id, memory_id, organization_id) do
-    with {:ok, project_id} <- Ecto.UUID.cast(project_id),
-         {:ok, memory_id} <- Ecto.UUID.cast(memory_id),
-         {:ok, organization_id} <- Ecto.UUID.cast(organization_id) do
+  def get_memory(project_id, memory_id, %AuthContext{} = auth) do
+    with {:ok, project} <- Projects.authorize_project(project_id, auth, :reader),
+         {:ok, memory_id} <- Ecto.UUID.cast(memory_id) do
       revisions = from revision in MemoryRevision, order_by: revision.revision_number
 
-      Repo.one(
-        from memory in Memory,
-          join: project in assoc(memory, :project),
-          where: memory.id == ^memory_id and memory.project_id == ^project_id,
-          where: project.organization_id == ^organization_id,
-          preload: [revisions: ^revisions]
-      )
+      case Repo.one(
+             from memory in Memory,
+               where: memory.id == ^memory_id and memory.project_id == ^project.id,
+               preload: [revisions: ^revisions]
+           ) do
+        nil -> {:error, :memory_not_found}
+        memory -> {:ok, memory}
+      end
     else
-      :error -> nil
+      :error -> {:error, :memory_not_found}
+      {:error, reason} -> {:error, reason}
     end
   end
 
-  def search(project_id, query, organization_id) do
-    with project when not is_nil(project) <- Projects.get_project(project_id, organization_id),
+  def search(project_id, query, %AuthContext{} = auth) do
+    with {:ok, project} <- Projects.authorize_project(project_id, auth, :reader),
          {:ok, query} <- validate_query(query) do
       results =
         Repo.all(
           from revision in MemoryRevision,
             join: memory in Memory,
             on: memory.id == revision.memory_id,
-            join: scoped_project in assoc(memory, :project),
             where: memory.project_id == ^project.id,
-            where: scoped_project.organization_id == ^organization_id,
             where:
               fragment(
                 "? @@ plainto_tsquery('simple', ?)",
@@ -126,7 +125,7 @@ defmodule BrainCloud.Memories do
 
       {:ok, results}
     else
-      nil -> {:error, :project_not_found}
+      {:error, :project_not_found} -> {:error, :project_not_found}
       {:error, details} -> {:error, {:validation_failed, details}}
     end
   end

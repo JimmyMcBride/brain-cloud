@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-28T21:34:35Z"
+updated: "2026-07-29T07:04:36Z"
 ---
 # Brain Cloud roadmap
 
@@ -61,7 +61,9 @@ Planning is the first major optional official Brain module. It is not a separate
 
 **Phase 2B complete.** [Organization membership administration foundation](https://github.com/JimmyMcBride/brain-cloud/issues/9) adds owner-only membership create/list/role/deactivate/reactivate operations, one-time target-member credentials, non-enumerating tenant boundaries, transactional credential revocation, final-owner concurrency protection, and membership audit events.
 
-Later Phase 2 slices add invitations, teams, agent credentials, interactive identity, and fine-grained project permissions.
+**Phase 2C complete.** [Project access control foundation](https://github.com/JimmyMcBride/brain-cloud/issues/12) adds direct reader/editor grants for human memberships, implicit owner access, member-creator editor grants, PostgreSQL-enforced tenant alignment, compatibility backfill, owner-only grant administration, deterministic audit events, and project authorization before memory/revision/search lookup.
+
+Later Phase 2 slices add invitations, teams, agent credentials, interactive identity, and fine-grained access beyond direct human grants.
 
 ### Phase 3 — Complete cloud-native Brain project model
 

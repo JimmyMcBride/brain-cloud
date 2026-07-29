@@ -12,6 +12,7 @@ defmodule BrainCloud.SystemInfo do
       capabilities: [
         "system.info",
         "projects.create",
+        "projects.manage_access",
         "memory.write",
         "memory.read",
         "search.keyword",

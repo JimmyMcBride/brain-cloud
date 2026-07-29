@@ -2,6 +2,7 @@ defmodule BrainCloud.MemoriesTest do
   use BrainCloud.DataCase, async: true
 
   alias BrainCloud.Accounts.AuditEvent
+  alias BrainCloud.Accounts
   alias BrainCloud.Memories
   alias BrainCloud.Memories.Memory
   alias BrainCloud.Memories.MemoryRevision
@@ -35,8 +36,8 @@ defmodule BrainCloud.MemoriesTest do
     assert revision.content_hash ==
              Base.encode16(:crypto.hash(:sha256, attrs.content), case: :lower)
 
-    assert stored =
-             Memories.get_memory(project.id, memory.id, identity.organization.id)
+    assert {:ok, stored} =
+             Memories.get_memory(project.id, memory.id, identity.auth_context)
 
     assert [stored_revision] = stored.revisions
     assert stored_revision.id == revision.id
@@ -167,10 +168,11 @@ defmodule BrainCloud.MemoriesTest do
         identity.auth_context
       )
 
-    assert Memories.get_memory(other_project.id, memory.id, identity.organization.id) == nil
+    assert {:error, :memory_not_found} =
+             Memories.get_memory(other_project.id, memory.id, identity.auth_context)
 
     assert {:ok, [result]} =
-             Memories.search(project.id, "PHOENIX", identity.organization.id)
+             Memories.search(project.id, "PHOENIX", identity.auth_context)
 
     assert result.memory_id == memory.id
     assert result.title == "Phoenix Search"
@@ -178,31 +180,100 @@ defmodule BrainCloud.MemoriesTest do
     assert is_float(result.rank)
 
     assert {:ok, []} =
-             Memories.search(other_project.id, "phoenix", identity.organization.id)
+             Memories.search(other_project.id, "phoenix", identity.auth_context)
 
-    assert {:ok, []} = Memories.search(project.id, "missing", identity.organization.id)
+    assert {:ok, []} = Memories.search(project.id, "missing", identity.auth_context)
 
     other_identity = identity_fixture()
 
-    assert Memories.get_memory(project.id, memory.id, other_identity.organization.id) == nil
+    assert {:error, :project_not_found} =
+             Memories.get_memory(project.id, memory.id, other_identity.auth_context)
 
     assert {:error, :project_not_found} =
-             Memories.search(project.id, "phoenix", other_identity.organization.id)
+             Memories.search(project.id, "phoenix", other_identity.auth_context)
   end
 
   test "validates search queries and missing projects", %{identity: identity, project: project} do
     assert {:error, {:validation_failed, %{q: [_message]}}} =
-             Memories.search(project.id, " ", identity.organization.id)
+             Memories.search(project.id, " ", identity.auth_context)
 
     assert {:error, {:validation_failed, %{q: [_message]}}} =
              Memories.search(
                project.id,
                String.duplicate("a", 257),
-               identity.organization.id
+               identity.auth_context
              )
 
     assert {:error, :project_not_found} =
-             Memories.search(Ecto.UUID.generate(), "memory", identity.organization.id)
+             Memories.search(Ecto.UUID.generate(), "memory", identity.auth_context)
+  end
+
+  test "enforces reader and editor project access before memory queries", %{
+    identity: identity,
+    project: project
+  } do
+    suffix = Ecto.UUID.generate()
+
+    {:ok, membership} =
+      Accounts.create_organization_membership(identity.auth_context, %{
+        email: "memory-member-#{suffix}@example.test",
+        display_name: "Memory Member",
+        role: "member"
+      })
+
+    {:ok, _token, raw_token} =
+      Accounts.create_membership_api_token(identity.auth_context, membership.id, %{
+        name: "Memory access",
+        scopes: ["memory.read", "memory.write", "search.keyword"]
+      })
+
+    {:ok, member_auth} = Accounts.authenticate(raw_token)
+
+    assert {:ok, _grant} =
+             Projects.put_project_access_grant(
+               project.id,
+               membership.id,
+               "reader",
+               identity.auth_context
+             )
+
+    assert {:error, :project_not_found} =
+             Memories.create_memory(
+               project.id,
+               %{title: "Denied", content: "Denied", content_type: "text/markdown"},
+               member_auth
+             )
+
+    assert {:ok, []} = Memories.search(project.id, "anything", member_auth)
+
+    assert {:ok, _grant} =
+             Projects.put_project_access_grant(
+               project.id,
+               membership.id,
+               "editor",
+               identity.auth_context
+             )
+
+    assert {:ok, memory} =
+             Memories.create_memory(
+               project.id,
+               %{title: "Allowed", content: "Allowed", content_type: "text/markdown"},
+               member_auth
+             )
+
+    assert {:ok, _memory} = Memories.get_memory(project.id, memory.id, member_auth)
+
+    assert :ok =
+             Projects.delete_project_access_grant(
+               project.id,
+               membership.id,
+               identity.auth_context
+             )
+
+    assert {:error, :project_not_found} =
+             Memories.get_memory(project.id, memory.id, member_auth)
+
+    assert {:error, :project_not_found} = Memories.search(project.id, "allowed", member_auth)
   end
 
   test "stores the generated search vector behind a GIN index" do

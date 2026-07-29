@@ -2,7 +2,6 @@ defmodule BrainCloudWeb.MemoryController do
   use BrainCloudWeb, :controller
 
   alias BrainCloud.Memories
-  alias BrainCloud.Projects
   alias BrainCloudWeb.APIError
   alias BrainCloudWeb.APIJSON
 
@@ -25,16 +24,14 @@ defmodule BrainCloudWeb.MemoryController do
   end
 
   def show(conn, %{"project_id" => project_id, "id" => memory_id}) do
-    organization_id = conn.assigns.auth_context.organization_id
-
-    cond do
-      is_nil(Projects.get_project(project_id, organization_id)) ->
-        APIError.project_not_found(conn)
-
-      memory = Memories.get_memory(project_id, memory_id, organization_id) ->
+    case Memories.get_memory(project_id, memory_id, conn.assigns.auth_context) do
+      {:ok, memory} ->
         json(conn, %{memory: APIJSON.memory(memory)})
 
-      true ->
+      {:error, :project_not_found} ->
+        APIError.project_not_found(conn)
+
+      {:error, :memory_not_found} ->
         APIError.memory_not_found(conn)
     end
   end

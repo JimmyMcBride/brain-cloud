@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-28T21:34:35Z"
+updated: "2026-07-29T07:04:36Z"
 ---
 # Brain Cloud
 
@@ -45,7 +45,7 @@ Planning must be optional. Brain works without Planning, with the official Plann
 
 ## Status
 
-Phase 2B implements owner-managed human organization memberships on top of the Phase 2A identity and tenant foundation. Release operators bootstrap the first owner; owners can add and list members, change owner/member roles, deactivate or reactivate access, and issue one-time scoped credentials for a target membership. Organization-isolated project, immutable Markdown memory, and PostgreSQL keyword-search APIs remain the product slice. The Phoenix/LiveView shell remains an honest bootstrap surface; invitations, teams, interactive login, agent credentials, fine-grained project ACLs, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
+Phase 2C implements direct reader/editor project grants for human organization memberships on top of the Phase 2A identity and Phase 2B membership foundations. Owners have implicit full project access; members require a direct grant and the fixed route scope. Member project creators receive an editor grant atomically. Organization-isolated project, immutable Markdown memory, and PostgreSQL keyword-search APIs remain the product slice. The Phoenix/LiveView shell remains an honest bootstrap surface; invitations, teams, interactive login, agent credentials, fine-grained ACLs beyond direct grants, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
 
 ## Local development
 
@@ -118,7 +118,7 @@ curl --fail-with-body \
   "http://localhost:4000/v1/projects/${project_id}/search?q=durable"
 ```
 
-Tokens use `bc1_<public_id>_<secret>`, are permanently bound to one organization membership, and are stored only as SHA-256 digests. Token-management endpoints require an owner membership plus `tokens.manage`; membership lifecycle endpoints require owner plus `members.manage`, and target-member issuance requires both management scopes. Product routes require their advertised fixed scope.
+Tokens use `bc1_<public_id>_<secret>`, are permanently bound to one organization membership, and are stored only as SHA-256 digests. Token-management endpoints require an owner membership plus `tokens.manage`; membership lifecycle endpoints require owner plus `members.manage`, and target-member issuance requires both management scopes. Project-grant management requires owner plus `projects.manage_access`. Product routes require both their advertised fixed token scope and project access: owners are implicit, readers can retrieve/search, and editors can also create memories.
 
 Create a human member and issue a one-time credential explicitly:
 
@@ -133,14 +133,25 @@ membership_response="$(
 
 membership_id="$(printf '%s' "${membership_response}" | jq -r '.membership.id')"
 
+member_token_response="$(
+  curl --fail-with-body \
+    --header "Authorization: Bearer ${BRAIN_CLOUD_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --data '{"name":"Member reader","scopes":["memory.read","search.keyword"]}' \
+    "http://localhost:4000/v1/organization/memberships/${membership_id}/tokens"
+)"
+
+export MEMBER_TOKEN="$(printf '%s' "${member_token_response}" | jq -r '.token.token')"
+
 curl --fail-with-body \
   --header "Authorization: Bearer ${BRAIN_CLOUD_TOKEN}" \
   --header "Content-Type: application/json" \
-  --data '{"name":"Member reader","scopes":["memory.read","search.keyword"]}' \
-  "http://localhost:4000/v1/organization/memberships/${membership_id}/tokens"
+  --request PUT \
+  --data '{"access":"reader"}' \
+  "http://localhost:4000/v1/projects/${project_id}/access/${membership_id}"
 ```
 
-Deactivation and owner-to-member demotion revoke all target credentials immediately. Reactivation never restores them. The final active owner cannot be demoted or deactivated. See [self-hosting](docs/self-hosting.md) for bootstrap, recovery, and membership administration details.
+Grants survive suspension/reactivation and role changes. They are dormant while a membership is inactive or an owner, and become effective again when the membership is an active member. Deactivation and owner-to-member demotion revoke all target credentials immediately; reactivation never restores them. The final active owner cannot be demoted or deactivated. See [self-hosting](docs/self-hosting.md) for bootstrap, recovery, and access administration details.
 
 ## Project documents
 

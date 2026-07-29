@@ -3,7 +3,7 @@
   "repo_url": "https://github.com/JimmyMcBride/brain-cloud",
   "default_branch": "develop",
   "last_enabled_at": "2026-07-27T17:50:25Z",
-  "last_updated_at": "2026-07-28T21:16:04Z",
+  "last_updated_at": "2026-07-29T06:25:51Z",
   "stories": {},
   "planning": {
     "brain-cloud-first-vertical-slice": {
@@ -44,6 +44,19 @@
       "entry_mode": "local_promotion",
       "source_mode": "local",
       "updated_at": "2026-07-28T19:33:25Z"
+    },
+    "project-access-control-foundation": {
+      "slug": "project-access-control-foundation",
+      "kind": "spec",
+      "title": "Project access control foundation",
+      "issue_number": 12,
+      "issue_url": "https://github.com/JimmyMcBride/brain-cloud/issues/12",
+      "remote_state": "open",
+      "readiness": "ready",
+      "ownership_mode": "github",
+      "entry_mode": "local_promotion",
+      "source_mode": "local",
+      "updated_at": "2026-07-29T06:25:51Z"
     }
   }
 }

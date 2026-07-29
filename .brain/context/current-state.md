@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-28T21:34:35Z"
+updated: "2026-07-29T07:04:36Z"
 ---
 # Current State
 
@@ -39,5 +39,7 @@ Phase 2A is implemented from GitHub spec [#5](https://github.com/JimmyMcBride/br
 Phase 2A merged through [PR #7](https://github.com/JimmyMcBride/brain-cloud/pull/7).
 
 Phase 2B implements GitHub spec [#9](https://github.com/JimmyMcBride/brain-cloud/issues/9): owner-only human membership create/list/role/deactivate/reactivate operations, explicit one-time target-member credentials, non-enumerating tenant boundaries, final-owner concurrency protection, transactional credential revocation, and membership audit events. Invitations, interactive login, teams, service/agent identities, and project ACLs remain deferred.
+
+Phase 2C implements GitHub spec [#12](https://github.com/JimmyMcBride/brain-cloud/issues/12), `project-access-control-foundation`: direct reader/editor grants for human memberships, implicit owner access, member-creator editor grants, fixed `projects.manage_access` scope migration, PostgreSQL-enforced tenant alignment, compatibility backfill including inactive members, exact owner-only management contracts, deterministic audit semantics, and authorization before memory/revision/search lookup. Teams, invitations, interactive login, service/agent identities, custom roles, and a generic policy engine remain deferred.
 
 When a local brainstorm has already been promoted in GitHub source mode, update the existing issue with `plan github adopt --issues <number>`; do not reapply `plan discuss promote`, whose preview does not reconcile local brainstorm sources to existing issues.
