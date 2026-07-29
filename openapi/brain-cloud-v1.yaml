@@ -450,6 +450,30 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/ProjectOrMembershipNotFound"
+        "409":
+          $ref: "#/components/responses/MembershipInactive"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+    delete:
+      operationId: deleteProjectAccessGrant
+      summary: Revoke a direct project access grant
+      description: A valid project and membership target returns 204 whether or not a grant exists. Inactive memberships are valid deletion targets.
+      x-required-role: owner
+      x-required-scope: projects.manage_access
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/MembershipId"
+      responses:
+        "204":
+          description: Grant absent after the operation.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ProjectOrMembershipNotFound"
   /v1/projects/{project_id}/team-access:
     get:
       operationId: listTeamProjectAccessGrants
@@ -511,30 +535,6 @@ paths:
         "401": {$ref: "#/components/responses/Unauthorized"}
         "403": {$ref: "#/components/responses/Forbidden"}
         "404": {$ref: "#/components/responses/ProjectOrTeamNotFound"}
-        "409":
-          $ref: "#/components/responses/MembershipInactive"
-        "422":
-          $ref: "#/components/responses/ValidationFailed"
-    delete:
-      operationId: deleteProjectAccessGrant
-      summary: Revoke a direct project access grant
-      description: A valid project and membership target returns 204 whether or not a grant exists. Inactive memberships are valid deletion targets.
-      x-required-role: owner
-      x-required-scope: projects.manage_access
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ProjectId"
-        - $ref: "#/components/parameters/MembershipId"
-      responses:
-        "204":
-          description: Grant absent after the operation.
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/ProjectOrMembershipNotFound"
   /v1/projects/{project_id}/memories:
     post:
       operationId: createMemory

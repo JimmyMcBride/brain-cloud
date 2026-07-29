@@ -205,6 +205,7 @@ team_inactive_status="$(
     "$base_url/v1/projects/$project_id/memories/$team_memory_id"
 )"
 test "$team_inactive_status" = "404"
+jq -e '.error.code == "project_not_found"' "$scratch_dir/team-inactive.json" >/dev/null
 
 authorized_curl "$token_a" --request POST \
   "$base_url/v1/organization/teams/$team_id/reactivate" |
