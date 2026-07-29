@@ -313,7 +313,7 @@ defmodule BrainCloud.AccountsTest do
                membership.id,
                %{
                  name: "Invalid manager",
-                 scopes: ["members.manage", "projects.manage_access"]
+                 scopes: ["members.manage", "projects.manage_access", "teams.manage"]
                }
              )
 

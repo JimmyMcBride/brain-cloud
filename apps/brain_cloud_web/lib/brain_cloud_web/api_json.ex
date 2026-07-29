@@ -23,6 +23,37 @@ defmodule BrainCloudWeb.APIJSON do
     }
   end
 
+  def team(team) do
+    %{
+      id: team.id,
+      name: team.name,
+      active: is_nil(team.deactivated_at),
+      deactivated_at: optional_timestamp(team.deactivated_at),
+      inserted_at: timestamp(team.inserted_at),
+      updated_at: timestamp(team.updated_at)
+    }
+  end
+
+  def team_membership(link) do
+    %{
+      id: link.id,
+      team_id: link.team_id,
+      membership_id: link.organization_membership_id,
+      inserted_at: timestamp(link.inserted_at)
+    }
+  end
+
+  def team_project_access_grant(grant) do
+    %{
+      id: grant.id,
+      project_id: grant.project_id,
+      team_id: grant.team_id,
+      access: grant.access,
+      inserted_at: timestamp(grant.inserted_at),
+      updated_at: timestamp(grant.updated_at)
+    }
+  end
+
   def created_token(token, raw_token) do
     token
     |> token()

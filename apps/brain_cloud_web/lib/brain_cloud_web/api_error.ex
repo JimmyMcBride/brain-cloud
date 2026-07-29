@@ -28,12 +28,20 @@ defmodule BrainCloudWeb.APIError do
     render(conn, :not_found, "membership_not_found", "Organization membership not found")
   end
 
+  def team_not_found(conn) do
+    render(conn, :not_found, "team_not_found", "Team not found")
+  end
+
   def membership_exists(conn) do
     render(conn, :conflict, "membership_exists", "Organization membership already exists")
   end
 
   def membership_inactive(conn) do
     render(conn, :conflict, "membership_inactive", "Organization membership is inactive")
+  end
+
+  def team_inactive(conn) do
+    render(conn, :conflict, "team_inactive", "Team is inactive")
   end
 
   def last_owner_required(conn) do

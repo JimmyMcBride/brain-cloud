@@ -64,7 +64,7 @@ curl --fail --silent --show-error "$base_url/readyz" |
   jq -e '. == {"status":"ready"}' >/dev/null
 
 curl --fail --silent --show-error "$base_url/v1/system/info" |
-  jq -e '.modules == [] and (.capabilities | contains(["system.info", "projects.create", "projects.manage_access", "memory.write", "memory.read", "search.keyword", "members.manage", "tokens.manage"]))' >/dev/null
+  jq -e '.modules == [] and (.capabilities | contains(["system.info", "projects.create", "projects.manage_access", "memory.write", "memory.read", "search.keyword", "members.manage", "teams.manage", "tokens.manage"]))' >/dev/null
 
 organization_a_slug="smoke-a-$run_suffix"
 organization_b_slug="smoke-b-$run_suffix"
@@ -109,7 +109,7 @@ second_owner_id="$(printf '%s' "$second_owner_response" | jq -er '.membership.id
 second_owner_token_response="$(
   authorized_curl "$token_a" \
     --header 'Content-Type: application/json' \
-    --data '{"name":"Second owner","scopes":["projects.create","projects.manage_access","memory.write","memory.read","search.keyword","members.manage","tokens.manage"]}' \
+    --data '{"name":"Second owner","scopes":["projects.create","projects.manage_access","memory.write","memory.read","search.keyword","members.manage","teams.manage","tokens.manage"]}' \
     "$base_url/v1/organization/memberships/$second_owner_id/tokens"
 )"
 second_owner_token="$(printf '%s' "$second_owner_token_response" | jq -er '.token.token')"
@@ -165,6 +165,56 @@ reader_write_status="$(
 )"
 test "$reader_write_status" = "404"
 jq -e '.error.code == "project_not_found"' "$scratch_dir/reader-write.json" >/dev/null
+
+team_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Smoke readers"}' \
+    "$base_url/v1/organization/teams"
+)"
+team_id="$(printf '%s' "$team_response" | jq -er '.team.id')"
+
+authorized_curl "$token_a" \
+  --request PUT \
+  "$base_url/v1/organization/teams/$team_id/members/$member_id" |
+  jq -e --arg team_id "$team_id" --arg member_id "$member_id" \
+    '.team_membership.team_id == $team_id and .team_membership.membership_id == $member_id' >/dev/null
+
+authorized_curl "$token_a" \
+  --request PUT \
+  --header 'Content-Type: application/json' \
+  --data '{"access":"reader"}' \
+  "$base_url/v1/projects/$project_id/team-access/$team_id" |
+  jq -e --arg team_id "$team_id" \
+    '.team_access_grant.team_id == $team_id and .team_access_grant.access == "reader"' >/dev/null
+
+team_memory_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data '{"title":"Team visible","content":"Team access check","content_type":"text/markdown"}' \
+    "$base_url/v1/projects/$project_id/memories"
+)"
+team_memory_id="$(printf '%s' "$team_memory_response" | jq -er '.memory.id')"
+authorized_curl "$member_token" "$base_url/v1/projects/$project_id/memories/$team_memory_id" |
+  jq -e --arg memory_id "$team_memory_id" '.memory.id == $memory_id' >/dev/null
+
+authorized_curl "$token_a" --request DELETE "$base_url/v1/organization/teams/$team_id" >/dev/null
+team_inactive_status="$(
+  curl --silent --show-error --output "$scratch_dir/team-inactive.json" --write-out '%{http_code}' \
+    --header "Authorization: Bearer $member_token" \
+    "$base_url/v1/projects/$project_id/memories/$team_memory_id"
+)"
+test "$team_inactive_status" = "404"
+jq -e '.error.code == "project_not_found"' "$scratch_dir/team-inactive.json" >/dev/null
+
+authorized_curl "$token_a" --request POST \
+  "$base_url/v1/organization/teams/$team_id/reactivate" |
+  jq -e '.team.active == true' >/dev/null
+authorized_curl "$member_token" "$base_url/v1/projects/$project_id/memories/$team_memory_id" |
+  jq -e --arg memory_id "$team_memory_id" '.memory.id == $memory_id' >/dev/null
+
+authorized_curl "$token_a" --request DELETE \
+  "$base_url/v1/projects/$project_id/team-access/$team_id" >/dev/null
 
 grant_response="$(
   authorized_curl "$token_a" \
@@ -468,5 +518,5 @@ revoked_access_status="$(
 test "$revoked_access_status" = "404"
 jq -e '.error.code == "project_not_found"' "$scratch_dir/revoked-access.json" >/dev/null
 
-printf 'Phase 2C smoke passed: organization=%s project=%s memory=%s member=%s\n' \
-  "$organization_a_id" "$project_id" "$memory_id" "$member_id"
+printf 'Phase 2D smoke passed: organization=%s project=%s memory=%s member=%s team=%s\n' \
+  "$organization_a_id" "$project_id" "$memory_id" "$member_id" "$team_id"

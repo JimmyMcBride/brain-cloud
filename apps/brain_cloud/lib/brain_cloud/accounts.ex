@@ -703,7 +703,12 @@ defmodule BrainCloud.Accounts do
           membership.role == "member" and
               Enum.any?(
                 scopes,
-                &(&1 in ["members.manage", "projects.manage_access", "tokens.manage"])
+                &(&1 in [
+                    "members.manage",
+                    "projects.manage_access",
+                    "teams.manage",
+                    "tokens.manage"
+                  ])
               ) ->
             {:error, member_management_scope_changeset(attrs, membership.id)}
 

@@ -8,6 +8,7 @@ defmodule BrainCloud.Accounts.Scopes do
     memory.read
     search.keyword
     members.manage
+    teams.manage
     tokens.manage
   )
 

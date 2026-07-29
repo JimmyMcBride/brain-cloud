@@ -14,6 +14,7 @@ defmodule BrainCloud.SystemInfoTest do
                "memory.read",
                "search.keyword",
                "members.manage",
+               "teams.manage",
                "tokens.manage"
              ],
              modules: []

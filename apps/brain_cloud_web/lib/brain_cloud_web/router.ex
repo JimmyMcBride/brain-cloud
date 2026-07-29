@@ -44,10 +44,25 @@ defmodule BrainCloudWeb.Router do
     delete "/organization/memberships/:id", MembershipController, :delete
     post "/organization/memberships/:id/reactivate", MembershipController, :reactivate
     post "/organization/memberships/:id/tokens", MembershipController, :create_token
+    post "/organization/teams", TeamController, :create
+    get "/organization/teams", TeamController, :index
+    patch "/organization/teams/:id", TeamController, :update
+    delete "/organization/teams/:id", TeamController, :delete
+    post "/organization/teams/:id/reactivate", TeamController, :reactivate
+    get "/organization/teams/:team_id/members", TeamMembershipController, :index
+    put "/organization/teams/:team_id/members/:membership_id", TeamMembershipController, :update
+
+    delete "/organization/teams/:team_id/members/:membership_id",
+           TeamMembershipController,
+           :delete
+
     post "/projects", ProjectController, :create
     get "/projects/:project_id/access", ProjectAccessController, :index
     put "/projects/:project_id/access/:membership_id", ProjectAccessController, :update
     delete "/projects/:project_id/access/:membership_id", ProjectAccessController, :delete
+    get "/projects/:project_id/team-access", TeamProjectAccessController, :index
+    put "/projects/:project_id/team-access/:team_id", TeamProjectAccessController, :update
+    delete "/projects/:project_id/team-access/:team_id", TeamProjectAccessController, :delete
     post "/projects/:project_id/memories", MemoryController, :create
     get "/projects/:project_id/memories/:id", MemoryController, :show
     get "/projects/:project_id/search", SearchController, :index

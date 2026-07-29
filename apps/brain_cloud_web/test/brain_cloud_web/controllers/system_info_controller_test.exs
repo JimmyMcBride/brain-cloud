@@ -16,6 +16,7 @@ defmodule BrainCloudWeb.SystemInfoControllerTest do
                "memory.read",
                "search.keyword",
                "members.manage",
+               "teams.manage",
                "tokens.manage"
              ],
              "modules" => []
