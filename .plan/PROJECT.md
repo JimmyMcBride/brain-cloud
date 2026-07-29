@@ -37,4 +37,4 @@ Brain Cloud is the hosted and self-hostable platform for Brain Core and optional
 
 ## Current focus
 
-Phase 1, Phase 2A, and Phase 2B are complete. GitHub spec [#9](https://github.com/JimmyMcBride/brain-cloud/issues/9) adds owner-managed human membership lifecycle, one-time target-member credentials, final-owner safety, transactional credential revocation, and membership audit events to the Phase 2A identity and tenant foundation. Invitations, teams, agent credentials, interactive login, and fine-grained project ACLs remain later Phase 2 work. Module framework implementation begins later in Phase 10. Planning integration begins only after a dedicated contract.
+Phase 1 through Phase 2C are complete. GitHub spec [#14](https://github.com/JimmyMcBride/brain-cloud/issues/14) implements Phase 2D reusable organization teams, retained membership links, soft lifecycle, team project grants, and strongest-access authorization. Invitations, agent credentials, interactive login, custom roles, and finer-grained policy remain later Phase 2 work. Module framework implementation begins later in Phase 10. Planning integration begins only after a dedicated contract.
