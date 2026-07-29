@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-29T05:32:26Z"
+updated: "2026-07-29T06:27:23Z"
 ---
 # Current State
 
@@ -42,6 +42,6 @@ Phase 2B is implemented from GitHub spec [#9](https://github.com/JimmyMcBride/br
 
 Phase 2B merged through [PR #10](https://github.com/JimmyMcBride/brain-cloud/pull/10).
 
-Phase 2C planning now lives in Plan-owned GitHub spec [#12](https://github.com/JimmyMcBride/brain-cloud/issues/12), `project-access-control-foundation`: direct reader/editor grants for human memberships, implicit owner access, fixed token scopes, compatibility backfill for existing projects, and private-by-default access for new projects. Planning PR [#11](https://github.com/JimmyMcBride/brain-cloud/pull/11) was closed unmerged after promotion. Teams, invitations, interactive login, service/agent identities, custom roles, and a generic policy engine remain deferred.
+Phase 2C planning now lives in reviewed, execution-ready Plan-owned GitHub spec [#12](https://github.com/JimmyMcBride/brain-cloud/issues/12), `project-access-control-foundation`: direct reader/editor grants for human memberships, implicit owner access, fixed token scopes with an explicit upgrade path, PostgreSQL-enforced tenant alignment, compatibility backfill for existing projects, exact management endpoint contracts, deterministic audit semantics, and private-by-default access for new projects. Planning PR [#11](https://github.com/JimmyMcBride/brain-cloud/pull/11) was closed unmerged after promotion. Teams, invitations, interactive login, service/agent identities, custom roles, and a generic policy engine remain deferred.
 
 When a local brainstorm has already been promoted in GitHub source mode, update the existing issue with `plan github adopt --issues <number>`; do not reapply `plan discuss promote`, whose preview does not reconcile local brainstorm sources to existing issues.

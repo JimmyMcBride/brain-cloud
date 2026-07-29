@@ -5,7 +5,7 @@ slug: project-access-control-foundation
 status: active
 title: project access control foundation
 type: brainstorm
-updated_at: "2026-07-29T05:01:43Z"
+updated_at: "2026-07-29T06:25:51Z"
 ---
 
 # Brainstorm: project access control foundation
@@ -36,7 +36,9 @@ Add one narrow authorization boundary between organization membership and projec
 
 - Preserve one public `/v1` protocol and existing successful response shapes unless this slice explicitly adds a field or endpoint.
 - Preserve access to existing projects for existing member-role memberships during migration.
+- Preserve administration capability by granting the new management scope only to existing active owner tokens that already carry `members.manage`.
 - Keep owner access implicit, but never let role or project grants bypass fixed token scopes.
+- Enforce project and membership organization alignment in PostgreSQL, not only in application code.
 - Authorize before resource lookup and conceal inaccessible or cross-tenant projects with the exact existing not-found contract.
 - Keep grant mutation and immutable audit creation transactional.
 - Do not add teams, team grants, custom roles, deny rules, inheritance, row-level security, a generic policy engine, or authorization caching.
@@ -47,9 +49,10 @@ None blocking. Direct membership grants are the chosen first access-control prim
 
 ## Ideas
 
-- Add `project_access_grants` keyed by project and organization membership with `reader` or `editor` access.
+- Add `project_access_grants` keyed by organization, project, and organization membership with `reader` or `editor` access and composite tenant constraints.
 - Give organization owners implicit full project access.
 - Add `projects.manage_access` for owner-operated grant administration.
+- Migrate the new scope onto active owner tokens that already contain `members.manage`; do not escalate narrower owner tokens or member tokens.
 - Backfill editor grants for every existing member-role membership across every existing organization project, including inactive memberships so reactivation preserves prior access.
 - Give a member creator an editor grant in the same transaction as project creation; an owner creator relies on implicit access.
 - Return explicit grants from access-list endpoints and document owner access as implicit.
@@ -62,6 +65,8 @@ None blocking. Direct membership grants are the chosen first access-control prim
 - Team-based sharing is valuable, but direct grants establish the minimal semantics teams can later target.
 - Grant changes should affect the next request without credential rotation.
 - Membership suspension already blocks authentication. Reactivation should preserve grants but must not restore revoked credentials.
+- Explicit grants survive owner/member role changes, remain dormant while a membership is an owner, and become effective if that membership later becomes a member.
+- Idempotent no-op grant writes do not create audit noise.
 
 ## Refinement
 
@@ -114,6 +119,7 @@ Use direct project-to-human-membership grants with fixed `reader` and `editor` v
 - `editor` includes reader capabilities plus memory creation.
 - Organization owners may manage all project grants and access all organization projects.
 - Existing inactive memberships should receive migration grants so later reactivation matches pre-upgrade access, while authentication remains blocked during suspension.
+- Explicit grants may exist for owners but do not restrict implicit owner access; they remain stored through role changes.
 - Deleting an already absent grant is idempotently successful.
 
 ### Likely Overengineering
@@ -134,40 +140,43 @@ Active organization members currently inherit access to every organization proje
 
 #### Scope
 
-- Add a UUID-backed `project_access_grants` table with `project_id`, `organization_membership_id`, fixed `reader` or `editor` access, timestamps, uniqueness on the project-membership pair, supporting indexes, and database constraints.
-- Add `projects.manage_access` to supported fixed scopes and system discovery capabilities.
+- Add a UUID-backed `project_access_grants` table with `organization_id`, `project_id`, `organization_membership_id`, fixed `reader` or `editor` access, timestamps, uniqueness on the project-membership pair, and supporting indexes. Add parent composite unique indexes as needed and composite foreign keys from `(project_id, organization_id)` to projects and `(organization_membership_id, organization_id)` to organization memberships so PostgreSQL rejects cross-organization grants.
+- Add `projects.manage_access` to supported fixed scopes and system discovery capabilities. During upgrade, append it to active owner tokens that already contain `members.manage`; leave narrower owner tokens unchanged and reject `projects.manage_access` when issuing credentials to member-role memberships.
 - Treat active organization owners as implicitly authorized for every organization project while continuing to require the endpoint's fixed token scope.
 - Treat an explicit reader grant as authorization for memory retrieval and keyword search, and an explicit editor grant as reader authorization plus memory creation.
 - Keep `projects.create` as the project-creation scope. In the creation transaction, give a member creator an editor grant; let an owner creator rely on implicit access.
 - Backfill editor grants for every existing member-role membership and every existing project in the same organization, including inactive memberships. Do not backfill owners.
-- Add `GET /v1/projects/{project_id}/access` to list explicit grants, `PUT /v1/projects/{project_id}/access/{membership_id}` with `{"access":"reader"|"editor"}` to create or replace a grant idempotently, and `DELETE /v1/projects/{project_id}/access/{membership_id}` to revoke idempotently.
+- Add `GET /v1/projects/{project_id}/access` returning `200 {"access_grants":[...]}` for explicit grants only, sorted by `inserted_at` then `id`; each grant contains `id`, `project_id`, `membership_id`, `access`, `inserted_at`, and `updated_at`.
+- Add idempotent `PUT /v1/projects/{project_id}/access/{membership_id}` with `{"access":"reader"|"editor"}` returning `200 {"access_grant":{...}}` for create, change, or no-op, and idempotent `DELETE /v1/projects/{project_id}/access/{membership_id}` returning `204` whether a valid target's grant existed or not.
 - Require owner role plus `projects.manage_access` for all grant-management endpoints and return authorization failures before project or membership lookup.
-- Return exact `404 project_not_found` for malformed, missing, inaccessible, or cross-tenant project identifiers. Return exact `404 membership_not_found` for missing or cross-tenant target memberships. Return `409 membership_inactive` when granting to an inactive membership, while allowing deletion of a stored inactive-membership grant.
+- Return exact `404 project_not_found` for malformed, missing, inaccessible, or cross-tenant project identifiers. Return exact `404 membership_not_found` for malformed, missing, or cross-tenant target membership identifiers. Return exact `409 membership_inactive` when granting to an inactive membership, while allowing deletion of a stored inactive-membership grant. Return the standard `422 validation_failed` envelope with `details.access` for missing or invalid access.
 - Enforce project authorization before loading project or memory data in every current memory creation, retrieval, revision, and search path.
-- Make grant changes effective on the next request without token rotation. Preserve grants through membership suspension/reactivation while preserving existing credential revocation rules.
-- Append immutable audit events transactionally for grant creation, access changes, and revocation without storing credential secrets or digests.
+- Make grant changes effective on the next request without token rotation. Preserve explicit grants through membership suspension/reactivation and owner/member role changes while preserving existing credential revocation rules. Explicit grants do not restrict owners; they become effective if an owner is demoted, and an owner without an explicit grant loses project access on demotion until granted.
+- Append immutable audit actions `project_access.grant`, `project_access.change`, and `project_access.revoke` transactionally with resource type `project_access_grant` and the grant ID. Store project ID, membership ID, access, and previous access where applicable; never store credential secrets or digests. Emit no audit event for a no-op PUT or DELETE of an already absent grant.
 - Update OpenAPI, architecture, security, self-hosting, roadmap, project context, release upgrade, and smoke documentation for the new boundary.
 - Defer teams and team grants, invitations, email/password login, OAuth/SSO/SCIM, service or agent principals, project listing, public links, custom roles, deny rules, inheritance, RLS, generic policy engines, authorization caches, audit-query APIs, pagination, and access-management UI.
 
 #### Acceptance criteria
 
 - Existing member-role credentials retain their pre-upgrade access to existing projects through migration grants, including grants retained for inactive memberships pending later reactivation.
+- Existing active owner tokens containing `members.manage` gain `projects.manage_access` during upgrade; narrower owner tokens remain unchanged, and member-role credentials cannot be issued the management scope.
+- PostgreSQL rejects grants whose project and organization membership do not belong to the same organization, even when bypassing application validation.
 - A new project is accessible to organization owners and its member creator, but not to another member until that member receives an explicit grant.
 - A reader with the required fixed token scopes can retrieve and search project memory but cannot create memory; an editor with the required scopes can retrieve, search, and create.
 - Fixed token scopes remain mandatory for every operation and neither owner role nor a project grant escalates a credential beyond its scopes.
-- Grant PUT creates or changes the explicit access idempotently, grant DELETE is idempotent, and revocation blocks the affected project on the next request without token rotation.
+- Access GET returns only explicit grants with exact fields and deterministic ordering. Grant PUT always returns the exact `200` grant envelope for create, change, or no-op; grant DELETE always returns `204` for a valid target whether the grant existed or not; revocation blocks the affected project on the next request without token rotation.
 - Missing owner role or `projects.manage_access` returns the exact authorization response before resource lookup, while missing, malformed, inaccessible, and cross-tenant projects share exact `404 project_not_found` behavior.
-- Missing or cross-tenant target memberships return exact `404 membership_not_found`; attempts to grant access to inactive memberships return exact `409 membership_inactive`.
-- Membership suspension blocks authentication, reactivation preserves stored grants, and previously revoked credentials remain revoked so a fresh credential is required.
-- Grant creation, access change, and revocation emit immutable audit events in the same transaction and never record token plaintext or digests.
+- Malformed, missing, or cross-tenant target memberships return exact `404 membership_not_found`; attempts to grant access to inactive memberships return exact `409 membership_inactive`; missing or invalid access returns exact `422 validation_failed` with `details.access`.
+- Membership suspension blocks authentication, reactivation preserves stored grants, and previously revoked credentials remain revoked so a fresh credential is required. Owner/member role changes preserve explicit grants; grants remain dormant while owner access is implicit and become effective after demotion.
+- Real grant creation, access change, and revocation emit the named immutable audit events in the same transaction and never record token plaintext or digests; no-op PUT and absent-grant DELETE emit no event.
 - Existing public contracts remain compatible except for the documented capability, access endpoints, and intentional authorization applied to newly private project data paths.
 - OpenAPI documents all new operations, schemas, fixed scopes, and exact error responses without adding deferred Phase 2 features.
 
 #### Verification
 
-- Project-domain tests cover migration backfill, owner implicit access, member-creator grants, reader/editor decisions, idempotent grant changes and revocation, inactive-membership handling, tenant concealment, and transactional audit events.
+- Project-domain tests cover migration backfill, management-scope upgrade and member-scope rejection, database-enforced tenant alignment, owner implicit access, member-creator grants, reader/editor decisions, role-transition grant persistence, idempotent grant changes and revocation, inactive-membership handling, tenant concealment, and transactional/no-op audit behavior.
 - Memory and search tests prove both grant and fixed-scope enforcement, authorization before resource loading, immediate revocation, and exact concealment behavior.
-- Controller tests cover exact JSON/status contracts for access listing, grant creation/change/revocation, role/scope failures, cross-tenant targets, inactive memberships, and unauthorized project access.
+- Controller tests cover exact JSON/status contracts and list ordering for access listing, `200` grant PUT, `204` grant DELETE, missing/invalid access, malformed identifiers, role/scope failures, cross-tenant targets, inactive memberships, and unauthorized project access.
 - Run `mix format --check-formatted`, `mix compile --warnings-as-errors`, test database creation and migrations, `mix test`, and `mix assets.deploy` through the Brain session.
 - Run the release upgrade path, production Docker build, and Compose smoke tests for owner implicit access, new-project privacy, reader/editor behavior, immediate revocation, suspension/reactivation, restart persistence, and PostgreSQL outage recovery.
 - Run `brain context audit`, `plan check`, OpenAPI parsing, shell syntax checks, `git diff --check`, and finish the Brain session.

@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "last_active_chain": "brainstorm/project-access-control-foundation",
-  "last_updated_at": "2026-07-29T05:01:43Z",
+  "last_updated_at": "2026-07-29T06:25:51Z",
   "sessions": {
     "brainstorm/brain-cloud-first-vertical-slice": {
       "chain_id": "brainstorm/brain-cloud-first-vertical-slice",
@@ -68,10 +68,10 @@
       "stage_statuses": {
         "brainstorm": "in_progress"
       },
-      "summary": "Recap:\nCurrent understanding: Phase 2B enables multiple humans, but active members still inherit organization-wide access to every project. Direct reader/editor grants create the smallest secure project boundary while owners retain implicit access and fixed token scopes remain mandatory.\nKey decisions: preserve existing member access through migration backfill; make new projects private to owners and their member creator; conceal inaccessible projects; defer teams, invitations, agent principals, custom roles, and generic policy infrastructure.\nUnresolved risks or questions: none.\nParked items: none.\nRecommended next stage: Promote the ready single-spec plan after review.",
-      "next_action": "Brainstorm handoff is ready when you want to continue into the epic stage.",
+      "summary": "Recap:\nCurrent understanding: Phase 2B enables multiple humans, but active members still inherit organization-wide access to every project. Direct reader/editor grants create the smallest secure project boundary while owners retain implicit access and fixed token scopes remain mandatory.\nKey decisions: preserve existing member access through migration backfill; migrate the new management scope onto existing active owner admin tokens; enforce same-organization grants with composite database constraints; define exact access endpoint envelopes and statuses; preserve dormant grants through role changes; audit only real state changes; defer teams, invitations, agent principals, custom roles, and generic policy infrastructure.\nUnresolved risks or questions: none.\nParked items: none.\nRecommended next stage: Execute canonical GitHub spec #12.",
+      "next_action": "Canonical GitHub spec #12 is ready for execution.",
       "created_at": "2026-07-29T04:57:10Z",
-      "updated_at": "2026-07-29T05:01:43Z"
+      "updated_at": "2026-07-29T06:25:51Z"
     }
   }
 }
