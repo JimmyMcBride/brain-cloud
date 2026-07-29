@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "last_active_chain": "brainstorm/organization-membership-administration-foundation",
-  "last_updated_at": "2026-07-28T20:55:13Z",
+  "last_active_chain": "brainstorm/project-access-control-foundation",
+  "last_updated_at": "2026-07-29T05:01:43Z",
   "sessions": {
     "brainstorm/brain-cloud-first-vertical-slice": {
       "chain_id": "brainstorm/brain-cloud-first-vertical-slice",
@@ -58,6 +58,20 @@
       "next_action": "Review recap and continue into the epic stage when ready.",
       "created_at": "2026-07-28T19:24:11Z",
       "updated_at": "2026-07-28T19:25:29Z"
+    },
+    "brainstorm/project-access-control-foundation": {
+      "chain_id": "brainstorm/project-access-control-foundation",
+      "brainstorm": "project-access-control-foundation",
+      "current_stage": "brainstorm",
+      "current_cluster": 5,
+      "current_cluster_label": "handoff-epic",
+      "stage_statuses": {
+        "brainstorm": "in_progress"
+      },
+      "summary": "Recap:\nCurrent understanding: Phase 2B enables multiple humans, but active members still inherit organization-wide access to every project. Direct reader/editor grants create the smallest secure project boundary while owners retain implicit access and fixed token scopes remain mandatory.\nKey decisions: preserve existing member access through migration backfill; make new projects private to owners and their member creator; conceal inaccessible projects; defer teams, invitations, agent principals, custom roles, and generic policy infrastructure.\nUnresolved risks or questions: none.\nParked items: none.\nRecommended next stage: Promote the ready single-spec plan after review.",
+      "next_action": "Brainstorm handoff is ready when you want to continue into the epic stage.",
+      "created_at": "2026-07-29T04:57:10Z",
+      "updated_at": "2026-07-29T05:01:43Z"
     }
   }
 }

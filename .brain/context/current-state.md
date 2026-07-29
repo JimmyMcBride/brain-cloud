@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-28T21:34:35Z"
+updated: "2026-07-29T05:02:10Z"
 ---
 # Current State
 
@@ -11,7 +11,7 @@ This file is a deterministic snapshot of the repository state at the last refres
 - Project: `brain-cloud`
 - Root: `.`
 - Runtime: `elixir`
-- Current branch: `codex/organization-membership-administration-foundation`
+- Current branch: `codex/phase-2c-project-access-control-plan`
 - Default branch: `develop`
 - Remote: `https://github.com/JimmyMcBride/brain-cloud.git`
 - Umbrella apps: `brain_cloud`, `brain_cloud_web`
@@ -38,6 +38,10 @@ Phase 2A is implemented from GitHub spec [#5](https://github.com/JimmyMcBride/br
 
 Phase 2A merged through [PR #7](https://github.com/JimmyMcBride/brain-cloud/pull/7).
 
-Phase 2B implements GitHub spec [#9](https://github.com/JimmyMcBride/brain-cloud/issues/9): owner-only human membership create/list/role/deactivate/reactivate operations, explicit one-time target-member credentials, non-enumerating tenant boundaries, final-owner concurrency protection, transactional credential revocation, and membership audit events. Invitations, interactive login, teams, service/agent identities, and project ACLs remain deferred.
+Phase 2B is implemented from GitHub spec [#9](https://github.com/JimmyMcBride/brain-cloud/issues/9): owner-only human membership create/list/role/deactivate/reactivate operations, explicit one-time target-member credentials, non-enumerating tenant boundaries, final-owner concurrency protection, transactional credential revocation, and membership audit events.
+
+Phase 2B merged through [PR #10](https://github.com/JimmyMcBride/brain-cloud/pull/10).
+
+The next proposed Phase 2C slice is `.plan/brainstorms/project-access-control-foundation.md`: direct reader/editor grants for human memberships, implicit owner access, fixed token scopes, compatibility backfill for existing projects, and private-by-default access for new projects. Teams, invitations, interactive login, service/agent identities, custom roles, and a generic policy engine remain deferred.
 
 When a local brainstorm has already been promoted in GitHub source mode, update the existing issue with `plan github adopt --issues <number>`; do not reapply `plan discuss promote`, whose preview does not reconcile local brainstorm sources to existing issues.
