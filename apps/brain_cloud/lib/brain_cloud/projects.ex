@@ -10,7 +10,10 @@ defmodule BrainCloud.Projects do
   alias BrainCloud.Accounts.OrganizationMembership
   alias BrainCloud.Projects.Project
   alias BrainCloud.Projects.ProjectAccessGrant
+  alias BrainCloud.Projects.TeamProjectAccessGrant
   alias BrainCloud.Repo
+  alias BrainCloud.Teams.Team
+  alias BrainCloud.Teams.TeamMembership
   alias Ecto.Multi
 
   @reader_access ~w(reader editor)
@@ -151,6 +154,80 @@ defmodule BrainCloud.Projects do
     end
   end
 
+  def list_team_project_access_grants(project_id, %AuthContext{} = auth) do
+    with :ok <- authorize_access_management(auth),
+         {:ok, project_id} <- Ecto.UUID.cast(project_id),
+         %Project{} <- tenant_project(project_id, auth.organization_id) do
+      {:ok,
+       Repo.all(
+         from grant in TeamProjectAccessGrant,
+           where:
+             grant.project_id == ^project_id and
+               grant.organization_id == ^auth.organization_id,
+           order_by: [asc: grant.inserted_at, asc: grant.id]
+       )}
+    else
+      :error -> {:error, :project_not_found}
+      nil -> {:error, :project_not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def put_team_project_access_grant(project_id, team_id, access, %AuthContext{} = auth) do
+    with :ok <- authorize_access_management(auth),
+         {:ok, project_id} <- Ecto.UUID.cast(project_id) do
+      Repo.transaction(fn ->
+        case tenant_project(project_id, auth.organization_id) do
+          nil ->
+            Repo.rollback(:project_not_found)
+
+          %Project{} ->
+            with {:ok, team_id} <- Ecto.UUID.cast(team_id),
+                 %Team{} = team <- tenant_team_for_update(team_id, auth.organization_id),
+                 :ok <- ensure_team_active(team) do
+              put_team_grant(project_id, team_id, access, auth)
+            else
+              nil -> Repo.rollback(:team_not_found)
+              :error -> Repo.rollback(:team_not_found)
+              {:error, reason} -> Repo.rollback(reason)
+            end
+        end
+      end)
+      |> unwrap_transaction()
+    else
+      :error -> {:error, :project_not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def delete_team_project_access_grant(project_id, team_id, %AuthContext{} = auth) do
+    with :ok <- authorize_access_management(auth),
+         {:ok, project_id} <- Ecto.UUID.cast(project_id) do
+      Repo.transaction(fn ->
+        case tenant_project(project_id, auth.organization_id) do
+          nil ->
+            Repo.rollback(:project_not_found)
+
+          %Project{} ->
+            with {:ok, team_id} <- Ecto.UUID.cast(team_id),
+                 %Team{} <- tenant_team_for_update(team_id, auth.organization_id) do
+              delete_team_grant(project_id, team_id, auth)
+            else
+              nil -> Repo.rollback(:team_not_found)
+              :error -> Repo.rollback(:team_not_found)
+            end
+        end
+      end)
+      |> case do
+        {:ok, _} -> :ok
+        {:error, reason} -> {:error, reason}
+      end
+    else
+      :error -> {:error, :project_not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   defp authorized_project(id, %AuthContext{role: "owner"} = auth, _required_access) do
     tenant_project(id, auth.organization_id)
   end
@@ -164,21 +241,35 @@ defmodule BrainCloud.Projects do
 
     Repo.one(
       from project in Project,
-        join: grant in ProjectAccessGrant,
-        on:
-          grant.project_id == project.id and
-            grant.organization_id == project.organization_id,
         join: membership in OrganizationMembership,
         on:
-          membership.id == grant.organization_membership_id and
-            membership.organization_id == grant.organization_id,
+          membership.id == ^auth.membership_id and
+            membership.organization_id == project.organization_id,
+        left_join: grant in ProjectAccessGrant,
+        on:
+          grant.project_id == project.id and
+            grant.organization_id == project.organization_id and
+            grant.organization_membership_id == membership.id,
+        left_join: link in TeamMembership,
+        on:
+          link.organization_id == project.organization_id and
+            link.organization_membership_id == membership.id,
+        left_join: team in Team,
+        on:
+          team.id == link.team_id and team.organization_id == link.organization_id and
+            is_nil(team.deactivated_at),
+        left_join: team_grant in TeamProjectAccessGrant,
+        on:
+          team_grant.project_id == project.id and
+            team_grant.organization_id == project.organization_id and
+            team_grant.team_id == team.id,
         where:
           project.id == ^id and
             project.organization_id == ^auth.organization_id and
-            grant.organization_membership_id == ^auth.membership_id and
-            grant.access in ^allowed_access and
             membership.role == "member" and
-            is_nil(membership.deactivated_at)
+            is_nil(membership.deactivated_at) and
+            (grant.access in ^allowed_access or team_grant.access in ^allowed_access),
+        distinct: true
     )
   end
 
@@ -251,6 +342,88 @@ defmodule BrainCloud.Projects do
     end
   end
 
+  defp put_team_grant(project_id, team_id, access, auth) do
+    case team_grant_for_update(project_id, team_id, auth.organization_id) do
+      nil ->
+        changeset =
+          TeamProjectAccessGrant.changeset(%TeamProjectAccessGrant{}, %{
+            organization_id: auth.organization_id,
+            project_id: project_id,
+            team_id: team_id,
+            access: access
+          })
+
+        with {:ok, grant} <- Repo.insert(changeset),
+             {:ok, _event} <-
+               team_grant_audit_changeset(auth, "team_project_access.grant", grant)
+               |> Repo.insert() do
+          grant
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+
+      %TeamProjectAccessGrant{access: ^access} = grant ->
+        grant
+
+      %TeamProjectAccessGrant{} = grant ->
+        previous_access = grant.access
+
+        with {:ok, updated} <-
+               grant |> TeamProjectAccessGrant.changeset(%{access: access}) |> Repo.update(),
+             {:ok, _event} <-
+               team_grant_audit_changeset(
+                 auth,
+                 "team_project_access.change",
+                 updated,
+                 %{"previous_access" => previous_access}
+               )
+               |> Repo.insert() do
+          updated
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+    end
+  end
+
+  defp delete_team_grant(project_id, team_id, auth) do
+    case team_grant_for_update(project_id, team_id, auth.organization_id) do
+      nil ->
+        nil
+
+      grant ->
+        with {:ok, deleted} <- Repo.delete(grant),
+             {:ok, _event} <-
+               team_grant_audit_changeset(
+                 auth,
+                 "team_project_access.revoke",
+                 grant,
+                 %{"previous_access" => grant.access}
+               )
+               |> Repo.insert() do
+          deleted
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+    end
+  end
+
+  defp team_grant_audit_changeset(auth, action, grant, metadata \\ %{}) do
+    Accounts.audit_changeset(
+      auth,
+      action,
+      "team_project_access_grant",
+      grant.id,
+      Map.merge(
+        %{
+          "project_id" => grant.project_id,
+          "team_id" => grant.team_id,
+          "access" => grant.access
+        },
+        metadata
+      )
+    )
+  end
+
   defp grant_audit_changeset(auth, action, grant, metadata \\ %{}) do
     Accounts.audit_changeset(
       auth,
@@ -304,8 +477,28 @@ defmodule BrainCloud.Projects do
     )
   end
 
+  defp tenant_team_for_update(id, organization_id) do
+    Repo.one(
+      from team in Team,
+        where: team.id == ^id and team.organization_id == ^organization_id,
+        lock: "FOR UPDATE"
+    )
+  end
+
+  defp team_grant_for_update(project_id, team_id, organization_id) do
+    Repo.one(
+      from grant in TeamProjectAccessGrant,
+        where:
+          grant.project_id == ^project_id and grant.team_id == ^team_id and
+            grant.organization_id == ^organization_id,
+        lock: "FOR UPDATE"
+    )
+  end
+
   defp ensure_membership_active(%OrganizationMembership{deactivated_at: nil}), do: :ok
   defp ensure_membership_active(_membership), do: {:error, :membership_inactive}
+  defp ensure_team_active(%Team{deactivated_at: nil}), do: :ok
+  defp ensure_team_active(_team), do: {:error, :team_inactive}
 
   defp malformed_resource(project_id, _membership_id) do
     if Ecto.UUID.cast(project_id) == :error,
