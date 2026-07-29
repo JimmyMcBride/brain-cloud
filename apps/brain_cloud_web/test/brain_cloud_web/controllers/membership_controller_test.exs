@@ -232,8 +232,20 @@ defmodule BrainCloudWeb.MembershipControllerTest do
     conn: conn,
     identity: identity
   } do
+    assert %{
+             "error" => %{
+               "code" => "validation_failed",
+               "details" => %{"role" => ["can't be blank"]}
+             }
+           } =
+             conn
+             |> authenticate(identity)
+             |> patch(~p"/v1/organization/memberships/#{identity.membership.id}", %{})
+             |> json_response(422)
+
     assert exact_error(
              conn
+             |> recycle()
              |> authenticate(identity)
              |> patch(~p"/v1/organization/memberships/#{identity.membership.id}", %{
                role: "member"

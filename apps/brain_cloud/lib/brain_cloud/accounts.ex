@@ -100,8 +100,11 @@ defmodule BrainCloud.Accounts do
 
         with %OrganizationMembership{} = membership <-
                organization_membership_for_update(auth.organization_id, membership_id),
-             :ok <- preserve_active_owner(membership, role, active_owners),
-             {:ok, updated_membership} <- update_membership_role(membership, role),
+             role_changeset = OrganizationMembership.changeset(membership, %{role: role}),
+             {:ok, validated_membership} <-
+               Changeset.apply_action(role_changeset, :update),
+             :ok <- preserve_active_owner(membership, validated_membership.role, active_owners),
+             {:ok, updated_membership} <- Repo.update(role_changeset),
              :ok <- revoke_tokens_after_demotion(membership, updated_membership),
              {:ok, _event} <-
                audit_role_change(auth, membership, updated_membership) do
@@ -650,15 +653,6 @@ defmodule BrainCloud.Accounts do
   end
 
   defp preserve_active_owner(_membership, _next_role, _active_owners), do: :ok
-
-  defp update_membership_role(%OrganizationMembership{role: role} = membership, role),
-    do: {:ok, membership}
-
-  defp update_membership_role(membership, role) do
-    membership
-    |> OrganizationMembership.changeset(%{role: role})
-    |> Repo.update()
-  end
 
   defp revoke_tokens_after_demotion(
          %OrganizationMembership{role: "owner"},
