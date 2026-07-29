@@ -18,6 +18,20 @@ import Ecto.Query
     scopes: ["memory.read"]
   })
 
+{:ok, _full_token, _raw_token} =
+  Accounts.create_api_token(bootstrap_auth, %{
+    name: "Legacy full owner",
+    scopes: [
+      "projects.create",
+      "projects.manage_access",
+      "memory.write",
+      "memory.read",
+      "search.keyword",
+      "members.manage",
+      "tokens.manage"
+    ]
+  })
+
 {1, nil} =
   Repo.update_all(
     from(token in ApiToken, where: token.id == ^bootstrap.token.id),
@@ -26,6 +40,7 @@ import Ecto.Query
 
 persisted_bootstrap = Repo.get!(ApiToken, bootstrap.token.id)
 false = "projects.manage_access" in persisted_bootstrap.scopes
+false = "teams.manage" in persisted_bootstrap.scopes
 
 inactive_user_id = Ecto.UUID.cast!("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
 

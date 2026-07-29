@@ -185,7 +185,7 @@ paths:
     post:
       operationId: createOrganizationMembershipToken
       summary: Create a one-time credential for an organization membership
-      description: The raw token appears only in this successful response. Requested scopes must be a subset of caller scopes; member memberships cannot receive members.manage, projects.manage_access, or tokens.manage.
+      description: The raw token appears only in this successful response. Requested scopes must be a subset of caller scopes; member memberships cannot receive members.manage, projects.manage_access, teams.manage, or tokens.manage.
       x-required-role: owner
       x-required-scopes: [members.manage, tokens.manage]
       security:
@@ -218,6 +218,153 @@ paths:
           $ref: "#/components/responses/MembershipInactive"
         "422":
           $ref: "#/components/responses/ValidationFailed"
+  /v1/organization/teams:
+    post:
+      operationId: createTeam
+      summary: Create an organization team
+      x-required-role: owner
+      x-required-scope: teams.manage
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamWrite"
+      responses:
+        "201":
+          description: Team created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamEnvelope"
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+    get:
+      operationId: listTeams
+      summary: List active and deactivated organization teams
+      x-required-role: owner
+      x-required-scope: teams.manage
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Teams ordered by inserted_at and id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamListEnvelope"
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+  /v1/organization/teams/{team_id}:
+    patch:
+      operationId: renameTeam
+      summary: Rename an active or deactivated team
+      x-required-role: owner
+      x-required-scope: teams.manage
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: "#/components/parameters/TeamId"}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamWrite"
+      responses:
+        "200":
+          description: Team renamed or already named as requested.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamEnvelope"
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/TeamNotFound"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+    delete:
+      operationId: deactivateTeam
+      summary: Soft-deactivate a team while retaining links and grants
+      x-required-role: owner
+      x-required-scope: teams.manage
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: "#/components/parameters/TeamId"}]
+      responses:
+        "204": {description: Team is inactive; repeated requests are idempotent.}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/TeamNotFound"}
+  /v1/organization/teams/{team_id}/reactivate:
+    post:
+      operationId: reactivateTeam
+      summary: Reactivate a team and its retained access relationships
+      x-required-role: owner
+      x-required-scope: teams.manage
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: "#/components/parameters/TeamId"}]
+      responses:
+        "200":
+          description: Team is active; repeated requests are idempotent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamEnvelope"
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/TeamNotFound"}
+  /v1/organization/teams/{team_id}/members:
+    get:
+      operationId: listTeamMemberships
+      summary: List retained organization-membership links for a team
+      x-required-role: owner
+      x-required-scope: teams.manage
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: "#/components/parameters/TeamId"}]
+      responses:
+        "200":
+          description: Links ordered by inserted_at and id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMembershipListEnvelope"
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/TeamNotFound"}
+  /v1/organization/teams/{team_id}/members/{membership_id}:
+    put:
+      operationId: putTeamMembership
+      summary: Add an active organization membership to an active team
+      x-required-role: owner
+      x-required-scope: teams.manage
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/MembershipId"
+      responses:
+        "200":
+          description: Link exists; repeated requests are idempotent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMembershipEnvelope"
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/TeamOrMembershipNotFound"}
+        "409": {$ref: "#/components/responses/TeamOrMembershipInactive"}
+    delete:
+      operationId: deleteTeamMembership
+      summary: Remove a retained membership link
+      description: Active and inactive teams/memberships are valid targets. Repeated requests are idempotent.
+      x-required-role: owner
+      x-required-scope: teams.manage
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/TeamId"
+        - $ref: "#/components/parameters/MembershipId"
+      responses:
+        "204": {description: Link absent after the operation.}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/TeamOrMembershipNotFound"}
   /v1/projects:
     post:
       operationId: createProject
@@ -303,6 +450,67 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/ProjectOrMembershipNotFound"
+  /v1/projects/{project_id}/team-access:
+    get:
+      operationId: listTeamProjectAccessGrants
+      summary: List team access grants for a project
+      description: Includes grants retained for deactivated teams; direct grants remain on the separate access route.
+      x-required-role: owner
+      x-required-scope: projects.manage_access
+      security: [{bearerAuth: []}]
+      parameters: [{$ref: "#/components/parameters/ProjectId"}]
+      responses:
+        "200":
+          description: Team grants ordered by inserted_at and id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamProjectAccessGrantListEnvelope"
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/ProjectNotFound"}
+  /v1/projects/{project_id}/team-access/{team_id}:
+    put:
+      operationId: putTeamProjectAccessGrant
+      summary: Create or replace an active team's project access
+      x-required-role: owner
+      x-required-scope: projects.manage_access
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TeamId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectAccessGrantPut"
+      responses:
+        "200":
+          description: Grant created, changed, or already in the requested state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamProjectAccessGrantEnvelope"
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/ProjectOrTeamNotFound"}
+        "409": {$ref: "#/components/responses/TeamInactive"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+    delete:
+      operationId: deleteTeamProjectAccessGrant
+      summary: Revoke a retained team project grant
+      x-required-role: owner
+      x-required-scope: projects.manage_access
+      security: [{bearerAuth: []}]
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/TeamId"
+      responses:
+        "204": {description: Grant absent after the operation.}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/ProjectOrTeamNotFound"}
         "409":
           $ref: "#/components/responses/MembershipInactive"
         "422":
@@ -529,6 +737,13 @@ components:
       schema:
         type: string
         format: uuid
+    TeamId:
+      name: team_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
   responses:
     Unauthorized:
       description: The bearer token is missing, malformed, unknown, expired, revoked, digest-mismatched, or bound to an inactive membership.
@@ -653,6 +868,61 @@ components:
               code: membership_inactive
               message: Organization membership is inactive
               details: {}
+    TeamNotFound:
+      description: The team is missing, malformed, or belongs to another organization.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: team_not_found
+              message: Team not found
+              details: {}
+    TeamOrMembershipNotFound:
+      description: The team is evaluated before the organization membership; missing, malformed, and cross-tenant identifiers are concealed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          examples:
+            team:
+              value: {error: {code: team_not_found, message: Team not found, details: {}}}
+            membership:
+              value: {error: {code: membership_not_found, message: Organization membership not found, details: {}}}
+    ProjectOrTeamNotFound:
+      description: The project is evaluated before the team; missing, malformed, and cross-tenant identifiers are concealed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          examples:
+            project:
+              value: {error: {code: project_not_found, message: Project not found, details: {}}}
+            team:
+              value: {error: {code: team_not_found, message: Team not found, details: {}}}
+    TeamInactive:
+      description: The team is inactive and cannot receive new memberships or grants.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: team_inactive
+              message: Team is inactive
+              details: {}
+    TeamOrMembershipInactive:
+      description: The target team or organization membership is inactive.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          examples:
+            team:
+              value: {error: {code: team_inactive, message: Team is inactive, details: {}}}
+            membership:
+              value: {error: {code: membership_inactive, message: Organization membership is inactive, details: {}}}
     LastOwnerRequired:
       description: The requested change would remove the final active organization owner.
       content:
@@ -841,6 +1111,88 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ProjectAccessGrant"
+    TeamWrite:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+    Team:
+      type: object
+      additionalProperties: false
+      required: [id, name, active, deactivated_at, inserted_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        active: {type: boolean}
+        deactivated_at: {type: [string, "null"], format: date-time}
+        inserted_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    TeamEnvelope:
+      type: object
+      additionalProperties: false
+      required: [team]
+      properties:
+        team: {$ref: "#/components/schemas/Team"}
+    TeamListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [teams]
+      properties:
+        teams:
+          type: array
+          items: {$ref: "#/components/schemas/Team"}
+    TeamMembership:
+      type: object
+      additionalProperties: false
+      required: [id, team_id, membership_id, inserted_at]
+      properties:
+        id: {type: string, format: uuid}
+        team_id: {type: string, format: uuid}
+        membership_id: {type: string, format: uuid}
+        inserted_at: {type: string, format: date-time}
+    TeamMembershipEnvelope:
+      type: object
+      additionalProperties: false
+      required: [team_membership]
+      properties:
+        team_membership: {$ref: "#/components/schemas/TeamMembership"}
+    TeamMembershipListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [team_memberships]
+      properties:
+        team_memberships:
+          type: array
+          items: {$ref: "#/components/schemas/TeamMembership"}
+    TeamProjectAccessGrant:
+      type: object
+      additionalProperties: false
+      required: [id, project_id, team_id, access, inserted_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        project_id: {type: string, format: uuid}
+        team_id: {type: string, format: uuid}
+        access: {$ref: "#/components/schemas/ProjectAccessLevel"}
+        inserted_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    TeamProjectAccessGrantEnvelope:
+      type: object
+      additionalProperties: false
+      required: [team_access_grant]
+      properties:
+        team_access_grant: {$ref: "#/components/schemas/TeamProjectAccessGrant"}
+    TeamProjectAccessGrantListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [team_access_grants]
+      properties:
+        team_access_grants:
+          type: array
+          items: {$ref: "#/components/schemas/TeamProjectAccessGrant"}
     TokenCreate:
       type: object
       required: [name, scopes]
@@ -866,6 +1218,7 @@ components:
         - memory.read
         - search.keyword
         - members.manage
+        - teams.manage
         - tokens.manage
     MembershipCreate:
       type: object

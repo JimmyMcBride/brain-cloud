@@ -23,7 +23,7 @@ This slice is production-capable API access control, not a complete identity pro
 
 Human membership lifecycle operations require both an active owner role and `members.manage`; one-time target-member credential issuance additionally requires `tokens.manage`. Authorization completes before resource lookup. Missing, malformed, nonexistent, and cross-tenant membership IDs share `404 membership_not_found`, preventing membership enumeration.
 
-Requested target-token scopes must be a subset of the caller's scopes. A member target cannot receive `members.manage`, `projects.manage_access`, or `tokens.manage`. Raw credentials are returned once, stored only as digests, and excluded from logs, validation details, audit metadata, and membership responses.
+Requested target-token scopes must be a subset of the caller's scopes. A member target cannot receive `members.manage`, `projects.manage_access`, `teams.manage`, or `tokens.manage`. Raw credentials are returned once, stored only as digests, and excluded from logs, validation details, audit metadata, and membership responses.
 
 PostgreSQL row locks serialize changes that could remove an active owner. The final active owner cannot be demoted or deactivated, including concurrent attempts against the last two owners. Deactivation and owner-to-member demotion revoke every active credential bound to the target membership in the same transaction. Reactivation never clears revocation, so access resumes only after an owner explicitly issues a fresh credential. Membership create, role change, deactivate, and reactivate actions commit safe immutable audit events transactionally.
 
@@ -34,6 +34,12 @@ Project access combines fixed token scopes with membership-level authorization. 
 Grant administration requires an active owner plus `projects.manage_access`. PostgreSQL composite foreign keys enforce that each grant, project, and membership share one organization. Inactive memberships cannot receive grants, but existing grants survive suspension/reactivation and role changes; they are dormant for inactive memberships and owners. Member-created projects atomically grant the creator editor access. Existing member/project pairs are backfilled as editors during upgrade, including inactive memberships, while owners remain implicit.
 
 Grant create, access change, and revoke actions commit immutable audit events with project, membership, current access, and previous access where applicable. Idempotent PUTs and absent DELETEs emit no event.
+
+## Phase 2D team access
+
+Team lifecycle and membership administration requires an active owner plus `teams.manage`; team project-grant administration remains separate under `projects.manage_access`. PostgreSQL composite foreign keys enforce organization alignment for teams, membership links, projects, and grants. Case-insensitive team names are unique within an organization.
+
+Teams are soft-deactivated. Their membership links and project grants remain inspectable and auditable but contribute no authorization until explicit reactivation. Active members receive the strongest reader/editor permission from direct grants and any active linked teams, with no deny rules. Team-row locks serialize lifecycle, membership, and grant mutations; transactional audit events are emitted only for real state changes.
 
 Future encryption modes are server-readable, end-to-end encrypted, and local-only. Server-readable projects can use hosted search and Hive Mind. End-to-end encrypted projects may require trusted client-side or user-controlled retrieval and will explicitly disclose lost server features. Searchable end-to-end encryption is not an initial requirement.
 

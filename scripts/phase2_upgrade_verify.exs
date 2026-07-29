@@ -1,6 +1,8 @@
 alias BrainCloud.{Accounts, Memories, Projects, Repo}
 alias BrainCloud.Accounts.{ApiToken, OrganizationMembership, User}
 alias BrainCloud.Projects.ProjectAccessGrant
+alias BrainCloud.Projects.TeamProjectAccessGrant
+alias BrainCloud.Teams.{Team, TeamMembership}
 
 import Ecto.Query
 
@@ -10,9 +12,14 @@ legacy_manager =
       where: token.name == "Bootstrap owner" and is_nil(token.revoked_at)
   )
 true = "projects.manage_access" in legacy_manager.scopes
+false = "teams.manage" in legacy_manager.scopes
+
+legacy_full = Repo.get_by!(ApiToken, name: "Legacy full owner")
+true = "teams.manage" in legacy_full.scopes
 
 legacy_narrow = Repo.get_by!(ApiToken, name: "Legacy narrow reader")
 false = "projects.manage_access" in legacy_narrow.scopes
+false = "teams.manage" in legacy_narrow.scopes
 
 {:ok, bootstrap} =
   Accounts.bootstrap_owner(
@@ -24,6 +31,10 @@ false = "projects.manage_access" in legacy_narrow.scopes
 true = bootstrap.organization.id == Accounts.phase_one_organization_id()
 true = is_binary(bootstrap.raw_token)
 {:ok, auth} = Accounts.authenticate(bootstrap.raw_token)
+true = "teams.manage" in auth.scopes
+true = Repo.aggregate(Team, :count, :id) == 0
+true = Repo.aggregate(TeamMembership, :count, :id) == 0
+true = Repo.aggregate(TeamProjectAccessGrant, :count, :id) == 0
 
 project = Projects.get_project("11111111-1111-4111-8111-111111111111", auth.organization_id)
 true = project.name == "Legacy project"
@@ -133,4 +144,4 @@ inactive_legacy_membership =
 true = member_auth.membership_id == membership.id
 {:error, :project_not_found} = Projects.authorize_project(project.id, member_auth, :reader)
 
-IO.puts("Phase 2C upgrade passed")
+IO.puts("Phase 2D upgrade passed")
