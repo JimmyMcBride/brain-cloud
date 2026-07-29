@@ -3,9 +3,22 @@
   "repo_url": "https://github.com/JimmyMcBride/brain-cloud",
   "default_branch": "develop",
   "last_enabled_at": "2026-07-27T17:50:25Z",
-  "last_updated_at": "2026-07-29T08:47:39Z",
+  "last_updated_at": "2026-07-29T21:12:01Z",
   "stories": {},
   "planning": {
+    "agent-identity-and-credential-foundation": {
+      "slug": "agent-identity-and-credential-foundation",
+      "kind": "spec",
+      "title": "Agent identity and credential foundation",
+      "issue_number": 16,
+      "issue_url": "https://github.com/JimmyMcBride/brain-cloud/issues/16",
+      "remote_state": "open",
+      "readiness": "ready",
+      "ownership_mode": "github",
+      "entry_mode": "local_promotion",
+      "source_mode": "local",
+      "updated_at": "2026-07-29T21:12:01Z"
+    },
     "brain-cloud-first-vertical-slice": {
       "slug": "brain-cloud-first-vertical-slice",
       "kind": "spec",
