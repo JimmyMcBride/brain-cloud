@@ -565,6 +565,12 @@ components:
                   code: project_not_found
                   message: Project not found
                   details: {}
+            memory:
+              value:
+                error:
+                  code: memory_not_found
+                  message: Memory not found
+                  details: {}
     ProjectNotFound:
       description: The project is missing, malformed, inaccessible, or belongs to another organization.
       content:
@@ -594,12 +600,6 @@ components:
                 error:
                   code: membership_not_found
                   message: Organization membership not found
-                  details: {}
-            memory:
-              value:
-                error:
-                  code: memory_not_found
-                  message: Memory not found
                   details: {}
     TokenNotFound:
       description: The API token does not exist in the caller's organization.

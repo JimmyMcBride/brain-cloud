@@ -18,10 +18,14 @@ import Ecto.Query
     scopes: ["memory.read"]
   })
 
-Repo.update_all(
-  from(token in ApiToken, where: token.id == ^bootstrap.token.id),
-  set: [scopes: ["members.manage", "tokens.manage"]]
-)
+{1, nil} =
+  Repo.update_all(
+    from(token in ApiToken, where: token.id == ^bootstrap.token.id),
+    set: [scopes: ["members.manage", "tokens.manage"]]
+  )
+
+persisted_bootstrap = Repo.get!(ApiToken, bootstrap.token.id)
+false = "projects.manage_access" in persisted_bootstrap.scopes
 
 inactive_user_id = Ecto.UUID.cast!("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
 
@@ -31,5 +35,3 @@ Repo.update_all(
   ),
   set: [deactivated_at: DateTime.utc_now(:microsecond)]
 )
-
-true = "projects.manage_access" in bootstrap_auth.scopes

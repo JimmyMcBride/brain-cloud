@@ -125,7 +125,7 @@ member_id="$(printf '%s' "$member_response" | jq -er '.membership.id')"
 member_token_response="$(
   authorized_curl "$second_owner_token" \
     --header 'Content-Type: application/json' \
-    --data '{"name":"Member reader","scopes":["memory.write","memory.read","search.keyword"]}' \
+    --data '{"name":"Member project operator","scopes":["memory.write","memory.read","search.keyword"]}' \
     "$base_url/v1/organization/memberships/$member_id/tokens"
 )"
 member_token="$(printf '%s' "$member_token_response" | jq -er '.token.token')"
