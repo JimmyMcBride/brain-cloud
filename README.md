@@ -45,7 +45,7 @@ Planning must be optional. Brain works without Planning, with the official Plann
 
 ## Status
 
-Phase 2D adds reusable organization teams and team-derived reader/editor project grants on top of the Phase 2C direct-grant foundation. Owners have implicit full project access; active members receive the strongest direct or active-team grant while every route still requires its fixed token scope. Team deactivation retains links and grants but makes them dormant until explicit reactivation. Organization-isolated project, immutable Markdown memory, and PostgreSQL keyword-search APIs remain the product slice. The Phoenix/LiveView shell remains an honest bootstrap surface; invitations, interactive login, agent credentials, custom roles, nested teams, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
+Phase 2E adds first-class organization-owned agent principals, revocable read-only credentials, and direct reader project grants without synthetic human identities. Owners manage agent lifecycle and credentials with `agents.manage`; deactivation revokes every active agent credential while retaining dormant grants, and reactivation requires fresh credentials. Human direct/team reader-editor access and the organization-isolated project, immutable Markdown memory, and PostgreSQL keyword-search APIs remain intact. Invitations, interactive login, agent-authored writes, custom roles, nested teams, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
 
 ## Local development
 
@@ -118,7 +118,7 @@ curl --fail-with-body \
   "http://localhost:4000/v1/projects/${project_id}/search?q=durable"
 ```
 
-Tokens use `bc1_<public_id>_<secret>`, are permanently bound to one organization membership, and are stored only as SHA-256 digests. Token-management endpoints require an owner membership plus `tokens.manage`; membership lifecycle endpoints require owner plus `members.manage`, team lifecycle/membership requires owner plus `teams.manage`, and target-member issuance requires both token and membership management scopes. Direct and team project-grant management requires owner plus `projects.manage_access`. Product routes require both their advertised fixed token scope and project access: owners are implicit, readers can retrieve/search, and editors can also create memories.
+Tokens use `bc1_<public_id>_<secret>`, are permanently bound to exactly one human membership or agent principal, and are stored only as SHA-256 digests. Human token-management endpoints require an owner membership plus `tokens.manage`; membership lifecycle requires owner plus `members.manage`, team lifecycle/membership requires owner plus `teams.manage`, and agent lifecycle/credential operations require owner plus `agents.manage`. Direct human, team, and agent project-grant management requires owner plus `projects.manage_access`. Agent tokens are limited to `memory.read` and `search.keyword`, and agent grants are reader-only. Product routes always require both their fixed token scope and project access.
 
 Create a human member and issue a one-time credential explicitly:
 

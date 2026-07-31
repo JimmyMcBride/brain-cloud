@@ -63,9 +63,11 @@ Planning is the first major optional official Brain module. It is not a separate
 
 **Phase 2C complete.** [Project access control foundation](https://github.com/JimmyMcBride/brain-cloud/issues/12) adds direct reader/editor grants for human memberships, implicit owner access, member-creator editor grants, PostgreSQL-enforced tenant alignment, compatibility backfill, owner-only grant administration, deterministic audit events, and project authorization before memory/revision/search lookup.
 
-**Phase 2D implementing.** [Team access foundation](https://github.com/JimmyMcBride/brain-cloud/issues/14) adds reusable organization teams, soft lifecycle, retained membership links, reader/editor team project grants, strongest-access authorization, tenant-safe database constraints, and transactional audit events.
+**Phase 2D complete.** [Team access foundation](https://github.com/JimmyMcBride/brain-cloud/issues/14) adds reusable organization teams, soft lifecycle, retained membership links, reader/editor team project grants, strongest-access authorization, tenant-safe database constraints, and transactional audit events.
 
-Later Phase 2 slices add invitations, agent credentials, interactive identity, and fine-grained access beyond direct and team grants.
+**Phase 2E implementing.** [Agent identity and credential foundation](https://github.com/JimmyMcBride/brain-cloud/issues/16) adds organization-owned agent principals, revocable read-only credentials, direct reader grants, explicit authentication provenance, tenant-safe constraints, and transactional lifecycle audits.
+
+Later Phase 2 slices add invitations, interactive identity, agent-authored write provenance, and finer-grained access.
 
 ### Phase 3 — Complete cloud-native Brain project model
 
