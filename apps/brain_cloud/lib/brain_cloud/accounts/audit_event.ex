@@ -24,6 +24,14 @@ defmodule BrainCloud.Accounts.AuditEvent do
     team_project_access.grant
     team_project_access.change
     team_project_access.revoke
+    agent.create
+    agent.rename
+    agent.deactivate
+    agent.reactivate
+    agent_token.create
+    agent_token.revoke
+    agent_project_access.grant
+    agent_project_access.revoke
     memory.create
   )
   @primary_key {:id, :binary_id, autogenerate: true}

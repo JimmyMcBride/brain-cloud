@@ -64,7 +64,7 @@ curl --fail --silent --show-error "$base_url/readyz" |
   jq -e '. == {"status":"ready"}' >/dev/null
 
 curl --fail --silent --show-error "$base_url/v1/system/info" |
-  jq -e '.modules == [] and (.capabilities | contains(["system.info", "projects.create", "projects.manage_access", "memory.write", "memory.read", "search.keyword", "members.manage", "teams.manage", "tokens.manage"]))' >/dev/null
+  jq -e '.modules == [] and (.capabilities | contains(["system.info", "projects.create", "projects.manage_access", "memory.write", "memory.read", "search.keyword", "members.manage", "teams.manage", "agents.manage", "tokens.manage"]))' >/dev/null
 
 organization_a_slug="smoke-a-$run_suffix"
 organization_b_slug="smoke-b-$run_suffix"
@@ -295,6 +295,101 @@ printf '%s' "$memory_response" |
   jq -e --arg content "$memory_content" --arg hash "$content_hash" \
     '.memory.revision.content == $content and .memory.revision.content_hash == $hash' >/dev/null
 
+agent_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Smoke retriever"}' \
+    "$base_url/v1/organization/agents"
+)"
+agent_id="$(printf '%s' "$agent_response" | jq -er '.agent.id')"
+
+agent_token_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Smoke agent reader","scopes":["memory.read","search.keyword"]}' \
+    "$base_url/v1/organization/agents/$agent_id/tokens"
+)"
+agent_token_id="$(printf '%s' "$agent_token_response" | jq -er '.token.id')"
+agent_token="$(printf '%s' "$agent_token_response" | jq -er '.token.token')"
+
+authorized_curl "$token_a" \
+  --request PUT \
+  --header 'Content-Type: application/json' \
+  --data '{"access":"reader"}' \
+  "$base_url/v1/projects/$project_id/agent-access/$agent_id" |
+  jq -e --arg agent_id "$agent_id" \
+    '.agent_access_grant.agent_id == $agent_id and .agent_access_grant.access == "reader"' >/dev/null
+
+authorized_curl "$agent_token" "$base_url/v1/projects/$project_id/memories/$memory_id" |
+  jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
+authorized_curl "$agent_token" "$base_url/v1/projects/$project_id/search?q=phoenix" |
+  jq -e --arg memory_id "$memory_id" 'any(.results[]; .memory_id == $memory_id)' >/dev/null
+
+agent_write_status="$(
+  curl --silent --show-error --output "$scratch_dir/agent-write.json" --write-out '%{http_code}' \
+    --header "Authorization: Bearer $agent_token" \
+    --header 'Content-Type: application/json' \
+    --data '{"title":"Denied","content":"Denied","content_type":"text/markdown"}' \
+    "$base_url/v1/projects/not-a-uuid/memories"
+)"
+test "$agent_write_status" = "403"
+jq -e '.error.code == "forbidden"' "$scratch_dir/agent-write.json" >/dev/null
+
+agent_manage_status="$(
+  curl --silent --show-error --output "$scratch_dir/agent-manage.json" --write-out '%{http_code}' \
+    --header "Authorization: Bearer $agent_token" \
+    "$base_url/v1/organization/agents"
+)"
+test "$agent_manage_status" = "403"
+jq -e '.error.code == "forbidden"' "$scratch_dir/agent-manage.json" >/dev/null
+
+cross_agent_status="$(
+  curl --silent --show-error --output "$scratch_dir/cross-agent.json" --write-out '%{http_code}' \
+    --request PATCH \
+    --header "Authorization: Bearer $token_b" \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Hidden"}' \
+    "$base_url/v1/organization/agents/$agent_id"
+)"
+test "$cross_agent_status" = "404"
+jq -e '.error.code == "agent_not_found"' "$scratch_dir/cross-agent.json" >/dev/null
+
+authorized_curl "$token_a" --request DELETE \
+  "$base_url/v1/organization/agents/$agent_id" >/dev/null
+
+inactive_agent_status="$(
+  curl --silent --show-error --output "$scratch_dir/inactive-agent.json" --write-out '%{http_code}' \
+    --header "Authorization: Bearer $agent_token" \
+    "$base_url/v1/projects/$project_id/memories/$memory_id"
+)"
+test "$inactive_agent_status" = "401"
+
+authorized_curl "$token_a" --request POST \
+  "$base_url/v1/organization/agents/$agent_id/reactivate" |
+  jq -e '.agent.active == true' >/dev/null
+
+old_agent_status="$(
+  curl --silent --show-error --output "$scratch_dir/old-agent.json" --write-out '%{http_code}' \
+    --header "Authorization: Bearer $agent_token" \
+    "$base_url/v1/projects/$project_id/memories/$memory_id"
+)"
+test "$old_agent_status" = "401"
+
+fresh_agent_token_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Fresh smoke agent reader","scopes":["memory.read","search.keyword"]}' \
+    "$base_url/v1/organization/agents/$agent_id/tokens"
+)"
+fresh_agent_token="$(printf '%s' "$fresh_agent_token_response" | jq -er '.token.token')"
+
+authorized_curl "$fresh_agent_token" "$base_url/v1/projects/$project_id/memories/$memory_id" |
+  jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
+
+authorized_curl "$token_a" "$base_url/v1/auth/tokens" |
+  jq -e --arg agent_token_id "$agent_token_id" \
+    'all(.tokens[]; .id != $agent_token_id)' >/dev/null
+
 for tenant_b_path in \
   "$base_url/v1/projects/$project_id/memories/$memory_id" \
   "$base_url/v1/projects/$project_id/search?q=phoenix"; do
@@ -443,6 +538,10 @@ authorized_curl "$replacement_member_token" \
   "$base_url/v1/projects/$project_id/memories/$memory_id" |
   jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
 
+authorized_curl "$fresh_agent_token" \
+  "$base_url/v1/projects/$project_id/memories/$memory_id" |
+  jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
+
 rotated_a="$(
   bootstrap_owner \
     "owner-a-$run_suffix@example.test" \
@@ -500,6 +599,10 @@ authorized_curl "$replacement_member_token" \
   "$base_url/v1/projects/$project_id/memories/$memory_id" |
   jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
 
+authorized_curl "$fresh_agent_token" \
+  "$base_url/v1/projects/$project_id/memories/$memory_id" |
+  jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
+
 authorized_curl "$replacement_token" \
   --request DELETE \
   "$base_url/v1/projects/$project_id/access/$member_id" >/dev/null
@@ -518,5 +621,16 @@ revoked_access_status="$(
 test "$revoked_access_status" = "404"
 jq -e '.error.code == "project_not_found"' "$scratch_dir/revoked-access.json" >/dev/null
 
-printf 'Phase 2D smoke passed: organization=%s project=%s memory=%s member=%s team=%s\n' \
-  "$organization_a_id" "$project_id" "$memory_id" "$member_id" "$team_id"
+authorized_curl "$replacement_token" --request DELETE \
+  "$base_url/v1/projects/$project_id/agent-access/$agent_id" >/dev/null
+
+revoked_agent_access_status="$(
+  curl --silent --show-error --output "$scratch_dir/revoked-agent-access.json" --write-out '%{http_code}' \
+    --header "Authorization: Bearer $fresh_agent_token" \
+    "$base_url/v1/projects/$project_id/memories/$memory_id"
+)"
+test "$revoked_agent_access_status" = "404"
+jq -e '.error.code == "project_not_found"' "$scratch_dir/revoked-agent-access.json" >/dev/null
+
+printf 'Phase 2E smoke passed: organization=%s project=%s memory=%s member=%s team=%s agent=%s\n' \
+  "$organization_a_id" "$project_id" "$memory_id" "$member_id" "$team_id" "$agent_id"
