@@ -37,4 +37,4 @@ Brain Cloud is the hosted and self-hostable platform for Brain Core and optional
 
 ## Current focus
 
-Phase 1 through Phase 2D are complete. Execution-ready GitHub spec [#16](https://github.com/JimmyMcBride/brain-cloud/issues/16) defines Phase 2E first-class organization agents, revocable read-only credentials, and direct reader project grants without synthetic human identities. Agent-authored writes, invitations, interactive login, custom roles, and finer-grained policy remain later work. Module framework implementation begins later in Phase 10. Planning integration begins only after a dedicated contract.
+Phase 1 through Phase 2D are complete. Phase 2E is being implemented from canonical GitHub spec [#16](https://github.com/JimmyMcBride/brain-cloud/issues/16): first-class organization agents, revocable read-only credentials, and direct reader project grants without synthetic human identities. Agent-authored writes, invitations, interactive login, custom roles, and finer-grained policy remain later work. Module framework implementation begins later in Phase 10. Planning integration begins only after a dedicated contract.

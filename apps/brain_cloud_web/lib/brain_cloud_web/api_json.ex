@@ -34,6 +34,17 @@ defmodule BrainCloudWeb.APIJSON do
     }
   end
 
+  def agent(agent) do
+    %{
+      id: agent.id,
+      name: agent.name,
+      active: is_nil(agent.deactivated_at),
+      deactivated_at: optional_timestamp(agent.deactivated_at),
+      inserted_at: timestamp(agent.inserted_at),
+      updated_at: timestamp(agent.updated_at)
+    }
+  end
+
   def team_membership(link) do
     %{
       id: link.id,
@@ -48,6 +59,17 @@ defmodule BrainCloudWeb.APIJSON do
       id: grant.id,
       project_id: grant.project_id,
       team_id: grant.team_id,
+      access: grant.access,
+      inserted_at: timestamp(grant.inserted_at),
+      updated_at: timestamp(grant.updated_at)
+    }
+  end
+
+  def agent_project_access_grant(grant) do
+    %{
+      id: grant.id,
+      project_id: grant.project_id,
+      agent_id: grant.agent_id,
       access: grant.access,
       inserted_at: timestamp(grant.inserted_at),
       updated_at: timestamp(grant.updated_at)

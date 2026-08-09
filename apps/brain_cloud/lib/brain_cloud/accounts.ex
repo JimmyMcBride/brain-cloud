@@ -12,6 +12,7 @@ defmodule BrainCloud.Accounts do
   alias BrainCloud.Accounts.OrganizationMembership
   alias BrainCloud.Accounts.Scopes
   alias BrainCloud.Accounts.User
+  alias BrainCloud.Agents.Agent
   alias BrainCloud.Repo
   alias Ecto.Changeset
   alias Ecto.Multi
@@ -319,17 +320,7 @@ defmodule BrainCloud.Accounts do
     with [_, public_id, _secret] <- Regex.run(@token_pattern, raw_token),
          %ApiToken{} = token <- token_by_public_id(public_id),
          true <- valid_token?(token, raw_token) do
-      membership = token.membership
-
-      {:ok,
-       %AuthContext{
-         user_id: membership.user_id,
-         organization_id: membership.organization_id,
-         membership_id: membership.id,
-         role: membership.role,
-         api_token_id: token.id,
-         scopes: token.scopes
-       }}
+      {:ok, auth_context(token)}
     else
       _invalid -> {:error, :unauthorized}
     end
@@ -338,6 +329,22 @@ defmodule BrainCloud.Accounts do
   def authenticate(_raw_token), do: {:error, :unauthorized}
 
   def authorized?(%AuthContext{scopes: scopes}, scope), do: Scopes.allowed?(scopes, scope)
+
+  def issue_agent_token(agent_id, attrs) do
+    attrs = Map.new(attrs)
+
+    case attribute(attrs, :scopes) do
+      scopes when is_list(scopes) ->
+        if scopes != [] and Scopes.subset?(scopes, ["memory.read", "search.keyword"]) do
+          issue_token_for(%{agent_id: agent_id}, attrs, false)
+        else
+          {:error, agent_scope_changeset(attrs, agent_id)}
+        end
+
+      _missing ->
+        {:error, agent_validation_token_changeset(attrs, agent_id)}
+    end
+  end
 
   def audit_changeset(
         %AuthContext{} = auth,
@@ -552,6 +559,10 @@ defmodule BrainCloud.Accounts do
   end
 
   defp issue_token(membership_id, attrs, bootstrap?) do
+    issue_token_for(%{membership_id: membership_id}, attrs, bootstrap?)
+  end
+
+  defp issue_token_for(principal, attrs, bootstrap?) do
     public_id = :crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower)
     secret = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
     raw_token = "bc1_#{public_id}_#{secret}"
@@ -563,7 +574,7 @@ defmodule BrainCloud.Accounts do
           token_digest: :crypto.hash(:sha256, raw_token),
           bootstrap: bootstrap?
         }),
-        membership_id
+        principal
       )
 
     case Repo.insert(changeset) do
@@ -572,18 +583,24 @@ defmodule BrainCloud.Accounts do
     end
   end
 
-  defp token_changeset(attrs, membership_id) do
+  defp token_changeset(attrs, membership_id) when is_binary(membership_id) do
+    token_changeset(attrs, %{membership_id: membership_id})
+  end
+
+  defp token_changeset(attrs, principal) when is_map(principal) do
     attrs = Map.new(attrs)
 
-    ApiToken.changeset(%ApiToken{}, %{
-      membership_id: membership_id,
-      public_id: attribute(attrs, :public_id),
-      token_digest: attribute(attrs, :token_digest),
-      name: attribute(attrs, :name),
-      scopes: attribute(attrs, :scopes),
-      expires_at: attribute(attrs, :expires_at),
-      bootstrap: attribute(attrs, :bootstrap) || false
-    })
+    ApiToken.changeset(
+      %ApiToken{},
+      Map.merge(principal, %{
+        public_id: attribute(attrs, :public_id),
+        token_digest: attribute(attrs, :token_digest),
+        name: attribute(attrs, :name),
+        scopes: attribute(attrs, :scopes),
+        expires_at: attribute(attrs, :expires_at),
+        bootstrap: attribute(attrs, :bootstrap) || false
+      })
+    )
   end
 
   defp scope_subset_changeset(attrs, membership_id) do
@@ -707,6 +724,7 @@ defmodule BrainCloud.Accounts do
                     "members.manage",
                     "projects.manage_access",
                     "teams.manage",
+                    "agents.manage",
                     "tokens.manage"
                   ])
               ) ->
@@ -739,7 +757,7 @@ defmodule BrainCloud.Accounts do
   defp token_by_public_id(public_id) do
     case Repo.get_by(ApiToken, public_id: public_id) do
       nil -> nil
-      token -> Repo.preload(token, membership: [:user, :organization])
+      token -> Repo.preload(token, membership: [:user, :organization], agent: :organization)
     end
   end
 
@@ -753,7 +771,7 @@ defmodule BrainCloud.Accounts do
   end
 
   defp valid_token?(token, raw_token) do
-    membership_active? = is_nil(token.membership.deactivated_at)
+    principal_active? = principal_active?(token)
     not_revoked? = is_nil(token.revoked_at)
 
     not_expired? =
@@ -765,7 +783,55 @@ defmodule BrainCloud.Accounts do
       byte_size(provided_digest) == byte_size(token.token_digest) and
         :crypto.hash_equals(provided_digest, token.token_digest)
 
-    membership_active? and not_revoked? and not_expired? and digest_matches?
+    principal_active? and not_revoked? and not_expired? and digest_matches?
+  end
+
+  defp auth_context(%ApiToken{membership: membership} = token)
+       when not is_nil(membership) do
+    %AuthContext{
+      principal_type: :human,
+      principal_id: membership.id,
+      user_id: membership.user_id,
+      organization_id: membership.organization_id,
+      membership_id: membership.id,
+      role: membership.role,
+      api_token_id: token.id,
+      scopes: token.scopes
+    }
+  end
+
+  defp auth_context(%ApiToken{agent: %Agent{} = agent} = token) do
+    %AuthContext{
+      principal_type: :agent,
+      principal_id: agent.id,
+      agent_id: agent.id,
+      organization_id: agent.organization_id,
+      role: "agent",
+      api_token_id: token.id,
+      scopes: token.scopes
+    }
+  end
+
+  defp principal_active?(%ApiToken{membership: membership}) when not is_nil(membership),
+    do: is_nil(membership.deactivated_at)
+
+  defp principal_active?(%ApiToken{agent: %Agent{} = agent}),
+    do: is_nil(agent.deactivated_at)
+
+  defp principal_active?(_token), do: false
+
+  defp agent_validation_token_changeset(attrs, agent_id) do
+    attrs
+    |> Map.new()
+    |> Map.put(:public_id, @validation_public_id)
+    |> Map.put(:token_digest, @validation_digest)
+    |> token_changeset(%{agent_id: agent_id})
+  end
+
+  defp agent_scope_changeset(attrs, agent_id) do
+    attrs
+    |> agent_validation_token_changeset(agent_id)
+    |> Changeset.add_error(:scopes, "may include only memory.read and search.keyword")
   end
 
   defp unwrap_transaction({:ok, value}), do: {:ok, value}

@@ -3,7 +3,7 @@
   "repo_url": "https://github.com/JimmyMcBride/brain-cloud",
   "default_branch": "develop",
   "last_enabled_at": "2026-07-27T17:50:25Z",
-  "last_updated_at": "2026-07-29T21:12:01Z",
+  "last_updated_at": "2026-07-31T19:29:34Z",
   "stories": {},
   "planning": {
     "agent-identity-and-credential-foundation": {
@@ -17,7 +17,7 @@
       "ownership_mode": "github",
       "entry_mode": "local_promotion",
       "source_mode": "local",
-      "updated_at": "2026-07-29T21:12:01Z"
+      "updated_at": "2026-07-31T19:29:34Z"
     },
     "brain-cloud-first-vertical-slice": {
       "slug": "brain-cloud-first-vertical-slice",
