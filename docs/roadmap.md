@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-29T07:04:36Z"
+updated: "2026-08-09T08:45:48Z"
 ---
 # Brain Cloud roadmap
 
@@ -65,9 +65,11 @@ Planning is the first major optional official Brain module. It is not a separate
 
 **Phase 2D complete.** [Team access foundation](https://github.com/JimmyMcBride/brain-cloud/issues/14) adds reusable organization teams, soft lifecycle, retained membership links, reader/editor team project grants, strongest-access authorization, tenant-safe database constraints, and transactional audit events.
 
-**Phase 2E implementing.** [Agent identity and credential foundation](https://github.com/JimmyMcBride/brain-cloud/issues/16) adds organization-owned agent principals, revocable read-only credentials, direct reader grants, explicit authentication provenance, tenant-safe constraints, and transactional lifecycle audits.
+**Phase 2E complete.** [Agent identity and credential foundation](https://github.com/JimmyMcBride/brain-cloud/issues/16) adds organization-owned agent principals, revocable read-only credentials, direct reader grants, explicit authentication provenance, tenant-safe constraints, and transactional lifecycle audits.
 
-Later Phase 2 slices add invitations, interactive identity, agent-authored write provenance, and finer-grained access.
+**Phase 2F ready.** [Agent-authored memory provenance foundation](https://github.com/JimmyMcBride/brain-cloud/issues/19) adds explicit human/agent memory and audit provenance, direct agent editor grants, and scoped agent-authored immutable memory creation.
+
+Later Phase 2 slices add invitations, interactive identity, proposals, and finer-grained access.
 
 ### Phase 3 — Complete cloud-native Brain project model
 
@@ -145,4 +147,4 @@ Planning remains focused on turning durable project understanding into structure
 
 ## Current implementation non-goals
 
-The current implementation does not include invitations, teams, agent credentials, interactive login, fine-grained project permissions, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.
+The current implementation does not include invitations, interactive login, agent-authored writes, proposals, custom roles, deny rules, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.

@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-31T19:47:40Z"
+updated: "2026-08-09T08:46:11Z"
 ---
 # Current State
 
@@ -45,5 +45,7 @@ Phase 2C implements GitHub spec [#12](https://github.com/JimmyMcBride/brain-clou
 Phase 2D implements GitHub spec [#14](https://github.com/JimmyMcBride/brain-cloud/issues/14), `team-access-foundation`: soft-deactivated organization teams, retained membership links, separate team project grants, strongest direct-or-team authorization, fixed `teams.manage`, tenant-aligned composite constraints, serialized mutations, and transactional audit semantics. Invitations, interactive login, service/agent identities, custom roles, nested teams, deny rules, and a generic policy engine remain deferred.
 
 Phase 2E implements GitHub spec [#16](https://github.com/JimmyMcBride/brain-cloud/issues/16), `agent-identity-and-credential-foundation`: organization-owned agent principals, shared-format read-only credentials with explicit principal provenance, fixed `agents.manage`, direct reader grants, lifecycle locking, aggregate deactivation revocation audits, and tenant-aligned database constraints. Agent-authored writes, invitations, interactive login, custom roles, deny rules, and a generic policy engine remain deferred.
+
+Phase 2F is ready in canonical GitHub spec [#19](https://github.com/JimmyMcBride/brain-cloud/issues/19), `agent-authored-memory-provenance-foundation`: split human/agent memory and audit provenance, direct agent editor grants, and scoped agent-authored immutable memory creation. Project creation, administration, delegation, proposals, and a generic policy engine remain deferred.
 
 When a local brainstorm has already been promoted in GitHub source mode, update the existing issue with `plan github adopt --issues <number>`; do not reapply `plan discuss promote`, whose preview does not reconcile local brainstorm sources to existing issues.

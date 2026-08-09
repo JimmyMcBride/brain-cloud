@@ -1,8 +1,22 @@
 {
   "schema_version": 3,
-  "last_active_chain": "brainstorm/organization-membership-administration-foundation",
-  "last_updated_at": "2026-07-28T20:55:13Z",
+  "last_active_chain": "brainstorm/agent-authored-memory-provenance-foundation",
+  "last_updated_at": "2026-08-09T08:40:56Z",
   "sessions": {
+    "brainstorm/agent-authored-memory-provenance-foundation": {
+      "chain_id": "brainstorm/agent-authored-memory-provenance-foundation",
+      "brainstorm": "agent-authored-memory-provenance-foundation",
+      "current_stage": "brainstorm",
+      "current_cluster": 5,
+      "current_cluster_label": "handoff-epic",
+      "stage_statuses": {
+        "brainstorm": "in_progress"
+      },
+      "summary": "Recap:\nCurrent understanding: Phase 2E gives agents honest identities and read-only project access, but memory creation assumes every author is a human user. Granting memory.write now would either crash on missing user provenance, impersonate a human, or weaken database integrity. Revision and audit actor models must support agents before any agent-authored durable write is safe. / Organizations can give a narrowly scoped automation agent direct editor access to selected projects. Agents can create durable memory under their own identity; people and future clients can trust author provenance, revoke access immediately, and distinguish human from automated content without a separate workflow system.\nKey decisions: appetite captured.\nUnresolved risks or questions: none captured yet.\nParked items: none.\nRecommended next stage: Review recap and continue into the epic stage when ready.",
+      "next_action": "Review recap and continue into the epic stage when ready.",
+      "created_at": "2026-08-09T08:38:23Z",
+      "updated_at": "2026-08-09T08:40:56Z"
+    },
     "brainstorm/brain-cloud-first-vertical-slice": {
       "chain_id": "brainstorm/brain-cloud-first-vertical-slice",
       "brainstorm": "brain-cloud-first-vertical-slice",
