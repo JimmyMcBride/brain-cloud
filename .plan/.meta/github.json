@@ -3,9 +3,22 @@
   "repo_url": "https://github.com/JimmyMcBride/brain-cloud",
   "default_branch": "develop",
   "last_enabled_at": "2026-07-27T17:50:25Z",
-  "last_updated_at": "2026-07-31T19:29:34Z",
+  "last_updated_at": "2026-08-09T08:45:11Z",
   "stories": {},
   "planning": {
+    "agent-authored-memory-provenance-foundation": {
+      "slug": "agent-authored-memory-provenance-foundation",
+      "kind": "spec",
+      "title": "Agent-authored memory provenance foundation",
+      "issue_number": 19,
+      "issue_url": "https://github.com/JimmyMcBride/brain-cloud/issues/19",
+      "remote_state": "open",
+      "readiness": "ready",
+      "ownership_mode": "github",
+      "entry_mode": "local_promotion",
+      "source_mode": "local",
+      "updated_at": "2026-08-09T08:45:11Z"
+    },
     "agent-identity-and-credential-foundation": {
       "slug": "agent-identity-and-credential-foundation",
       "kind": "spec",
