@@ -25,6 +25,8 @@ defmodule BrainCloud.AccountsTest do
     assert first.membership.role == "owner"
 
     assert {:ok, auth} = Accounts.authenticate(first.raw_token)
+    assert auth.principal_type == :human
+    assert auth.principal_id == first.membership.id
     assert auth.user_id == first.user.id
     assert auth.organization_id == first.organization.id
     assert "tokens.manage" in auth.scopes

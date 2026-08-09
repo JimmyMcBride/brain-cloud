@@ -790,7 +790,7 @@ defmodule BrainCloud.Accounts do
        when not is_nil(membership) do
     %AuthContext{
       principal_type: :human,
-      principal_id: membership.user_id,
+      principal_id: membership.id,
       user_id: membership.user_id,
       organization_id: membership.organization_id,
       membership_id: membership.id,

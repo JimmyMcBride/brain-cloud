@@ -1,5 +1,5 @@
 ---
-updated: "2026-07-29T07:04:36Z"
+updated: "2026-08-09T07:30:35Z"
 ---
 # Security direction
 
@@ -13,7 +13,7 @@ Permission checks occur before search, retrieval, reranking, context compilation
 
 Protected product routes authenticate persisted, versioned `bc1_<public_id>_<secret>` credentials. Brain Cloud stores only a public lookup ID and SHA-256 digest, compares digests in constant time, rejects expired/revoked credentials and inactive memberships, and assigns one immutable user/organization/membership/role/token/scope context to each request. Operational endpoints, the bootstrap LiveView, and system discovery remain public.
 
-Every token belongs permanently to one organization membership. Required scopes are checked before resource lookup; valid insufficient credentials return `403`, while missing and cross-tenant resources share non-enumerating `404` responses. Project, memory, and search queries include organization predicates before protected content loads. Owner role plus `tokens.manage` controls token creation, metadata listing, and revocation, and issued scopes cannot exceed the caller's scopes.
+Every token belongs permanently to exactly one principal: a human organization membership or an organization-owned agent. Required scopes are checked before resource lookup; valid insufficient credentials return `403`, while missing and cross-tenant resources share non-enumerating `404` responses. Project, memory, and search queries include organization predicates before protected content loads. Owner role plus `tokens.manage` controls human token creation, metadata listing, and revocation, and issued scopes cannot exceed the caller's scopes.
 
 Bootstrap, token create/revoke, project create, and memory create commit immutable audit events in the same transaction as their durable action. The bootstrap secret is displayed once; explicit recovery revokes it and displays one replacement. Raw tokens and digests are excluded from normal logs, errors, audit metadata, inspection, list, and revoke output.
 
