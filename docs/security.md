@@ -1,5 +1,5 @@
 ---
-updated: "2026-08-09T07:30:35Z"
+updated: "2026-08-10T07:11:28Z"
 ---
 # Security direction
 
@@ -41,11 +41,11 @@ Team lifecycle and membership administration requires an active owner plus `team
 
 Teams are soft-deactivated. Their membership links and project grants remain inspectable and auditable but contribute no authorization until explicit reactivation. Active members receive the strongest reader/editor permission from direct grants and any active linked teams, with no deny rules. Team-row locks serialize lifecycle, membership, and grant mutations; transactional audit events are emitted only for real state changes.
 
-## Phase 2E agent identity and credentials
+## Phase 2E–2F agent identity, credentials, and provenance
 
-Agents are organization-owned principals, not synthetic users or memberships. Each credential belongs to exactly one human membership or agent, uses the same one-time-secret/digest format, and authenticates into an explicit principal type and ID. Agent credentials are restricted to non-empty subsets of `memory.read` and `search.keyword`; they cannot bootstrap, write memory, manage agents, or exercise human administration.
+Agents are organization-owned principals, not synthetic users or memberships. Each credential belongs to exactly one human membership or agent, uses the same one-time-secret/digest format, and authenticates into an explicit principal type and ID. Agent credentials are restricted to non-empty subsets of `memory.write`, `memory.read`, and `search.keyword`; they cannot bootstrap, create projects, manage access, manage agents, or exercise human administration.
 
-Agent lifecycle and nested credential operations require an active owner plus `agents.manage`. Direct agent grants require owner plus `projects.manage_access`, are reader-only, and use project-first tenant concealment. Deactivation locks the agent, revokes all active credentials transactionally, emits one aggregate audit event, and retains dormant grants. Reactivation never restores credentials. PostgreSQL checks enforce exactly one token principal and tenant-aligned agent grants.
+Agent lifecycle and nested credential operations require an active owner plus `agents.manage`. Direct agent grants require owner plus `projects.manage_access`, are reader or editor, and use project-first tenant concealment. Agent memory creation requires both `memory.write` and a direct editor grant; retrieval and search require their own scopes plus reader or editor access. Revision and audit rows store exactly one human or agent actor, preserve existing human actor IDs, and enforce agent tenant alignment in PostgreSQL. Deactivation locks the agent, revokes all active credentials transactionally, emits one aggregate audit event, and retains dormant grants. Reactivation never restores credentials. PostgreSQL checks enforce exactly one token principal, exactly one revision and audit actor, and tenant-aligned agent grants and provenance.
 
 Future encryption modes are server-readable, end-to-end encrypted, and local-only. Server-readable projects can use hosted search and Hive Mind. End-to-end encrypted projects may require trusted client-side or user-controlled retrieval and will explicitly disclose lost server features. Searchable end-to-end encryption is not an initial requirement.
 
