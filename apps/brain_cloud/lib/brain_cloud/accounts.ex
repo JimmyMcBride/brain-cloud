@@ -335,7 +335,8 @@ defmodule BrainCloud.Accounts do
 
     case attribute(attrs, :scopes) do
       scopes when is_list(scopes) ->
-        if scopes != [] and Scopes.subset?(scopes, ["memory.read", "search.keyword"]) do
+        if scopes != [] and
+             Scopes.subset?(scopes, ["memory.write", "memory.read", "search.keyword"]) do
           issue_token_for(%{agent_id: agent_id}, attrs, false)
         else
           {:error, agent_scope_changeset(attrs, agent_id)}
@@ -353,15 +354,26 @@ defmodule BrainCloud.Accounts do
         resource_id,
         metadata \\ %{}
       ) do
-    AuditEvent.changeset(%AuditEvent{}, %{
-      organization_id: auth.organization_id,
-      actor_user_id: auth.user_id,
-      api_token_id: auth.api_token_id,
-      action: action,
-      resource_type: resource_type,
-      resource_id: resource_id,
-      metadata: metadata
-    })
+    actor =
+      case auth.principal_type do
+        :human -> %{actor_user_id: auth.user_id}
+        :agent -> %{actor_agent_id: auth.agent_id}
+      end
+
+    AuditEvent.changeset(
+      %AuditEvent{},
+      Map.merge(
+        %{
+          organization_id: auth.organization_id,
+          api_token_id: auth.api_token_id,
+          action: action,
+          resource_type: resource_type,
+          resource_id: resource_id,
+          metadata: metadata
+        },
+        actor
+      )
+    )
   end
 
   def phase_one_organization_id, do: @phase_one_organization_id

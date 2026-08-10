@@ -39,6 +39,7 @@ defmodule BrainCloudWeb.MemoryControllerTest do
                  "content" => ^content,
                  "content_type" => "text/markdown",
                  "content_hash" => content_hash,
+                 "actor_type" => "human",
                  "actor_id" => actor_id,
                  "inserted_at" => revision_inserted_at
                }
@@ -71,6 +72,7 @@ defmodule BrainCloudWeb.MemoryControllerTest do
                  "content_hash" => ^content_hash,
                  "excerpt" => "Durable Phoenix cloud memory",
                  "rank" => rank,
+                 "actor_type" => "human",
                  "actor_id" => ^actor_id,
                  "inserted_at" => ^revision_inserted_at
                }

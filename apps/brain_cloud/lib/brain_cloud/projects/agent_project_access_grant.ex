@@ -19,7 +19,7 @@ defmodule BrainCloud.Projects.AgentProjectAccessGrant do
     grant
     |> cast(attrs, [:organization_id, :project_id, :agent_id, :access])
     |> validate_required([:organization_id, :project_id, :agent_id, :access])
-    |> validate_inclusion(:access, ["reader"])
+    |> validate_inclusion(:access, ["reader", "editor"])
     |> foreign_key_constraint(:organization_id)
     |> foreign_key_constraint(:project_id,
       name: :agent_project_access_grants_project_tenant_fkey

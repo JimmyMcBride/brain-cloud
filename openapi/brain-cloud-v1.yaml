@@ -310,8 +310,8 @@ paths:
   /v1/organization/agents/{agent_id}/tokens:
     post:
       operationId: createAgentToken
-      summary: Create a one-time read-only credential for an active agent
-      description: The raw token appears only in this response. Agent scopes are restricted to memory.read and search.keyword.
+      summary: Create a one-time scoped credential for an active agent
+      description: The raw token appears only in this response. Agent scopes are restricted to memory.write, memory.read, and search.keyword.
       x-required-role: owner
       x-required-scope: agents.manage
       security: [{bearerAuth: []}]
@@ -684,7 +684,7 @@ paths:
   /v1/projects/{project_id}/agent-access:
     get:
       operationId: listAgentProjectAccessGrants
-      summary: List direct agent reader grants for a project
+      summary: List direct agent reader/editor grants for a project
       description: Includes grants retained for deactivated agents.
       x-required-role: owner
       x-required-scope: projects.manage_access
@@ -702,8 +702,8 @@ paths:
   /v1/projects/{project_id}/agent-access/{agent_id}:
     put:
       operationId: putAgentProjectAccessGrant
-      summary: Create an active agent's direct reader grant
-      description: Only reader access is valid. Repeating the same grant is idempotent.
+      summary: Set an active agent's direct reader/editor grant
+      description: Repeating the same access is idempotent; changing access updates the retained grant.
       x-required-role: owner
       x-required-scope: projects.manage_access
       security: [{bearerAuth: []}]
@@ -717,7 +717,7 @@ paths:
             schema: {$ref: "#/components/schemas/AgentProjectAccessGrantPut"}
       responses:
         "200":
-          description: Grant created or already present.
+          description: Grant created, changed, or already in the requested state.
           content:
             application/json:
               schema: {$ref: "#/components/schemas/AgentProjectAccessGrantEnvelope"}
@@ -744,7 +744,7 @@ paths:
     post:
       operationId: createMemory
       summary: Create a memory with immutable revision 1
-      description: Requires owner access or a direct editor grant in addition to memory.write.
+      description: Requires human owner/direct editor access or an active agent's direct editor grant in addition to memory.write.
       x-required-scope: memory.write
       security:
         - bearerAuth: []
@@ -1216,6 +1216,7 @@ components:
             content: "# Durable\nPhoenix cloud memory"
             content_type: text/markdown
             content_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+            actor_type: human
             actor_id: 00000000-0000-0000-0000-000000000001
             inserted_at: "2026-07-28T05:01:00.000000Z"
     TokenCreated:
@@ -1240,6 +1241,7 @@ components:
             content_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
             excerpt: Durable Phoenix cloud memory
             rank: 0.06079271
+            actor_type: human
             actor_id: 00000000-0000-0000-0000-000000000001
             inserted_at: "2026-07-28T05:01:00.000000Z"
   schemas:
@@ -1475,7 +1477,7 @@ components:
       properties:
         access:
           type: string
-          const: reader
+          enum: [reader, editor]
     AgentProjectAccessGrant:
       type: object
       additionalProperties: false
@@ -1484,7 +1486,7 @@ components:
         id: {type: string, format: uuid}
         project_id: {type: string, format: uuid}
         agent_id: {type: string, format: uuid}
-        access: {type: string, const: reader}
+        access: {type: string, enum: [reader, editor]}
         inserted_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
     AgentProjectAccessGrantEnvelope:
@@ -1513,7 +1515,7 @@ components:
           uniqueItems: true
           items:
             type: string
-            enum: [memory.read, search.keyword]
+            enum: [memory.write, memory.read, search.keyword]
         expires_at:
           type: [string, "null"]
           format: date-time
@@ -1748,6 +1750,7 @@ components:
         - content
         - content_type
         - content_hash
+        - actor_type
         - actor_id
         - inserted_at
       properties:
@@ -1768,6 +1771,9 @@ components:
         content_hash:
           type: string
           pattern: "^[0-9a-f]{64}$"
+        actor_type:
+          type: string
+          enum: [human, agent]
         actor_id:
           type: string
           format: uuid
@@ -1795,6 +1801,7 @@ components:
         - content_hash
         - excerpt
         - rank
+        - actor_type
         - actor_id
         - inserted_at
       properties:
@@ -1818,6 +1825,9 @@ components:
         rank:
           type: number
           format: float
+        actor_type:
+          type: string
+          enum: [human, agent]
         actor_id:
           type: string
           format: uuid

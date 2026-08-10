@@ -204,6 +204,116 @@ defmodule BrainCloudWeb.AgentControllerTest do
            ) == "forbidden"
   end
 
+  test "agent editor writes with exact provenance and independent route scopes", %{
+    conn: conn,
+    identity: identity
+  } do
+    {:ok, project} = Projects.create_project(%{name: "Agent Write"}, identity.auth_context)
+
+    %{"agent" => %{"id" => agent_id}} =
+      conn
+      |> authenticate(identity)
+      |> post(~p"/v1/organization/agents", %{name: "Write Agent"})
+      |> json_response(201)
+
+    %{"token" => %{"token" => write_raw}} =
+      conn
+      |> recycle()
+      |> authenticate(identity)
+      |> post(~p"/v1/organization/agents/#{agent_id}/tokens", %{
+        name: "Write",
+        scopes: ["memory.write"]
+      })
+      |> json_response(201)
+
+    write = %{title: "Agent-authored", content: "agent provenance", content_type: "text/markdown"}
+
+    assert error_code(
+             conn
+             |> recycle()
+             |> bearer(write_raw)
+             |> post(~p"/v1/projects/#{project.id}/memories", write)
+             |> json_response(404)
+           ) == "project_not_found"
+
+    conn
+    |> recycle()
+    |> authenticate(identity)
+    |> put(~p"/v1/projects/#{project.id}/agent-access/#{agent_id}", %{access: "reader"})
+    |> json_response(200)
+
+    assert error_code(
+             conn
+             |> recycle()
+             |> bearer(write_raw)
+             |> post(~p"/v1/projects/#{project.id}/memories", write)
+             |> json_response(404)
+           ) == "project_not_found"
+
+    assert %{"agent_access_grant" => %{"access" => "editor"}} =
+             conn
+             |> recycle()
+             |> authenticate(identity)
+             |> put(~p"/v1/projects/#{project.id}/agent-access/#{agent_id}", %{access: "editor"})
+             |> json_response(200)
+
+    assert %{
+             "memory" => %{
+               "id" => memory_id,
+               "revision" => %{
+                 "actor_type" => "agent",
+                 "actor_id" => ^agent_id,
+                 "title" => "Agent-authored"
+               }
+             }
+           } =
+             conn
+             |> recycle()
+             |> bearer(write_raw)
+             |> post(~p"/v1/projects/#{project.id}/memories", write)
+             |> json_response(201)
+
+    assert error_code(
+             conn
+             |> recycle()
+             |> bearer(write_raw)
+             |> get(~p"/v1/projects/#{project.id}/memories/#{memory_id}")
+             |> json_response(403)
+           ) == "forbidden"
+
+    %{"token" => %{"token" => read_raw}} =
+      conn
+      |> recycle()
+      |> authenticate(identity)
+      |> post(~p"/v1/organization/agents/#{agent_id}/tokens", %{
+        name: "Read",
+        scopes: ["memory.read", "search.keyword"]
+      })
+      |> json_response(201)
+
+    assert %{
+             "memory" => %{
+               "revision" => %{"actor_type" => "agent", "actor_id" => ^agent_id}
+             }
+           } =
+             conn
+             |> recycle()
+             |> bearer(read_raw)
+             |> get(~p"/v1/projects/#{project.id}/memories/#{memory_id}")
+             |> json_response(200)
+
+    assert %{
+             "results" => [
+               %{"actor_type" => "agent", "actor_id" => ^agent_id}
+             ]
+           } =
+             conn
+             |> recycle()
+             |> bearer(read_raw)
+             |> get(~p"/v1/projects/#{project.id}/search?q=provenance")
+             |> json_response(200)
+  end
+
   test "enforces management before lookup and project-first grant errors", %{
     conn: conn,
     identity: identity

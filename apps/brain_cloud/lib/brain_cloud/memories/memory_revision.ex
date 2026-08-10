@@ -14,10 +14,11 @@ defmodule BrainCloud.Memories.MemoryRevision do
     field :content, :string
     field :content_type, :string
     field :content_hash, :string
-    field :actor_id, :binary_id
     field :search_vector, :string, load_in_query: false
 
     belongs_to :memory, BrainCloud.Memories.Memory
+    belongs_to :actor_user, BrainCloud.Accounts.User
+    belongs_to :actor_agent, BrainCloud.Agents.Agent
 
     timestamps()
   end
@@ -32,7 +33,8 @@ defmodule BrainCloud.Memories.MemoryRevision do
         :title,
         :content,
         :content_type,
-        :actor_id
+        :actor_user_id,
+        :actor_agent_id
       ],
       empty_values: [nil]
     )
@@ -41,17 +43,49 @@ defmodule BrainCloud.Memories.MemoryRevision do
       :memory_id,
       :revision_number,
       :title,
-      :content_type,
-      :actor_id
+      :content_type
     ])
     |> validate_number(:revision_number, equal_to: 1)
     |> validate_length(:title, min: 1, max: 200)
     |> validate_inclusion(:content_type, ["text/markdown"])
     |> validate_content()
     |> put_content_hash()
-    |> validate_uuid(:actor_id)
+    |> validate_actor()
+    |> validate_uuid(:actor_user_id)
+    |> validate_uuid(:actor_agent_id)
     |> foreign_key_constraint(:memory_id)
+    |> foreign_key_constraint(:actor_user_id,
+      name: :memory_revisions_actor_user_id_fkey
+    )
+    |> foreign_key_constraint(:actor_agent_id)
+    |> check_constraint(:actor_user_id,
+      name: :memory_revisions_exactly_one_actor_check
+    )
+    |> check_constraint(:actor_agent_id,
+      name: :memory_revisions_actor_agent_tenant_check
+    )
     |> unique_constraint([:memory_id, :revision_number], error_key: :revision_number)
+  end
+
+  def actor_type(%__MODULE__{actor_agent_id: nil}), do: "human"
+  def actor_type(%__MODULE__{}), do: "agent"
+
+  def actor_id(%__MODULE__{actor_agent_id: nil, actor_user_id: actor_user_id}),
+    do: actor_user_id
+
+  def actor_id(%__MODULE__{actor_agent_id: actor_agent_id}), do: actor_agent_id
+
+  defp validate_actor(changeset) do
+    case {get_field(changeset, :actor_user_id), get_field(changeset, :actor_agent_id)} do
+      {nil, nil} ->
+        add_error(changeset, :actor_user_id, "exactly one actor is required")
+
+      {user_id, agent_id} when not is_nil(user_id) and not is_nil(agent_id) ->
+        add_error(changeset, :actor_user_id, "exactly one actor is required")
+
+      _one_actor ->
+        changeset
+    end
   end
 
   defp validate_content(changeset) do

@@ -7,7 +7,7 @@ defmodule BrainCloudWeb.HomeLiveTest do
     {:ok, _view, html} = live(conn, ~p"/")
 
     assert html =~ "Brain Cloud"
-    assert html =~ "Phase 2E API"
+    assert html =~ "Phase 2F API"
     assert html =~ "human and agent credentials"
     assert html =~ "direct, team, and agent project-access administration"
     assert html =~ "organization membership"
