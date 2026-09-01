@@ -1,5 +1,5 @@
 ---
-updated: "2026-08-10T07:16:45Z"
+updated: "2026-09-01T14:40:12Z"
 ---
 # Current State
 
@@ -46,6 +46,8 @@ Phase 2D implements GitHub spec [#14](https://github.com/JimmyMcBride/brain-clou
 
 Phase 2E is complete from GitHub spec [#16](https://github.com/JimmyMcBride/brain-cloud/issues/16), `agent-identity-and-credential-foundation`: organization-owned agent principals, shared-format read-only credentials with explicit principal provenance, fixed `agents.manage`, direct reader grants, lifecycle locking, aggregate deactivation revocation audits, and tenant-aligned database constraints. Phase 2F supersedes its read-only agent boundary; invitations, interactive login, custom roles, deny rules, and a generic policy engine remain deferred.
 
-Phase 2F is being implemented from canonical GitHub spec [#19](https://github.com/JimmyMcBride/brain-cloud/issues/19), `agent-authored-memory-provenance-foundation`: split human/agent memory and audit provenance, direct agent editor grants, and scoped agent-authored immutable memory creation. Project creation, administration, delegation, proposals, and a generic policy engine remain deferred.
+Phase 2F is complete from canonical GitHub spec [#19](https://github.com/JimmyMcBride/brain-cloud/issues/19), `agent-authored-memory-provenance-foundation`, and merged PR [#21](https://github.com/JimmyMcBride/brain-cloud/pull/21): split human/agent memory and audit provenance, direct agent editor grants, and scoped agent-authored immutable memory creation.
+
+Phase 2G is ready in canonical GitHub spec [#22](https://github.com/JimmyMcBride/brain-cloud/issues/22), `human-invitation-and-acceptance-foundation`: owner-managed member-only invitations, one-time expiring acceptance secrets, transactional membership and initial-credential issuance, and explicit audit provenance. Email delivery, interactive login, owner invitations, project/team assignment, custom roles, proposals, and a generic policy engine remain deferred.
 
 When a local brainstorm has already been promoted in GitHub source mode, update the existing issue with `plan github adopt --issues <number>`; do not reapply `plan discuss promote`, whose preview does not reconcile local brainstorm sources to existing issues.

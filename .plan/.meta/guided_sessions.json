@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "last_active_chain": "brainstorm/agent-authored-memory-provenance-foundation",
-  "last_updated_at": "2026-08-09T08:40:56Z",
+  "last_active_chain": "brainstorm/human-invitation-and-acceptance-foundation",
+  "last_updated_at": "2026-09-01T14:33:29Z",
   "sessions": {
     "brainstorm/agent-authored-memory-provenance-foundation": {
       "chain_id": "brainstorm/agent-authored-memory-provenance-foundation",
@@ -44,6 +44,20 @@
       "next_action": "Capture the user's vision in plain language.",
       "created_at": "2026-07-27T21:20:04Z",
       "updated_at": "2026-07-27T21:20:04Z"
+    },
+    "brainstorm/human-invitation-and-acceptance-foundation": {
+      "chain_id": "brainstorm/human-invitation-and-acceptance-foundation",
+      "brainstorm": "human-invitation-and-acceptance-foundation",
+      "current_stage": "brainstorm",
+      "current_cluster": 5,
+      "current_cluster_label": "handoff-epic",
+      "stage_statuses": {
+        "brainstorm": "in_progress"
+      },
+      "summary": "Recap:\nCurrent understanding: Brain Cloud owners can provision human memberships and credentials, but recipients cannot claim their own identity or membership. Owners must create an identity and manually hand over a bearer token, which weakens ownership, lifecycle clarity, and audit provenance. / Organization owners gain an auditable onboarding boundary; invited humans can accept membership themselves through the API and receive a one-time initial credential without impersonation, shared secrets, or an interactive identity stack.\nKey decisions: appetite captured.\nUnresolved risks or questions: there are still open questions to review.\nParked items: none.\nRecommended next stage: Review recap and continue into the epic stage when ready.",
+      "next_action": "Review recap and continue into the epic stage when ready.",
+      "created_at": "2026-09-01T14:31:46Z",
+      "updated_at": "2026-09-01T14:33:29Z"
     },
     "brainstorm/organization-membership-administration-foundation": {
       "chain_id": "brainstorm/organization-membership-administration-foundation",
