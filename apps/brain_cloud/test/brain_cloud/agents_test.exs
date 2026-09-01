@@ -102,7 +102,6 @@ defmodule BrainCloud.AgentsTest do
 
     for scopes <- [
           [],
-          ["memory.write"],
           ["agents.manage"],
           ["unknown.scope"],
           ["memory.read", "tokens.manage"]

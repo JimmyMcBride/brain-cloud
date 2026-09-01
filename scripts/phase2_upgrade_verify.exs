@@ -1,6 +1,7 @@
-alias BrainCloud.{Accounts, Memories, Projects, Repo}
-alias BrainCloud.Accounts.{ApiToken, OrganizationMembership, User}
+alias BrainCloud.{Accounts, Agents, Memories, Projects, Repo}
+alias BrainCloud.Accounts.{ApiToken, AuditEvent, OrganizationMembership, User}
 alias BrainCloud.Agents.Agent
+alias BrainCloud.Memories.MemoryRevision
 alias BrainCloud.Projects.{AgentProjectAccessGrant, ProjectAccessGrant, TeamProjectAccessGrant}
 alias BrainCloud.Teams.{Team, TeamMembership}
 
@@ -46,6 +47,9 @@ true = Repo.aggregate(TeamMembership, :count, :id) == 0
 true = Repo.aggregate(TeamProjectAccessGrant, :count, :id) == 0
 true = Repo.aggregate(Agent, :count, :id) == 0
 true = Repo.aggregate(AgentProjectAccessGrant, :count, :id) == 0
+true =
+  Repo.aggregate(from(event in AuditEvent, where: not is_nil(event.actor_agent_id)), :count, :id) ==
+    0
 
 project = Projects.get_project("11111111-1111-4111-8111-111111111111", auth.organization_id)
 true = project.name == "Legacy project"
@@ -65,13 +69,17 @@ true = memory.inserted_at == ~U[2026-07-03 12:00:00.123456Z]
 true = memory.updated_at == ~U[2026-07-04 12:00:00.123456Z]
 true = revision.content == "Durable legacy Phoenix memory"
 true = revision.content_hash == String.duplicate("a", 64)
-true = revision.actor_id == "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+true = revision.actor_user_id == "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+true = is_nil(revision.actor_agent_id)
+true = MemoryRevision.actor_type(revision) == "human"
+true = MemoryRevision.actor_id(revision) == "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 true = revision.inserted_at == ~U[2026-07-05 12:00:00.123456Z]
 true = revision.updated_at == ~U[2026-07-06 12:00:00.123456Z]
 
 {:ok, [result]} = Memories.search(project.id, "phoenix", auth)
 true = result.memory_id == memory.id
-true = result.actor_id == revision.actor_id
+true = result.actor_type == "human"
+true = result.actor_id == revision.actor_user_id
 true = result.content_hash == revision.content_hash
 
 true = Repo.aggregate(User, :count, :id) == 3
@@ -155,4 +163,33 @@ inactive_legacy_membership =
 true = member_auth.membership_id == membership.id
 {:error, :project_not_found} = Projects.authorize_project(project.id, member_auth, :reader)
 
-IO.puts("Phase 2E upgrade passed")
+{:ok, agent} = Agents.create_agent(%{name: "Upgrade writer"}, auth)
+
+{:ok, grant} =
+  Projects.put_agent_project_access_grant(project.id, agent.id, "editor", auth)
+
+true = grant.access == "editor"
+
+{:ok, _agent_token, agent_raw} =
+  Agents.create_agent_token(agent.id, %{name: "Upgrade writer", scopes: ["memory.write"]}, auth)
+
+{:ok, agent_auth} = Accounts.authenticate(agent_raw)
+
+{:ok, agent_memory} =
+  Memories.create_memory(
+    project.id,
+    %{title: "Agent upgrade", content: "Agent-authored", content_type: "text/markdown"},
+    agent_auth
+  )
+
+[agent_revision] = agent_memory.revisions
+true = is_nil(agent_revision.actor_user_id)
+true = agent_revision.actor_agent_id == agent.id
+true = MemoryRevision.actor_type(agent_revision) == "agent"
+true = MemoryRevision.actor_id(agent_revision) == agent.id
+
+agent_event = Repo.get_by!(AuditEvent, action: "memory.create", resource_id: agent_memory.id)
+true = is_nil(agent_event.actor_user_id)
+true = agent_event.actor_agent_id == agent.id
+
+IO.puts("Phase 2F upgrade passed")

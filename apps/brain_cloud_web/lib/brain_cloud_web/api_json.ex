@@ -128,6 +128,7 @@ defmodule BrainCloudWeb.APIJSON do
       content_hash: result.content_hash,
       excerpt: result.excerpt,
       rank: result.rank,
+      actor_type: result.actor_type,
       actor_id: result.actor_id,
       inserted_at: timestamp(result.inserted_at)
     }
@@ -142,7 +143,8 @@ defmodule BrainCloudWeb.APIJSON do
       content: revision.content,
       content_type: revision.content_type,
       content_hash: revision.content_hash,
-      actor_id: revision.actor_id,
+      actor_type: BrainCloud.Memories.MemoryRevision.actor_type(revision),
+      actor_id: BrainCloud.Memories.MemoryRevision.actor_id(revision),
       inserted_at: timestamp(revision.inserted_at)
     }
   end

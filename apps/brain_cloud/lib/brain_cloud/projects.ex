@@ -6,6 +6,7 @@ defmodule BrainCloud.Projects do
   import Ecto.Query
 
   alias BrainCloud.Accounts
+  alias BrainCloud.Accounts.ApiToken
   alias BrainCloud.Accounts.AuthContext
   alias BrainCloud.Accounts.OrganizationMembership
   alias BrainCloud.Agents.Agent
@@ -78,6 +79,17 @@ defmodule BrainCloud.Projects do
       {:ok, project}
     else
       _missing -> {:error, :project_not_found}
+    end
+  end
+
+  def authorize_memory_write(id, %AuthContext{principal_type: :human} = auth),
+    do: authorize_project(id, auth, :editor)
+
+  def authorize_memory_write(id, %AuthContext{principal_type: :agent} = auth) do
+    if Accounts.authorized?(auth, "memory.write") do
+      authorize_agent_memory_write(id, auth)
+    else
+      {:error, :forbidden}
     end
   end
 
@@ -349,7 +361,10 @@ defmodule BrainCloud.Projects do
     )
   end
 
-  defp authorized_project(id, %AuthContext{role: "agent"} = auth, :reader) do
+  defp authorized_project(id, %AuthContext{role: "agent"} = auth, required_access)
+       when required_access in [:reader, :editor] do
+    allowed_access = if required_access == :reader, do: @reader_access, else: @editor_access
+
     Repo.one(
       from project in Project,
         join: agent in Agent,
@@ -361,7 +376,7 @@ defmodule BrainCloud.Projects do
         on:
           grant.project_id == project.id and
             grant.organization_id == project.organization_id and
-            grant.agent_id == agent.id and grant.access == "reader",
+            grant.agent_id == agent.id and grant.access in ^allowed_access,
         where:
           project.id == ^id and
             project.organization_id == ^auth.organization_id
@@ -369,6 +384,21 @@ defmodule BrainCloud.Projects do
   end
 
   defp authorized_project(_id, _auth, _required_access), do: nil
+
+  defp authorize_agent_memory_write(id, auth) do
+    with {:ok, id} <- Ecto.UUID.cast(id),
+         %Agent{deactivated_at: nil} <-
+           tenant_agent_for_update(auth.agent_id, auth.organization_id),
+         %ApiToken{} = token <- agent_token_for_update(auth.api_token_id, auth.agent_id),
+         true <- active_token?(token),
+         %Project{} = project <- tenant_project(id, auth.organization_id),
+         %AgentProjectAccessGrant{access: "editor"} <-
+           agent_grant_for_update(id, auth.agent_id, auth.organization_id) do
+      {:ok, project}
+    else
+      _missing -> {:error, :project_not_found}
+    end
+  end
 
   defp put_grant(project_id, membership_id, access, auth) do
     case project_access_grant_for_update(project_id, membership_id, auth.organization_id) do
@@ -525,10 +555,21 @@ defmodule BrainCloud.Projects do
       %AgentProjectAccessGrant{access: ^access} = grant ->
         grant
 
-      grant ->
-        case AgentProjectAccessGrant.changeset(grant, %{access: access})
-             |> Repo.update() do
-          {:ok, updated} -> updated
+      %AgentProjectAccessGrant{} = grant ->
+        previous_access = grant.access
+
+        with {:ok, updated} <-
+               grant |> AgentProjectAccessGrant.changeset(%{access: access}) |> Repo.update(),
+             {:ok, _event} <-
+               agent_grant_audit_changeset(
+                 auth,
+                 "agent_project_access.change",
+                 updated,
+                 %{"previous_access" => previous_access}
+               )
+               |> Repo.insert() do
+          updated
+        else
           {:error, reason} -> Repo.rollback(reason)
         end
     end
@@ -677,6 +718,19 @@ defmodule BrainCloud.Projects do
             grant.organization_id == ^organization_id,
         lock: "FOR UPDATE"
     )
+  end
+
+  defp agent_token_for_update(token_id, agent_id) do
+    Repo.one(
+      from token in ApiToken,
+        where: token.id == ^token_id and token.agent_id == ^agent_id,
+        lock: "FOR UPDATE"
+    )
+  end
+
+  defp active_token?(%ApiToken{revoked_at: revoked_at, expires_at: expires_at}) do
+    is_nil(revoked_at) and
+      (is_nil(expires_at) or DateTime.after?(expires_at, DateTime.utc_now()))
   end
 
   defp ensure_membership_active(%OrganizationMembership{deactivated_at: nil}), do: :ok

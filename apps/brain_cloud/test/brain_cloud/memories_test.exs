@@ -3,6 +3,7 @@ defmodule BrainCloud.MemoriesTest do
 
   alias BrainCloud.Accounts.AuditEvent
   alias BrainCloud.Accounts
+  alias BrainCloud.Agents
   alias BrainCloud.Memories
   alias BrainCloud.Memories.Memory
   alias BrainCloud.Memories.MemoryRevision
@@ -31,7 +32,10 @@ defmodule BrainCloud.MemoriesTest do
     assert revision.title == "Phoenix Notes"
     assert revision.content == attrs.content
     assert revision.content_type == "text/markdown"
-    assert revision.actor_id == identity.user.id
+    assert revision.actor_user_id == identity.user.id
+    assert is_nil(revision.actor_agent_id)
+    assert MemoryRevision.actor_type(revision) == "human"
+    assert MemoryRevision.actor_id(revision) == identity.user.id
 
     assert revision.content_hash ==
              Base.encode16(:crypto.hash(:sha256, attrs.content), case: :lower)
@@ -134,11 +138,157 @@ defmodule BrainCloud.MemoriesTest do
                title: "Duplicate",
                content: "Body",
                content_type: "text/markdown",
-               actor_id: identity.user.id
+               actor_user_id: identity.user.id
              })
              |> Repo.insert()
 
     assert "has already been taken" in errors_on(changeset).revision_number
+  end
+
+  test "requires exactly one revision actor and enforces agent tenant provenance", %{
+    identity: identity,
+    project: project
+  } do
+    memory = Repo.insert!(Memory.changeset(%Memory{}, %{project_id: project.id}))
+
+    {:ok, agent} = Agents.create_agent(%{name: "Same tenant"}, identity.auth_context)
+
+    base = %{
+      memory_id: memory.id,
+      revision_number: 1,
+      title: "Actor check",
+      content: "Body",
+      content_type: "text/markdown"
+    }
+
+    assert %{actor_user_id: ["exactly one actor is required"]} =
+             %MemoryRevision{}
+             |> MemoryRevision.changeset(base)
+             |> errors_on()
+
+    assert %{actor_user_id: ["exactly one actor is required"]} =
+             %MemoryRevision{}
+             |> MemoryRevision.changeset(
+               Map.merge(base, %{
+                 actor_user_id: identity.user.id,
+                 actor_agent_id: agent.id
+               })
+             )
+             |> errors_on()
+
+    other_identity = identity_fixture()
+    {:ok, other_agent} = Agents.create_agent(%{name: "Other tenant"}, other_identity.auth_context)
+
+    assert {:error, changeset} =
+             %MemoryRevision{}
+             |> MemoryRevision.changeset(Map.put(base, :actor_agent_id, other_agent.id))
+             |> Repo.insert()
+
+    assert "is invalid" in errors_on(changeset).actor_agent_id
+  end
+
+  test "agent editor creates memory with authentic revision and audit provenance", %{
+    identity: identity,
+    project: project
+  } do
+    {:ok, agent} = Agents.create_agent(%{name: "Writer"}, identity.auth_context)
+
+    {:ok, _grant} =
+      Projects.put_agent_project_access_grant(
+        project.id,
+        agent.id,
+        "editor",
+        identity.auth_context
+      )
+
+    {:ok, _token, raw} =
+      Agents.create_agent_token(
+        agent.id,
+        %{name: "Write", scopes: ["memory.write"]},
+        identity.auth_context
+      )
+
+    {:ok, agent_auth} = Accounts.authenticate(raw)
+
+    assert {:ok, memory} =
+             Memories.create_memory(
+               project.id,
+               %{title: "Agent note", content: "Automated", content_type: "text/markdown"},
+               agent_auth
+             )
+
+    assert [revision] = memory.revisions
+    assert is_nil(revision.actor_user_id)
+    assert revision.actor_agent_id == agent.id
+    assert MemoryRevision.actor_type(revision) == "agent"
+    assert MemoryRevision.actor_id(revision) == agent.id
+
+    event = Repo.get_by!(AuditEvent, action: "memory.create", resource_id: memory.id)
+    assert is_nil(event.actor_user_id)
+    assert event.actor_agent_id == agent.id
+    assert event.api_token_id == agent_auth.api_token_id
+  end
+
+  test "agent write requires both write scope and editor access", %{
+    identity: identity,
+    project: project
+  } do
+    {:ok, agent} = Agents.create_agent(%{name: "Bounded writer"}, identity.auth_context)
+
+    {:ok, _reader_grant} =
+      Projects.put_agent_project_access_grant(
+        project.id,
+        agent.id,
+        "reader",
+        identity.auth_context
+      )
+
+    {:ok, _token, raw} =
+      Agents.create_agent_token(
+        agent.id,
+        %{name: "Write", scopes: ["memory.write"]},
+        identity.auth_context
+      )
+
+    {:ok, agent_auth} = Accounts.authenticate(raw)
+
+    {:ok, _read_token, read_raw} =
+      Agents.create_agent_token(
+        agent.id,
+        %{name: "Read", scopes: ["memory.read"]},
+        identity.auth_context
+      )
+
+    {:ok, read_auth} = Accounts.authenticate(read_raw)
+
+    assert {:error, :forbidden} =
+             Memories.create_memory(
+               project.id,
+               %{title: "No scope", content: "Denied", content_type: "text/markdown"},
+               read_auth
+             )
+
+    assert {:error, :project_not_found} =
+             Memories.create_memory(
+               project.id,
+               %{title: "Denied", content: "Denied", content_type: "text/markdown"},
+               agent_auth
+             )
+
+    {:ok, _editor_grant} =
+      Projects.put_agent_project_access_grant(
+        project.id,
+        agent.id,
+        "editor",
+        identity.auth_context
+      )
+
+    assert {:ok, _memory} =
+             Memories.create_memory(
+               project.id,
+               %{title: "Allowed", content: "Allowed", content_type: "text/markdown"},
+               agent_auth
+             )
   end
 
   test "rejects missing projects without inserting a memory", %{identity: identity} do

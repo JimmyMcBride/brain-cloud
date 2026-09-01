@@ -31,6 +31,7 @@ defmodule BrainCloud.Accounts.AuditEvent do
     agent_token.create
     agent_token.revoke
     agent_project_access.grant
+    agent_project_access.change
     agent_project_access.revoke
     memory.create
   )
@@ -46,6 +47,7 @@ defmodule BrainCloud.Accounts.AuditEvent do
 
     belongs_to :organization, BrainCloud.Accounts.Organization
     belongs_to :actor_user, BrainCloud.Accounts.User
+    belongs_to :actor_agent, BrainCloud.Agents.Agent
     belongs_to :api_token, BrainCloud.Accounts.ApiToken
 
     timestamps(updated_at: false)
@@ -56,16 +58,33 @@ defmodule BrainCloud.Accounts.AuditEvent do
     |> cast(attrs, [
       :organization_id,
       :actor_user_id,
+      :actor_agent_id,
       :api_token_id,
       :action,
       :resource_type,
       :resource_id,
       :metadata
     ])
-    |> validate_required([:organization_id, :actor_user_id, :action, :metadata])
+    |> validate_required([:organization_id, :action, :metadata])
+    |> validate_actor()
     |> validate_inclusion(:action, @actions)
     |> foreign_key_constraint(:organization_id)
     |> foreign_key_constraint(:actor_user_id)
+    |> foreign_key_constraint(:actor_agent_id, name: :audit_events_actor_agent_tenant_fkey)
     |> foreign_key_constraint(:api_token_id)
+    |> check_constraint(:actor_user_id, name: :audit_events_exactly_one_actor_check)
+  end
+
+  defp validate_actor(changeset) do
+    case {get_field(changeset, :actor_user_id), get_field(changeset, :actor_agent_id)} do
+      {nil, nil} ->
+        add_error(changeset, :actor_user_id, "exactly one actor is required")
+
+      {user_id, agent_id} when not is_nil(user_id) and not is_nil(agent_id) ->
+        add_error(changeset, :actor_user_id, "exactly one actor is required")
+
+      _one_actor ->
+        changeset
+    end
   end
 end

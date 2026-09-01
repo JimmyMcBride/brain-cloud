@@ -18,6 +18,9 @@ defmodule BrainCloudWeb.MemoryController do
       {:error, :project_not_found} ->
         APIError.project_not_found(conn)
 
+      {:error, :forbidden} ->
+        APIError.forbidden(conn)
+
       {:error, changeset} ->
         APIError.validation_failed(conn, changeset)
     end

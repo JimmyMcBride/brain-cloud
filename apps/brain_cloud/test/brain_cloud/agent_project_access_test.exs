@@ -73,6 +73,64 @@ defmodule BrainCloud.AgentProjectAccessTest do
     assert {:ok, ^project} = Projects.authorize_project(project.id, agent_auth, :reader)
   end
 
+  test "editor grants imply reads, change transactionally, and audit only real changes" do
+    identity = identity_fixture()
+    auth = identity.auth_context
+    {:ok, project} = Projects.create_project(%{name: "Editor"}, auth)
+    {:ok, agent} = Agents.create_agent(%{name: "Editor"}, auth)
+
+    assert {:ok, reader} =
+             Projects.put_agent_project_access_grant(project.id, agent.id, "reader", auth)
+
+    assert {:ok, editor} =
+             Projects.put_agent_project_access_grant(project.id, agent.id, "editor", auth)
+
+    assert editor.id == reader.id
+    assert editor.access == "editor"
+
+    assert {:ok, same_editor} =
+             Projects.put_agent_project_access_grant(project.id, agent.id, "editor", auth)
+
+    assert same_editor.id == editor.id
+
+    {:ok, _token, raw} =
+      Agents.create_agent_token(
+        agent.id,
+        %{name: "Read and write", scopes: ["memory.read", "memory.write"]},
+        auth
+      )
+
+    {:ok, agent_auth} = Accounts.authenticate(raw)
+    assert {:ok, ^project} = Projects.authorize_project(project.id, agent_auth, :reader)
+    assert {:ok, ^project} = Projects.authorize_project(project.id, agent_auth, :editor)
+
+    changes =
+      Repo.all(
+        from event in AuditEvent,
+          where:
+            event.action == "agent_project_access.change" and
+              event.resource_id == ^editor.id
+      )
+
+    assert [change] = changes
+    assert change.metadata["previous_access"] == "reader"
+    assert change.metadata["access"] == "editor"
+
+    assert {:ok, downgraded} =
+             Projects.put_agent_project_access_grant(project.id, agent.id, "reader", auth)
+
+    assert downgraded.access == "reader"
+
+    assert {:error, :project_not_found} =
+             Projects.authorize_project(project.id, agent_auth, :editor)
+
+    assert Repo.aggregate(
+             from(e in AuditEvent, where: e.action == "agent_project_access.change"),
+             :count,
+             :id
+           ) == 2
+  end
+
   test "enforces project-first concealment and tenant constraints" do
     first = identity_fixture()
     second = identity_fixture()

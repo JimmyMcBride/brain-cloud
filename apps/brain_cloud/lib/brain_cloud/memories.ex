@@ -16,43 +16,40 @@ defmodule BrainCloud.Memories do
   @maximum_query_length 256
 
   def create_memory(project_id, attrs, %AuthContext{} = auth) do
-    case Projects.authorize_project(project_id, auth, :editor) do
-      {:error, :project_not_found} ->
-        {:error, :project_not_found}
+    attrs = Map.new(attrs)
 
-      {:ok, project} ->
-        attrs = Map.new(attrs)
+    Multi.new()
+    |> Multi.run(:project, fn _repo, _changes ->
+      Projects.authorize_memory_write(project_id, auth)
+    end)
+    |> Multi.insert(:memory, fn %{project: project} ->
+      Memory.changeset(%Memory{}, %{project_id: project.id})
+    end)
+    |> Multi.insert(:revision, fn %{memory: memory} ->
+      %{
+        memory_id: memory.id,
+        revision_number: 1,
+        title: attribute(attrs, :title),
+        content: attribute(attrs, :content),
+        content_type: attribute(attrs, :content_type)
+      }
+      |> Map.merge(actor_attrs(auth))
+      |> then(&MemoryRevision.changeset(%MemoryRevision{}, &1))
+    end)
+    |> Multi.insert(:audit_event, fn %{memory: memory} ->
+      Accounts.audit_changeset(auth, "memory.create", "memory", memory.id)
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{memory: memory, revision: revision}} ->
+        {:ok, %{memory | revisions: [revision]}}
 
-        Multi.new()
-        |> Multi.insert(:memory, Memory.changeset(%Memory{}, %{project_id: project.id}))
-        |> Multi.insert(:revision, fn %{memory: memory} ->
-          %{
-            memory_id: memory.id,
-            revision_number: 1,
-            title: attribute(attrs, :title),
-            content: attribute(attrs, :content),
-            content_type: attribute(attrs, :content_type),
-            actor_id: auth.user_id
-          }
-          |> then(&MemoryRevision.changeset(%MemoryRevision{}, &1))
-        end)
-        |> Multi.insert(:audit_event, fn %{memory: memory} ->
-          Accounts.audit_changeset(auth, "memory.create", "memory", memory.id)
-        end)
-        |> Repo.transaction()
-        |> case do
-          {:ok, %{memory: memory, revision: revision}} ->
-            {:ok, %{memory | revisions: [revision]}}
+      {:error, :project, reason, _changes} ->
+        {:error, reason}
 
-          {:error, :revision, changeset, _changes} ->
-            {:error, changeset}
-
-          {:error, :memory, changeset, _changes} ->
-            {:error, changeset}
-
-          {:error, :audit_event, changeset, _changes} ->
-            {:error, changeset}
-        end
+      {:error, step, changeset, _changes}
+      when step in [:revision, :memory, :audit_event] ->
+        {:error, changeset}
     end
   end
 
@@ -107,7 +104,8 @@ defmodule BrainCloud.Memories do
               content: revision.content,
               content_type: revision.content_type,
               content_hash: revision.content_hash,
-              actor_id: revision.actor_id,
+              actor_user_id: revision.actor_user_id,
+              actor_agent_id: revision.actor_agent_id,
               inserted_at: revision.inserted_at,
               rank:
                 type(
@@ -120,6 +118,7 @@ defmodule BrainCloud.Memories do
                 )
             }
         )
+        |> Enum.map(&put_actor_projection/1)
         |> Enum.map(&Map.put(&1, :excerpt, plain_text_excerpt(&1.content)))
         |> Enum.map(&Map.delete(&1, :content))
 
@@ -146,6 +145,26 @@ defmodule BrainCloud.Memories do
 
   defp attribute(attrs, key) do
     Map.get(attrs, key, Map.get(attrs, Atom.to_string(key)))
+  end
+
+  defp actor_attrs(%AuthContext{principal_type: :human, user_id: user_id}),
+    do: %{actor_user_id: user_id}
+
+  defp actor_attrs(%AuthContext{principal_type: :agent, agent_id: agent_id}),
+    do: %{actor_agent_id: agent_id}
+
+  defp put_actor_projection(%{actor_agent_id: nil} = result) do
+    result
+    |> Map.put(:actor_type, "human")
+    |> Map.put(:actor_id, result.actor_user_id)
+    |> Map.drop([:actor_user_id, :actor_agent_id])
+  end
+
+  defp put_actor_projection(result) do
+    result
+    |> Map.put(:actor_type, "agent")
+    |> Map.put(:actor_id, result.actor_agent_id)
+    |> Map.drop([:actor_user_id, :actor_agent_id])
   end
 
   defp plain_text_excerpt(content) do

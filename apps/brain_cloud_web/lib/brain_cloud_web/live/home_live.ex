@@ -16,7 +16,7 @@ defmodule BrainCloudWeb.HomeLive do
       <section class="space-y-8">
         <div class="space-y-3">
           <p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-            Phase 2E API
+            Phase 2F API
           </p>
           <h1 class="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
             Brain Cloud
@@ -25,7 +25,8 @@ defmodule BrainCloudWeb.HomeLive do
             The hosted and self-hostable server for Brain Core and explicitly enabled modules.
             This bootstrap exposes production human and agent credentials, organization membership,
             direct, team, and agent project-access administration, and organization-scoped durable
-            project memory; no product UI is implemented yet.
+            project memory with explicit human/agent provenance and bounded agent-authored writes;
+            no product UI is implemented yet.
           </p>
         </div>
 
