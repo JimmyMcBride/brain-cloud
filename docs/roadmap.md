@@ -1,5 +1,5 @@
 ---
-updated: "2026-08-10T07:11:28Z"
+updated: "2026-09-01T14:40:21Z"
 ---
 # Brain Cloud roadmap
 
@@ -67,9 +67,11 @@ Planning is the first major optional official Brain module. It is not a separate
 
 **Phase 2E complete.** [Agent identity and credential foundation](https://github.com/JimmyMcBride/brain-cloud/issues/16) adds organization-owned agent principals, revocable read-only credentials, direct reader grants, explicit authentication provenance, tenant-safe constraints, and transactional lifecycle audits.
 
-**Phase 2F implementing.** [Agent-authored memory provenance foundation](https://github.com/JimmyMcBride/brain-cloud/issues/19) adds explicit human/agent memory and audit provenance, direct agent editor grants, and scoped agent-authored immutable memory creation.
+**Phase 2F complete.** [Agent-authored memory provenance foundation](https://github.com/JimmyMcBride/brain-cloud/issues/19) adds explicit human/agent memory and audit provenance, direct agent editor grants, and scoped agent-authored immutable memory creation.
 
-Later Phase 2 slices add invitations, interactive identity, proposals, and finer-grained access.
+**Phase 2G ready.** [Human invitation and acceptance foundation](https://github.com/JimmyMcBride/brain-cloud/issues/22) specifies owner-managed member-only invitations, one-time expiring acceptance, transactional membership and initial-credential issuance, and audit provenance without email delivery or interactive login.
+
+Later Phase 2 slices add interactive identity, owner invitations, and finer-grained access. Agent proposals remain in Phase 12.
 
 ### Phase 3 — Complete cloud-native Brain project model
 

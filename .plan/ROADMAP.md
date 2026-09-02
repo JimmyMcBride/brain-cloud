@@ -22,7 +22,9 @@ Phase 2D is complete from [#14](https://github.com/JimmyMcBride/brain-cloud/issu
 
 Phase 2E is complete from [#16](https://github.com/JimmyMcBride/brain-cloud/issues/16): first-class organization agent principals, revocable read-only credentials, and direct reader project grants without synthetic human identities.
 
-Phase 2F is being implemented from [#19](https://github.com/JimmyMcBride/brain-cloud/issues/19): explicit human/agent memory and audit provenance, direct agent editor grants, and scoped agent-authored immutable memory creation. Later slices add invitations, interactive identity, proposals, and finer-grained permissions.
+Phase 2F is complete from [#19](https://github.com/JimmyMcBride/brain-cloud/issues/19) and merged [PR #21](https://github.com/JimmyMcBride/brain-cloud/pull/21): explicit human/agent memory and audit provenance, direct agent editor grants, and scoped agent-authored immutable memory creation.
+
+Phase 2G is ready in [#22](https://github.com/JimmyMcBride/brain-cloud/issues/22): owner-managed, member-only invitations with one-time expiring acceptance, transactional membership and initial-credential issuance, and audit provenance. Email delivery, interactive identity, owner invitations, proposals, and finer-grained permissions remain later slices.
 
 ## Phase 3 — Complete cloud-native project model
 
