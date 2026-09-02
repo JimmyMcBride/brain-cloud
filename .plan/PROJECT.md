@@ -1,3 +1,6 @@
+---
+updated: "2026-09-02T14:45:00Z"
+---
 # Project: brain-cloud
 
 Created: 2026-07-27T17:43:26Z
@@ -37,4 +40,4 @@ Brain Cloud is the hosted and self-hostable platform for Brain Core and optional
 
 ## Current focus
 
-Phase 1 through Phase 2F are complete. Phase 2G is ready in canonical GitHub spec [#22](https://github.com/JimmyMcBride/brain-cloud/issues/22): owner-managed, member-only invitations with one-time expiring acceptance secrets, transactional membership and initial-credential issuance, and explicit audit provenance without email delivery or interactive login. Owner invitations, passwords, browser sessions, OAuth/OIDC, SSO, SCIM, proposals, custom roles, and finer-grained policy remain later work. Module framework implementation begins later in Phase 10. Planning integration begins only after a dedicated contract.
+Phase 1 through Phase 2F are complete. Phase 2G is implemented from canonical GitHub spec [#22](https://github.com/JimmyMcBride/brain-cloud/issues/22): owner-managed, member-only invitations with one-time expiring acceptance secrets, transactional membership and initial-credential issuance, tenant-safe constraints, linearized terminal states, and explicit audit provenance without email delivery or interactive login. Owner invitations, passwords, browser sessions, OAuth/OIDC, SSO, SCIM, proposals, custom roles, and finer-grained policy remain later work. Module framework implementation begins later in Phase 10. Planning integration begins only after a dedicated contract.

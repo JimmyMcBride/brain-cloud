@@ -1,5 +1,5 @@
 ---
-updated: "2026-08-10T07:13:17Z"
+updated: "2026-09-02T14:32:46Z"
 ---
 # Architecture
 
@@ -22,9 +22,9 @@ Use this file for the structural shape of the repository.
 
 Brain Cloud is API-first and implements, but never imports, external SDKs.
 
-- `apps/brain_cloud` owns Ecto/PostgreSQL, users, organizations, owner-managed memberships and agents, human/agent token digests, soft-deactivated teams and agents, retained links/grants, direct human/team reader-editor grants, direct agent reader-editor grants, implicit owner access, row-locked lifecycle mutations, transactional credential revocation, immutable human-or-agent audit events, projects, immutable human-or-agent memory revisions, tenant/project-scoped search, readiness, release migrations/bootstrap, and domain supervision.
+- `apps/brain_cloud` owns Ecto/PostgreSQL, users, organizations, owner-managed memberships, member-only invitations and agents, human/agent token digests and one-time invitation-secret digests, soft-deactivated teams and agents, retained links/grants, direct human/team reader-editor grants, direct agent reader-editor grants, implicit owner access, row-locked lifecycle mutations, transactional credential revocation, immutable human-or-agent audit events, projects, immutable human-or-agent memory revisions, tenant/project-scoped search, readiness, release migrations/bootstrap, and domain supervision.
 - `apps/brain_cloud_web` owns Phoenix, Bandit, persisted bearer authentication with explicit human/agent provenance, owner/scope/project enforcement, structured JSON controllers, LiveView, assets, and the HTTP endpoint.
-- Implemented protected routes include human token/membership lifecycle, team lifecycle/membership, agent lifecycle/nested credentials, project creation, direct human/team/agent project grants, memory creation/retrieval, and keyword search. Root, health, readiness, and system discovery remain public.
+- Implemented routes include public invitation acceptance plus protected invitation, human token/membership lifecycle, team lifecycle/membership, agent lifecycle/nested credentials, project creation, direct human/team/agent project grants, memory creation/retrieval, and keyword search. Root, health, readiness, and system discovery remain public.
 - Every authenticated request derives principal type/ID, organization, credential, and fixed scopes; human contexts also carry user/membership/role. Tenant- and grant-aware Ecto predicates run before protected content loads.
 - Production releases emit JSON logs and run Ecto migrations before startup.
 - `openapi/brain-cloud-v1.yaml` records only implemented routes and reserves future `/v1` domain areas without speculative schemas.

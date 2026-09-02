@@ -1,5 +1,5 @@
 ---
-updated: "2026-08-10T07:11:28Z"
+updated: "2026-09-02T14:33:34Z"
 ---
 # Security direction
 
@@ -17,7 +17,7 @@ Every token belongs permanently to exactly one principal: a human organization m
 
 Bootstrap, token create/revoke, project create, and memory create commit immutable audit events in the same transaction as their durable action. The bootstrap secret is displayed once; explicit recovery revokes it and displays one replacement. Raw tokens and digests are excluded from normal logs, errors, audit metadata, inspection, list, and revoke output.
 
-This slice is production-capable API access control, not a complete identity product. Passwords, browser sessions, email verification, OAuth/OIDC, SSO, SCIM, invitations, rate limiting, and audit-query APIs remain unimplemented.
+This slice is production-capable API access control, not a complete identity product. Passwords, browser sessions, email verification, OAuth/OIDC, SSO, SCIM, email delivery, interactive invitation UI, rate limiting, and audit-query APIs remain unimplemented.
 
 ## Phase 2B membership administration
 
@@ -46,6 +46,14 @@ Teams are soft-deactivated. Their membership links and project grants remain ins
 Agents are organization-owned principals, not synthetic users or memberships. Each credential belongs to exactly one human membership or agent, uses the same one-time-secret/digest format, and authenticates into an explicit principal type and ID. Agent credentials are restricted to non-empty subsets of `memory.write`, `memory.read`, and `search.keyword`; they cannot bootstrap, create projects, manage access, manage agents, or exercise human administration.
 
 Agent lifecycle and nested credential operations require an active owner plus `agents.manage`. Direct agent grants require owner plus `projects.manage_access`, are reader or editor, and use project-first tenant concealment. Agent memory creation requires both `memory.write` and a direct editor grant; retrieval and search require their own scopes plus reader or editor access. Revision and audit rows store exactly one human or agent actor, preserve existing human actor IDs, and enforce agent tenant alignment in PostgreSQL. Deactivation locks the agent, revokes all active credentials transactionally, emits one aggregate audit event, and retains dormant grants. Reactivation never restores credentials. PostgreSQL checks enforce exactly one token principal, exactly one revision and audit actor, and tenant-aligned agent grants and provenance.
+
+## Phase 2G human invitation acceptance
+
+Human member invitations use distinct one-time `bci1_<public_id>_<secret>` acceptance tokens. Brain Cloud stores only the public lookup ID and SHA-256 digest, filters token and secret parameters from logs, and uses constant-time digest comparison after lookup. Owners need `members.manage` to list or revoke invitations and both `members.manage` and `tokens.manage` to create one; authorization precedes validation and tenant-concealed lookup.
+
+Each invitation is tenant-bound to its organization and inviter membership, expires within seven days, grants only the fixed `member` role, and cannot carry member-forbidden management scopes. PostgreSQL composite foreign keys, a partial unresolved-email uniqueness constraint, row locks, and email-scoped transaction advisory locks serialize creation, revocation, acceptance, and direct-membership races. Public acceptance conceals malformed, unknown, wrong, expired, revoked, accepted, and replayed tokens behind the same `404 invitation_not_found` response.
+
+Valid acceptance atomically creates or reuses the globally normalized user without overwriting an existing profile, creates one active membership, issues one non-expiring initial `bc1` credential with pre-approved scopes, marks the invitation accepted, and writes one authentic acceptance audit. Raw secrets, digests, email, and display name are excluded from audit metadata and safe responses. Delivery, email verification, interactive login, owner invitations, resend/recovery, and rate limiting remain unimplemented.
 
 Future encryption modes are server-readable, end-to-end encrypted, and local-only. Server-readable projects can use hosted search and Hive Mind. End-to-end encrypted projects may require trusted client-side or user-controlled retrieval and will explicitly disclose lost server features. Searchable end-to-end encryption is not an initial requirement.
 

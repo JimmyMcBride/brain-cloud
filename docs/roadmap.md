@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-01T14:40:21Z"
+updated: "2026-09-02T14:33:34Z"
 ---
 # Brain Cloud roadmap
 
@@ -69,7 +69,7 @@ Planning is the first major optional official Brain module. It is not a separate
 
 **Phase 2F complete.** [Agent-authored memory provenance foundation](https://github.com/JimmyMcBride/brain-cloud/issues/19) adds explicit human/agent memory and audit provenance, direct agent editor grants, and scoped agent-authored immutable memory creation.
 
-**Phase 2G ready.** [Human invitation and acceptance foundation](https://github.com/JimmyMcBride/brain-cloud/issues/22) specifies owner-managed member-only invitations, one-time expiring acceptance, transactional membership and initial-credential issuance, and audit provenance without email delivery or interactive login.
+**Phase 2G complete.** [Human invitation and acceptance foundation](https://github.com/JimmyMcBride/brain-cloud/issues/22) adds owner-managed member-only invitations, one-time expiring acceptance, transactional membership and initial-credential issuance, tenant-safe constraints, linearized terminal states, and audit provenance without email delivery or interactive login.
 
 Later Phase 2 slices add interactive identity, owner invitations, and finer-grained access. Agent proposals remain in Phase 12.
 
@@ -149,4 +149,4 @@ Planning remains focused on turning durable project understanding into structure
 
 ## Current implementation non-goals
 
-The current implementation does not include invitations, interactive login, proposals, custom roles, deny rules, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.
+The current implementation does not include email delivery, interactive login, owner invitations, proposals, custom roles, deny rules, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.

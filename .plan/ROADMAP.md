@@ -24,7 +24,7 @@ Phase 2E is complete from [#16](https://github.com/JimmyMcBride/brain-cloud/issu
 
 Phase 2F is complete from [#19](https://github.com/JimmyMcBride/brain-cloud/issues/19) and merged [PR #21](https://github.com/JimmyMcBride/brain-cloud/pull/21): explicit human/agent memory and audit provenance, direct agent editor grants, and scoped agent-authored immutable memory creation.
 
-Phase 2G is ready in [#22](https://github.com/JimmyMcBride/brain-cloud/issues/22): owner-managed, member-only invitations with one-time expiring acceptance, transactional membership and initial-credential issuance, and audit provenance. Email delivery, interactive identity, owner invitations, proposals, and finer-grained permissions remain later slices.
+Phase 2G is implemented from [#22](https://github.com/JimmyMcBride/brain-cloud/issues/22): owner-managed, member-only invitations with one-time expiring acceptance, transactional membership and initial-credential issuance, tenant-safe constraints, linearized terminal states, and audit provenance. Email delivery, interactive identity, owner invitations, proposals, and finer-grained permissions remain later slices.
 
 ## Phase 3 — Complete cloud-native project model
 

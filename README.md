@@ -1,5 +1,5 @@
 ---
-updated: "2026-08-10T07:10:51Z"
+updated: "2026-09-02T14:34:06Z"
 ---
 # Brain Cloud
 
@@ -45,7 +45,7 @@ Planning must be optional. Brain works without Planning, with the official Plann
 
 ## Status
 
-Phase 2F adds explicit human/agent revision and audit provenance, direct agent reader/editor grants, and agent credentials scoped to `memory.write`, `memory.read`, and `search.keyword`. Active agents can create immutable revision-1 memory only when both write scope and a direct editor grant permit it; deactivation, credential revocation/expiry, and grant removal block subsequent writes. Human actor IDs and existing human access remain compatible. Invitations, interactive login, proposals, custom roles, nested teams, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
+Phase 2G adds owner-managed, member-only invitations with one-time expiring `bci1` acceptance secrets, public recipient acceptance, transactional membership and initial-credential issuance, tenant-safe constraints, and authentic invitation audits. Phase 2F human/agent provenance and agent-authored memory behavior remains intact. There is no email delivery or interactive login; owner invitations, proposals, custom roles, nested teams, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
 
 ## Local development
 
@@ -118,9 +118,34 @@ curl --fail-with-body \
   "http://localhost:4000/v1/projects/${project_id}/search?q=durable"
 ```
 
-Tokens use `bc1_<public_id>_<secret>`, are permanently bound to exactly one human membership or agent principal, and are stored only as SHA-256 digests. Human token-management endpoints require an owner membership plus `tokens.manage`; membership lifecycle requires owner plus `members.manage`, team lifecycle/membership requires owner plus `teams.manage`, and agent lifecycle/credential operations require owner plus `agents.manage`. Direct human, team, and agent project-grant management requires owner plus `projects.manage_access`. Agent tokens are limited to non-empty subsets of `memory.write`, `memory.read`, and `search.keyword`, and direct agent grants are reader or editor. Agent writes record authentic agent revision and audit provenance; fixed route scopes remain independent from project access. Product routes always require both their fixed token scope and project access.
+API tokens use `bc1_<public_id>_<secret>` and invitation acceptance tokens use distinct `bci1_<public_id>_<secret>` values. Both are stored only as SHA-256 digests; raw secrets appear once in their successful create or acceptance response. Human token-management endpoints require an owner membership plus `tokens.manage`; membership lifecycle requires owner plus `members.manage`, team lifecycle/membership requires owner plus `teams.manage`, and agent lifecycle/credential operations require owner plus `agents.manage`. Direct human, team, and agent project-grant management requires owner plus `projects.manage_access`. Agent tokens are limited to non-empty subsets of `memory.write`, `memory.read`, and `search.keyword`, and direct agent grants are reader or editor. Agent writes record authentic agent revision and audit provenance; fixed route scopes remain independent from project access. Product routes always require both their fixed token scope and project access.
 
-Create a human member and issue a one-time credential explicitly:
+Invite a human member and let the recipient claim their own first credential:
+
+```bash
+invitation_response="$(
+  curl --fail-with-body \
+    --header "Authorization: Bearer ${BRAIN_CLOUD_TOKEN}" \
+    --header "Content-Type: application/json" \
+    --data '{"email":"invitee@example.com","display_name":"Example Invitee","scopes":["memory.read","search.keyword"],"expires_at":"2026-09-03T12:00:00Z"}' \
+    http://localhost:4000/v1/organization/invitations
+)"
+
+acceptance_token="$(printf '%s' "${invitation_response}" | jq -r '.acceptance_token')"
+
+acceptance_response="$(
+  curl --fail-with-body \
+    --header "Content-Type: application/json" \
+    --data "$(jq -n --arg token "${acceptance_token}" '{acceptance_token: $token}')" \
+    http://localhost:4000/v1/invitations/accept
+)"
+
+export MEMBER_TOKEN="$(printf '%s' "${acceptance_response}" | jq -r '.token.token')"
+```
+
+The acceptance token expires within seven days, cannot be recovered or resent, and must be transferred out of band. Expired invitations must be revoked before the same organization/email can be invited again.
+
+Direct owner provisioning remains available when recipient acceptance is not needed. Create a human member and issue a one-time credential explicitly:
 
 ```bash
 membership_response="$(
