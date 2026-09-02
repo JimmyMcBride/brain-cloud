@@ -100,6 +100,129 @@ bootstrap_b="$(
 )"
 token_b="$(printf '%s' "$bootstrap_b" | jq -er '.token')"
 
+invitation_expires_at="$(date -u -d '+1 hour' '+%Y-%m-%dT%H:%M:%SZ')"
+invitee_email="invitee-$run_suffix@example.test"
+invitation_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data "$(
+      jq -cn \
+        --arg email "$invitee_email" \
+        --arg expires_at "$invitation_expires_at" \
+        '{email:$email,display_name:"Smoke Invitee",scopes:["projects.create","memory.write","memory.read","search.keyword"],expires_at:$expires_at}'
+    )" \
+    "$base_url/v1/organization/invitations"
+)"
+invitation_id="$(printf '%s' "$invitation_response" | jq -er '.invitation.id')"
+acceptance_token="$(printf '%s' "$invitation_response" | jq -er '.acceptance_token')"
+printf '%s' "$acceptance_token" | grep -Eq '^bci1_[0-9a-f]{32}_[A-Za-z0-9_-]{43}$'
+
+authorized_curl "$token_a" "$base_url/v1/organization/invitations" |
+  jq -e --arg id "$invitation_id" --arg secret "$acceptance_token" \
+    '(.invitations | map(select(.id == $id and .status == "pending")) | length) == 1 and
+     (tostring | contains($secret) | not) and
+     (tostring | contains("secret_digest") | not)' >/dev/null
+
+cross_invitation_status="$(
+  curl --silent --show-error \
+    --output "$scratch_dir/cross-invitation.json" \
+    --write-out '%{http_code}' \
+    --request DELETE \
+    --header "Authorization: Bearer $token_b" \
+    "$base_url/v1/organization/invitations/$invitation_id"
+)"
+test "$cross_invitation_status" = "404"
+jq -e '.error.code == "invitation_not_found"' "$scratch_dir/cross-invitation.json" >/dev/null
+
+acceptance_response="$(
+  curl --fail-with-body --silent --show-error \
+    --header 'Content-Type: application/json' \
+    --data "$(jq -cn --arg token "$acceptance_token" '{acceptance_token:$token}')" \
+    "$base_url/v1/invitations/accept"
+)"
+invitee_membership_id="$(printf '%s' "$acceptance_response" | jq -er '.membership.id')"
+invitee_token="$(printf '%s' "$acceptance_response" | jq -er '.token.token')"
+printf '%s' "$acceptance_response" |
+  jq -e --arg email "$invitee_email" \
+    '.membership.email == $email and .membership.role == "member" and
+     .token.name == "Invitation acceptance" and .token.expires_at == null' >/dev/null
+
+replay_status="$(
+  curl --silent --show-error \
+    --output "$scratch_dir/invitation-replay.json" \
+    --write-out '%{http_code}' \
+    --header 'Content-Type: application/json' \
+    --data "$(jq -cn --arg token "$acceptance_token" '{acceptance_token:$token}')" \
+    "$base_url/v1/invitations/accept"
+)"
+test "$replay_status" = "404"
+jq -e '.error.code == "invitation_not_found"' "$scratch_dir/invitation-replay.json" >/dev/null
+
+invitee_project_response="$(
+  authorized_curl "$invitee_token" \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Invitation project"}' \
+    "$base_url/v1/projects"
+)"
+invitee_project_id="$(printf '%s' "$invitee_project_response" | jq -er '.project.id')"
+invitee_memory_response="$(
+  authorized_curl "$invitee_token" \
+    --header 'Content-Type: application/json' \
+    --data '{"title":"Accepted","content":"Invitation credential works","content_type":"text/markdown"}' \
+    "$base_url/v1/projects/$invitee_project_id/memories"
+)"
+invitee_memory_id="$(printf '%s' "$invitee_memory_response" | jq -er '.memory.id')"
+printf '%s' "$invitee_memory_response" |
+  jq -e '.memory.revision.actor_type == "human"' >/dev/null
+
+revoked_email="revoked-invitee-$run_suffix@example.test"
+revoked_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data "$(jq -cn --arg email "$revoked_email" --arg expires_at "$invitation_expires_at" '{email:$email,display_name:"Revoked Invitee",scopes:["memory.read"],expires_at:$expires_at}')" \
+    "$base_url/v1/organization/invitations"
+)"
+revoked_id="$(printf '%s' "$revoked_response" | jq -er '.invitation.id')"
+revoked_secret="$(printf '%s' "$revoked_response" | jq -er '.acceptance_token')"
+authorized_curl "$token_a" --request DELETE \
+  "$base_url/v1/organization/invitations/$revoked_id" >/dev/null
+
+revoked_accept_status="$(
+  curl --silent --show-error \
+    --output "$scratch_dir/revoked-invitation.json" \
+    --write-out '%{http_code}' \
+    --header 'Content-Type: application/json' \
+    --data "$(jq -cn --arg token "$revoked_secret" '{acceptance_token:$token}')" \
+    "$base_url/v1/invitations/accept"
+)"
+test "$revoked_accept_status" = "404"
+
+reissued_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data "$(jq -cn --arg email "$revoked_email" --arg expires_at "$invitation_expires_at" '{email:$email,display_name:"Reissued Invitee",scopes:["memory.read"],expires_at:$expires_at}')" \
+    "$base_url/v1/organization/invitations"
+)"
+reissued_secret="$(printf '%s' "$reissued_response" | jq -er '.acceptance_token')"
+curl --fail-with-body --silent --show-error \
+  --header 'Content-Type: application/json' \
+  --data "$(jq -cn --arg token "$reissued_secret" '{acceptance_token:$token}')" \
+  "$base_url/v1/invitations/accept" |
+  jq -e --arg email "$revoked_email" '.membership.email == $email' >/dev/null
+
+existing_user_response="$(
+  authorized_curl "$token_a" \
+    --header 'Content-Type: application/json' \
+    --data "$(jq -cn --arg email "owner-b-$run_suffix@example.test" --arg expires_at "$invitation_expires_at" '{email:$email,display_name:"Must Not Replace",scopes:["memory.read"],expires_at:$expires_at}')" \
+    "$base_url/v1/organization/invitations"
+)"
+existing_user_secret="$(printf '%s' "$existing_user_response" | jq -er '.acceptance_token')"
+curl --fail-with-body --silent --show-error \
+  --header 'Content-Type: application/json' \
+  --data "$(jq -cn --arg token "$existing_user_secret" '{acceptance_token:$token}')" \
+  "$base_url/v1/invitations/accept" |
+  jq -e '.membership.display_name == "Smoke Owner B" and .membership.role == "member"' >/dev/null
+
 second_owner_response="$(
   authorized_curl "$token_a" \
     --header 'Content-Type: application/json' \
@@ -622,6 +745,14 @@ authorized_curl "$token_a" \
   "$base_url/v1/projects/$project_id/memories/$memory_id" |
   jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
 
+authorized_curl "$token_a" "$base_url/v1/organization/invitations" |
+  jq -e --arg id "$invitation_id" --arg membership_id "$invitee_membership_id" \
+    '(.invitations | map(select(.id == $id and .status == "accepted" and .accepted_membership_id == $membership_id)) | length) == 1' >/dev/null
+
+authorized_curl "$invitee_token" \
+  "$base_url/v1/projects/$invitee_project_id/memories/$invitee_memory_id" |
+  jq -e --arg memory_id "$invitee_memory_id" '.memory.id == $memory_id' >/dev/null
+
 authorized_curl "$replacement_member_token" \
   "$base_url/v1/projects/$project_id/memories/$memory_id" |
   jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
@@ -734,5 +865,5 @@ revoked_agent_access_status="$(
 test "$revoked_agent_access_status" = "404"
 jq -e '.error.code == "project_not_found"' "$scratch_dir/revoked-agent-access.json" >/dev/null
 
-printf 'Phase 2F smoke passed: organization=%s project=%s memory=%s member=%s team=%s agent=%s\n' \
-  "$organization_a_id" "$project_id" "$memory_id" "$member_id" "$team_id" "$agent_id"
+printf 'Phase 2G smoke passed: organization=%s project=%s memory=%s member=%s invitee=%s team=%s agent=%s\n' \
+  "$organization_a_id" "$project_id" "$memory_id" "$member_id" "$invitee_membership_id" "$team_id" "$agent_id"
