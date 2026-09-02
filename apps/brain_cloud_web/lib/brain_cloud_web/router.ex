@@ -30,6 +30,7 @@ defmodule BrainCloudWeb.Router do
     get "/healthz", HealthController, :show
     get "/readyz", ReadinessController, :show
     get "/v1/system/info", SystemInfoController, :show
+    post "/v1/invitations/accept", InvitationAcceptanceController, :create
   end
 
   scope "/v1", BrainCloudWeb do
@@ -44,6 +45,9 @@ defmodule BrainCloudWeb.Router do
     delete "/organization/memberships/:id", MembershipController, :delete
     post "/organization/memberships/:id/reactivate", MembershipController, :reactivate
     post "/organization/memberships/:id/tokens", MembershipController, :create_token
+    post "/organization/invitations", InvitationController, :create
+    get "/organization/invitations", InvitationController, :index
+    delete "/organization/invitations/:id", InvitationController, :delete
     post "/organization/teams", TeamController, :create
     get "/organization/teams", TeamController, :index
     patch "/organization/teams/:id", TeamController, :update

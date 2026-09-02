@@ -9,6 +9,9 @@ defmodule BrainCloud.Accounts.AuditEvent do
     membership.role_change
     membership.deactivate
     membership.reactivate
+    invitation.create
+    invitation.revoke
+    invitation.accept
     token.create
     token.revoke
     project.create
