@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-02T14:32:46Z"
+updated: "2026-09-06T12:28:48Z"
 ---
 # Current State
 
@@ -11,7 +11,7 @@ This file is a deterministic snapshot of the repository state at the last refres
 - Project: `brain-cloud`
 - Root: `.`
 - Runtime: `elixir`
-- Current branch: `codex/human-invitation-acceptance-foundation`
+- Current branch: `codex/phase-2h-interactive-human-identity-bridge`
 - Default branch: `develop`
 - Remote: `https://github.com/JimmyMcBride/brain-cloud.git`
 - Umbrella apps: `brain_cloud`, `brain_cloud_web`
@@ -51,3 +51,5 @@ Phase 2F is complete from canonical GitHub spec [#19](https://github.com/JimmyMc
 Phase 2G is implemented from canonical GitHub spec [#22](https://github.com/JimmyMcBride/brain-cloud/issues/22), `human-invitation-and-acceptance-foundation`: owner-managed member-only invitations, one-time expiring `bci1` acceptance secrets stored only as digests, transactional user reuse or creation, membership and initial-credential issuance, terminal-state row locking, tenant-safe database constraints, exact concealed failures, and explicit invitation audit provenance. Email delivery, interactive login, owner invitations, project/team assignment, custom roles, proposals, and a generic policy engine remain deferred.
 
 When a local brainstorm has already been promoted in GitHub source mode, update the existing issue with `plan github adopt --issues <number>`; do not reapply `plan discuss promote`, whose preview does not reconcile local brainstorm sources to existing issues.
+
+Phase 2H planning is active on branch `codex/phase-2h-interactive-human-identity-bridge`. The refined and challenged local brainstorm `closed-enrollment-interactive-human-identity-bridge` recommends one closed-enrollment Phoenix passwordless magic-link spec with tracked browser sessions, explicit active-organization selection, rehydrated LiveView authorization, and a minimal authenticated shell. Phase 2G invitation delivery, product UI, passwords, passkeys, OAuth/OIDC, SSO, SCIM, MFA, and owner invitations remain separate later work until the brainstorm is reviewed and promoted through Plan GitHub mode.
