@@ -1,0 +1,38 @@
+<Layouts.app flash={@flash}>
+  <section class="mx-auto max-w-lg space-y-8">
+    <div class="space-y-3">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+        Closed enrollment
+      </p>
+      <h1 class="text-4xl font-semibold tracking-tight text-slate-950">Sign in to Brain Cloud</h1>
+      <p class="leading-7 text-slate-600">
+        Enter the email address already attached to your Brain Cloud membership. We’ll send a
+        one-time link if the address is eligible.
+      </p>
+    </div>
+
+    <form action={~p"/sign-in"} method="post" class="space-y-5">
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+      <label class="block space-y-2">
+        <span class="text-sm font-medium text-slate-800">Email address</span>
+        <input
+          name="sign_in[email]"
+          type="email"
+          autocomplete="email"
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none ring-cyan-600 focus:ring-2"
+        />
+      </label>
+      <button
+        class="rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white"
+        type="submit"
+      >
+        Email me a sign-in link
+      </button>
+    </form>
+
+    <a href={~p"/"} class="inline-block text-sm font-medium text-cyan-800 hover:underline">
+      Back to server overview
+    </a>
+  </section>
+</Layouts.app>

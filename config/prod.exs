@@ -21,6 +21,16 @@ config :brain_cloud_web, BrainCloudWeb.Endpoint,
     ]
   ]
 
+config :brain_cloud_web, :session_options,
+  store: :cookie,
+  key: "_brain_cloud_web_session",
+  signing_salt: "browser-signing-v1",
+  encryption_salt: "browser-encryption-v1",
+  same_site: "Lax",
+  max_age: 14 * 24 * 60 * 60,
+  http_only: true,
+  secure: true
+
 # Emit machine-readable logs in production.
 config :logger,
   level: :info,

@@ -17,6 +17,21 @@ config :brain_cloud_web,
   ecto_repos: [BrainCloud.Repo],
   generators: [context_app: :brain_cloud, binary_id: true]
 
+config :brain_cloud_web, :session_options,
+  store: :cookie,
+  key: "_brain_cloud_web_session",
+  signing_salt: "browser-signing-v1",
+  encryption_salt: "browser-encryption-v1",
+  same_site: "Lax",
+  max_age: 14 * 24 * 60 * 60,
+  http_only: true,
+  secure: false
+
+config :brain_cloud_web, BrainCloudWeb.Mailer, adapter: Swoosh.Adapters.Local
+config :brain_cloud_web, :mailer_from, {"Brain Cloud", "brain-cloud@localhost"}
+config :brain_cloud_web, :public_app_url, "http://localhost:4000"
+config :swoosh, :api_client, false
+
 # Configures the endpoint
 config :brain_cloud_web, BrainCloudWeb.Endpoint,
   url: [host: "localhost"],
@@ -60,7 +75,7 @@ config :logger_json, encoder: JSON
 # Use Jason for JSON parsing in Phoenix
 config :phoenix,
   json_library: Jason,
-  filter_parameters: ["authorization", "secret", "token"]
+  filter_parameters: ["authorization", "email", "secret", "token"]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

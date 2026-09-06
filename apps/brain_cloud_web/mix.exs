@@ -64,6 +64,8 @@ defmodule BrainCloudWeb.MixProject do
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 1.0"},
+      {:swoosh, "~> 1.19"},
+      {:gen_smtp, "~> 1.2"},
       {:brain_cloud, in_umbrella: true},
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"}

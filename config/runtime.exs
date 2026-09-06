@@ -58,11 +58,32 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
+  server? = System.get_env("PHX_SERVER") in ~w(true 1)
+
+  public_uri =
+    if server? do
+      public_url =
+        System.get_env("PUBLIC_APP_URL") ||
+          raise "environment variable PUBLIC_APP_URL is missing; expected an https:// URL"
+
+      case URI.parse(public_url) do
+        %URI{scheme: "https", host: host, userinfo: nil, query: nil, fragment: nil, path: path} =
+            uri
+        when is_binary(host) and path in [nil, "", "/"] ->
+          uri
+
+        _invalid ->
+          raise "environment variable PUBLIC_APP_URL must be an absolute https:// URL without credentials, path, query, or fragment"
+      end
+    else
+      URI.parse("https://#{System.get_env("PHX_HOST", "localhost")}")
+    end
+
   config :brain_cloud_web, BrainCloudWeb.Endpoint,
     url: [
-      host: System.get_env("PHX_HOST", "localhost"),
-      port: String.to_integer(System.get_env("PORT", "4000")),
-      scheme: "http"
+      host: public_uri.host,
+      port: public_uri.port || 443,
+      scheme: public_uri.scheme
     ],
     http: [
       # Enable IPv6 and bind on all interfaces.
@@ -70,6 +91,109 @@ if config_env() == :prod do
       ip: {0, 0, 0, 0, 0, 0, 0, 0}
     ],
     secret_key_base: secret_key_base
+
+  config :brain_cloud_web,
+         :public_app_url,
+         "#{public_uri.scheme}://#{public_uri.host}" <>
+           if(public_uri.port in [nil, 443], do: "", else: ":#{public_uri.port}")
+
+  if server? do
+    smtp_relay =
+      case System.get_env("SMTP_RELAY") do
+        value when is_binary(value) and value != "" -> value
+        _missing -> raise "environment variable SMTP_RELAY is missing"
+      end
+
+    smtp_port =
+      case Integer.parse(System.get_env("SMTP_PORT", "587")) do
+        {port, ""} when port in 1..65_535 -> port
+        _invalid -> raise "environment variable SMTP_PORT must be an integer from 1 through 65535"
+      end
+
+    smtp_tls =
+      case System.get_env("SMTP_TLS", "always") do
+        "always" -> :always
+        "if_available" -> :if_available
+        "never" -> :never
+        _invalid -> raise "environment variable SMTP_TLS must be always, if_available, or never"
+      end
+
+    smtp_ssl =
+      case System.get_env("SMTP_SSL", "false") do
+        value when value in ["true", "1"] -> true
+        value when value in ["false", "0"] -> false
+        _invalid -> raise "environment variable SMTP_SSL must be true or false"
+      end
+
+    if smtp_ssl and smtp_tls != :never do
+      raise "environment variable SMTP_TLS must be never when SMTP_SSL is true"
+    end
+
+    smtp_username = System.get_env("SMTP_USERNAME")
+    smtp_password = System.get_env("SMTP_PASSWORD")
+
+    smtp_auth =
+      case {smtp_username, smtp_password} do
+        {username, password} when username in [nil, ""] and password in [nil, ""] ->
+          :never
+
+        {username, password}
+        when is_binary(username) and username != "" and is_binary(password) and password != "" ->
+          :always
+
+        _partial ->
+          raise "SMTP_USERNAME and SMTP_PASSWORD must be configured together"
+      end
+
+    sender_address =
+      case System.get_env("SMTP_FROM_ADDRESS") do
+        value when is_binary(value) ->
+          if Regex.match?(~r/^[^\s@]+@[^\s@]+$/, value),
+            do: value,
+            else: raise("environment variable SMTP_FROM_ADDRESS must be an email address")
+
+        _missing ->
+          raise "environment variable SMTP_FROM_ADDRESS is missing"
+      end
+
+    tls_verification = [
+      versions: [:"tlsv1.2", :"tlsv1.3"],
+      verify: :verify_peer,
+      cacerts: :public_key.cacerts_get(),
+      server_name_indication: String.to_charlist(smtp_relay),
+      customize_hostname_check: [
+        match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+      ]
+    ]
+
+    mailer_config = [
+      adapter: Swoosh.Adapters.SMTP,
+      relay: smtp_relay,
+      port: smtp_port,
+      auth: smtp_auth,
+      tls: smtp_tls,
+      ssl: smtp_ssl,
+      retries: 2
+    ]
+
+    mailer_config =
+      if smtp_auth == :always,
+        do: mailer_config ++ [username: smtp_username, password: smtp_password],
+        else: mailer_config
+
+    mailer_config =
+      cond do
+        smtp_ssl -> mailer_config ++ [sockopts: tls_verification]
+        smtp_tls != :never -> mailer_config ++ [tls_options: tls_verification]
+        true -> mailer_config
+      end
+
+    config :brain_cloud_web, BrainCloudWeb.Mailer, mailer_config
+
+    config :brain_cloud_web,
+           :mailer_from,
+           {System.get_env("SMTP_FROM_NAME", "Brain Cloud"), sender_address}
+  end
 
   # ## SSL Support
   #

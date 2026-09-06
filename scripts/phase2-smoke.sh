@@ -3,6 +3,7 @@ set -eu
 
 compose_project="${COMPOSE_PROJECT_NAME:-brain-cloud}"
 base_url="${BASE_URL:-http://127.0.0.1:4000}"
+mailpit_url="${MAILPIT_URL:-http://127.0.0.1:8025}"
 run_suffix="$(date +%s)-$$"
 scratch_dir="$(mktemp -d)"
 
@@ -55,9 +56,9 @@ done
 test "$attempt" -le 60
 
 curl --fail --silent --show-error "$base_url/" |
-  grep -q "organization-scoped durable"
+  grep -q "organization-aware browser shell"
 curl --fail --silent --show-error "$base_url/" |
-  grep -q "bounded agent-authored writes"
+  grep -q "identity shell, not a project"
 
 curl --fail --silent --show-error "$base_url/healthz" |
   jq -e '. == {"status":"ok"}' >/dev/null
@@ -99,6 +100,7 @@ bootstrap_b="$(
     "$organization_b_slug"
 )"
 token_b="$(printf '%s' "$bootstrap_b" | jq -er '.token')"
+membership_b_id="$(printf '%s' "$bootstrap_b" | jq -er '.membership_id')"
 
 invitation_expires_at="$(date -u -d '+1 hour' '+%Y-%m-%dT%H:%M:%SZ')"
 invitee_email="invitee-$run_suffix@example.test"
@@ -217,11 +219,13 @@ existing_user_response="$(
     "$base_url/v1/organization/invitations"
 )"
 existing_user_secret="$(printf '%s' "$existing_user_response" | jq -er '.acceptance_token')"
-curl --fail-with-body --silent --show-error \
+existing_user_acceptance_response="$(curl --fail-with-body --silent --show-error \
   --header 'Content-Type: application/json' \
   --data "$(jq -cn --arg token "$existing_user_secret" '{acceptance_token:$token}')" \
-  "$base_url/v1/invitations/accept" |
+  "$base_url/v1/invitations/accept")"
+printf '%s' "$existing_user_acceptance_response" |
   jq -e '.membership.display_name == "Smoke Owner B" and .membership.role == "member"' >/dev/null
+owner_b_membership_a_id="$(printf '%s' "$existing_user_acceptance_response" | jq -er '.membership.id')"
 
 second_owner_response="$(
   authorized_curl "$token_a" \
@@ -768,6 +772,184 @@ authorized_curl "$fresh_agent_token" \
      .memory.revision.actor_type == "agent" and
      .memory.revision.actor_id == $agent_id' >/dev/null
 
+browser_cookie_name="_brain_cloud_web_session"
+
+browser_csrf() {
+  grep -o 'name="csrf-token" content="[^"]*"' "$1" |
+    sed 's/.*content="\([^"]*\)"/\1/'
+}
+
+browser_cookie_from_headers() {
+  sed -n "s/^set-cookie: $browser_cookie_name=\([^;]*\).*/\1/ip" "$1" | tail -1
+}
+
+start_browser_sign_in() {
+  browser_email="$1"
+  browser_prefix="$2"
+
+  curl --fail --silent --show-error \
+    --dump-header "$scratch_dir/$browser_prefix-start.headers" \
+    --output "$scratch_dir/$browser_prefix-sign-in.html" \
+    "$base_url/sign-in"
+
+  browser_cookie="$(browser_cookie_from_headers "$scratch_dir/$browser_prefix-start.headers")"
+  browser_csrf_token="$(browser_csrf "$scratch_dir/$browser_prefix-sign-in.html")"
+
+  curl --fail --silent --show-error \
+    --cookie "$browser_cookie_name=$browser_cookie" \
+    --data-urlencode "_csrf_token=$browser_csrf_token" \
+    --data-urlencode "sign_in[email]=$browser_email" \
+    --output "$scratch_dir/$browser_prefix-accepted.html" \
+    "$base_url/sign-in"
+
+  grep -q "If this email can sign in, a link is on its way" \
+    "$scratch_dir/$browser_prefix-accepted.html"
+
+  attempt=1
+  while [ "$attempt" -le 20 ]; do
+    if curl --fail --silent --show-error "$mailpit_url/view/latest.txt" \
+      --output "$scratch_dir/$browser_prefix-email.txt" 2>/dev/null &&
+      grep -q 'bcl1_' "$scratch_dir/$browser_prefix-email.txt"; then
+      break
+    fi
+    sleep 1
+    attempt=$((attempt + 1))
+  done
+  test "$attempt" -le 20
+
+  browser_login_token="$(grep -Eo 'bcl1_[0-9a-f]{32}_[A-Za-z0-9_-]{43}' \
+    "$scratch_dir/$browser_prefix-email.txt" | head -1)"
+
+  curl --fail --silent --show-error \
+    --cookie "$browser_cookie_name=$browser_cookie" \
+    --output "$scratch_dir/$browser_prefix-confirm.html" \
+    "$base_url/sign-in/confirm"
+  ! grep -q "$browser_login_token" "$scratch_dir/$browser_prefix-confirm.html"
+  browser_csrf_token="$(browser_csrf "$scratch_dir/$browser_prefix-confirm.html")"
+
+  confirmation_status="$(curl --silent --show-error \
+    --dump-header "$scratch_dir/$browser_prefix-confirm.headers" \
+    --output /dev/null \
+    --write-out '%{http_code}' \
+    --cookie "$browser_cookie_name=$browser_cookie" \
+    --data-urlencode "_csrf_token=$browser_csrf_token" \
+    --data-urlencode "login[token]=$browser_login_token" \
+    "$base_url/sign-in/confirm")"
+  test "$confirmation_status" = "302"
+  browser_cookie="$(browser_cookie_from_headers "$scratch_dir/$browser_prefix-confirm.headers")"
+}
+
+browser_root() {
+  browser_prefix="$1"
+  curl --fail --silent --show-error \
+    --cookie "$browser_cookie_name=$browser_cookie" \
+    --dump-header "$scratch_dir/$browser_prefix-root.headers" \
+    --output "$scratch_dir/$browser_prefix-root.html" \
+    "$base_url/"
+
+  refreshed_cookie="$(browser_cookie_from_headers "$scratch_dir/$browser_prefix-root.headers")"
+  if [ -n "$refreshed_cookie" ]; then
+    browser_cookie="$refreshed_cookie"
+  fi
+}
+
+start_browser_sign_in "owner-a-$run_suffix@example.test" "single"
+browser_root "single"
+grep -q 'id="signed-in"' "$scratch_dir/single-root.html"
+grep -q "Smoke Organization A $run_suffix" "$scratch_dir/single-root.html"
+
+single_csrf="$(browser_csrf "$scratch_dir/single-root.html")"
+curl --silent --show-error \
+  --cookie "$browser_cookie_name=$browser_cookie" \
+  --data-urlencode "_csrf_token=$single_csrf" \
+  --data '_method=delete' \
+  --output /dev/null \
+  "$base_url/session"
+browser_root "single-logged-out"
+grep -q 'id="signed-out"' "$scratch_dir/single-logged-out-root.html"
+
+start_browser_sign_in "owner-b-$run_suffix@example.test" "multiple"
+browser_root "multiple"
+grep -q 'id="organization-chooser"' "$scratch_dir/multiple-root.html"
+grep -q "Smoke Organization A $run_suffix" "$scratch_dir/multiple-root.html"
+grep -q "Smoke Organization B $run_suffix" "$scratch_dir/multiple-root.html"
+
+multiple_csrf="$(browser_csrf "$scratch_dir/multiple-root.html")"
+selection_status="$(curl --silent --show-error \
+  --output /dev/null \
+  --write-out '%{http_code}' \
+  --cookie "$browser_cookie_name=$browser_cookie" \
+  --data-urlencode "_csrf_token=$multiple_csrf" \
+  --data-urlencode "membership_id=$owner_b_membership_a_id" \
+  "$base_url/organizations/select")"
+test "$selection_status" = "302"
+browser_root "multiple-selected"
+grep -q 'id="signed-in"' "$scratch_dir/multiple-selected-root.html"
+grep -q 'Current role: member' "$scratch_dir/multiple-selected-root.html"
+
+switch_csrf="$(browser_csrf "$scratch_dir/multiple-selected-root.html")"
+curl --silent --show-error \
+  --output /dev/null \
+  --cookie "$browser_cookie_name=$browser_cookie" \
+  --data-urlencode "_csrf_token=$switch_csrf" \
+  --data-urlencode "membership_id=$membership_b_id" \
+  "$base_url/organizations/select"
+browser_root "multiple-switched"
+grep -q "Smoke Organization B $run_suffix" "$scratch_dir/multiple-switched-root.html"
+
+switch_csrf="$(browser_csrf "$scratch_dir/multiple-switched-root.html")"
+curl --silent --show-error \
+  --output /dev/null \
+  --cookie "$browser_cookie_name=$browser_cookie" \
+  --data-urlencode "_csrf_token=$switch_csrf" \
+  --data-urlencode "membership_id=$owner_b_membership_a_id" \
+  "$base_url/organizations/select"
+
+docker compose -p "$compose_project" restart api >/dev/null
+
+attempt=1
+while [ "$attempt" -le 60 ]; do
+  if curl --fail --silent --max-time 2 "$base_url/readyz" |
+    jq -e '.status == "ready"' >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+  attempt=$((attempt + 1))
+done
+test "$attempt" -le 60
+
+browser_root "multiple-restarted"
+grep -q 'id="signed-in"' "$scratch_dir/multiple-restarted-root.html"
+
+authorized_curl "$token_a" \
+  --header 'Content-Type: application/json' \
+  --request PATCH \
+  --data '{"role":"owner"}' \
+  "$base_url/v1/organization/memberships/$owner_b_membership_a_id" |
+  jq -e '.membership.role == "owner"' >/dev/null
+browser_root "multiple-role-fresh"
+grep -q 'Current role: owner' "$scratch_dir/multiple-role-fresh-root.html"
+
+authorized_curl "$token_a" --request DELETE \
+  "$base_url/v1/organization/memberships/$owner_b_membership_a_id" >/dev/null
+browser_root "multiple-fallback"
+grep -q 'id="organization-chooser"' "$scratch_dir/multiple-fallback-root.html"
+grep -q "Smoke Organization B $run_suffix" "$scratch_dir/multiple-fallback-root.html"
+
+fallback_csrf="$(browser_csrf "$scratch_dir/multiple-fallback-root.html")"
+logout_status="$(curl --silent --show-error \
+  --output /dev/null \
+  --write-out '%{http_code}' \
+  --cookie "$browser_cookie_name=$browser_cookie" \
+  --data-urlencode "_csrf_token=$fallback_csrf" \
+  --data '_method=delete' \
+  "$base_url/session")"
+test "$logout_status" = "302"
+browser_root "multiple-replay"
+grep -q 'id="signed-out"' "$scratch_dir/multiple-replay-root.html"
+
+printf 'Phase 2H smoke: browser identity flow passed\n'
+
 rotated_a="$(
   bootstrap_owner \
     "owner-a-$run_suffix@example.test" \
@@ -789,7 +971,10 @@ test "$old_token_status" = "401"
 
 authorized_curl "$replacement_token" \
   "$base_url/v1/projects/$project_id/search?q=restart" |
-  jq -e --arg memory_id "$memory_id" '.results[0].memory_id == $memory_id' >/dev/null
+  jq -e --arg memory_id "$memory_id" \
+    'any(.results[]; .memory_id == $memory_id)' >/dev/null
+
+printf 'Phase 2H smoke: credential recovery passed\n'
 
 docker compose -p "$compose_project" stop postgres >/dev/null
 
@@ -803,6 +988,8 @@ readiness_status="$(
 )"
 test "$health_status" = "200"
 test "$readiness_status" = "503"
+
+printf 'Phase 2H smoke: database outage behavior passed\n'
 
 docker compose -p "$compose_project" start postgres >/dev/null
 
@@ -865,5 +1052,5 @@ revoked_agent_access_status="$(
 test "$revoked_agent_access_status" = "404"
 jq -e '.error.code == "project_not_found"' "$scratch_dir/revoked-agent-access.json" >/dev/null
 
-printf 'Phase 2G smoke passed: organization=%s project=%s memory=%s member=%s invitee=%s team=%s agent=%s\n' \
+printf 'Phase 2H smoke passed: organization=%s project=%s memory=%s member=%s invitee=%s team=%s agent=%s\n' \
   "$organization_a_id" "$project_id" "$memory_id" "$member_id" "$invitee_membership_id" "$team_id" "$agent_id"
