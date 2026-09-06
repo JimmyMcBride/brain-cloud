@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-02T14:33:34Z"
+updated: "2026-09-06T13:58:09Z"
 ---
 # Security direction
 
@@ -17,7 +17,7 @@ Every token belongs permanently to exactly one principal: a human organization m
 
 Bootstrap, token create/revoke, project create, and memory create commit immutable audit events in the same transaction as their durable action. The bootstrap secret is displayed once; explicit recovery revokes it and displays one replacement. Raw tokens and digests are excluded from normal logs, errors, audit metadata, inspection, list, and revoke output.
 
-This slice is production-capable API access control, not a complete identity product. Passwords, browser sessions, email verification, OAuth/OIDC, SSO, SCIM, email delivery, interactive invitation UI, rate limiting, and audit-query APIs remain unimplemented.
+API bearer credentials remain organization-bound and independent from the Phase 2H browser identity boundary. Passwords, passkeys, OAuth/OIDC, SSO, SCIM, MFA, interactive invitation UI, automatic invitation delivery, distributed rate limiting, and audit-query APIs remain unimplemented.
 
 ## Phase 2B membership administration
 
@@ -53,7 +53,19 @@ Human member invitations use distinct one-time `bci1_<public_id>_<secret>` accep
 
 Each invitation is tenant-bound to its organization and inviter membership, expires within seven days, grants only the fixed `member` role, and cannot carry member-forbidden management scopes. PostgreSQL composite foreign keys, a partial unresolved-email uniqueness constraint, row locks, and email-scoped transaction advisory locks serialize creation, revocation, acceptance, and direct-membership races. Public acceptance conceals malformed, unknown, wrong, expired, revoked, accepted, and replayed tokens behind the same `404 invitation_not_found` response.
 
-Valid acceptance atomically creates or reuses the globally normalized user without overwriting an existing profile, creates one active membership, issues one non-expiring initial `bc1` credential with pre-approved scopes, marks the invitation accepted, and writes one authentic acceptance audit. Raw secrets, digests, email, and display name are excluded from audit metadata and safe responses. Delivery, email verification, interactive login, owner invitations, resend/recovery, and rate limiting remain unimplemented.
+Valid acceptance atomically creates or reuses the globally normalized user without overwriting an existing profile, creates one active membership, issues one non-expiring initial `bc1` credential with pre-approved scopes, marks the invitation accepted, and writes one authentic acceptance audit. Raw secrets, digests, email, and display name are excluded from audit metadata and safe responses. Automatic invitation delivery, interactive invitation acceptance, owner invitations, and invitation resend/recovery remain unimplemented.
+
+## Phase 2H browser identity
+
+Browser sign-in is closed enrollment: exact normalized email must match an existing user with an active membership, but every request receives the same acknowledgement. Eligible-user delivery is limited to one sent link per 60 seconds and five per rolling hour. Deployments must add a trusted reverse-proxy IP limiter because the application intentionally adds no generic distributed limiter in this slice.
+
+Login challenges and browser sessions use separate high-entropy `bcl1` and `bcs1` secrets. PostgreSQL stores only SHA-256 digests. Challenges expire after 15 minutes, supersede one another, and consume once under a row lock. Sign-in links carry the raw token in a URL fragment so it is absent from HTTP request logs; browser JavaScript clears the fragment, places the token in a hidden field, and requires a CSRF-protected final POST. No return URL is accepted.
+
+Successful confirmation verifies the existing email, rotates pre-authentication cookie state, and creates one server-tracked session with an absolute 14-day expiry and seven-day atomic token reissue. Production cookies are encrypted and signed, `Secure`, `HttpOnly`, `SameSite=Lax`, and contain only the opaque session token. A 20-minute authentication timestamp is retained for future elevated actions.
+
+Every browser HTTP request and LiveView mount/reconnect reloads the user, active memberships, selected membership, organization, and role from PostgreSQL. Selection accepts only an active membership owned by the user. Inactive selection falls back to the chooser; losing all active memberships revokes the session. Browser sessions never authenticate `/v1`, and `bc1` API credentials never authenticate the browser.
+
+Successful verification/sign-in, session reissue, organization selection, and logout write global human-auth events with user/session provenance. These events exclude email, IP address, user agent, request bodies, raw secrets, and digests. Delivery failures invalidate the challenge and emit only a sanitized operational log. SMTP is synchronous; retries are explicit form submissions and no worker or queue exists.
 
 Future encryption modes are server-readable, end-to-end encrypted, and local-only. Server-readable projects can use hosted search and Hive Mind. End-to-end encrypted projects may require trusted client-side or user-controlled retrieval and will explicitly disclose lost server features. Searchable end-to-end encryption is not an initial requirement.
 

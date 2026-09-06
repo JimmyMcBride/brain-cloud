@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-02T14:33:35Z"
+updated: "2026-09-06T13:58:09Z"
 ---
 # Project Architecture
 
@@ -20,4 +20,4 @@ Use this file for the structural shape of the repository.
 
 ## Local Notes
 
-The Phase 2G server is a Phoenix umbrella. `brain_cloud` owns Ecto/PostgreSQL, human and agent accounts, organization tenancy, member invitations and public acceptance, scoped credentials, soft-deactivated teams/agents and retained links/grants, direct human/team reader-editor grants, direct agent reader-editor grants, implicit owner access, row-locked lifecycle mutations, transactional credential revocation, immutable human-or-agent audit events, projects, memories, immutable human-or-agent revisions, tenant/project-scoped keyword search, readiness, release migrations/bootstrap, and domain supervision. `brain_cloud_web` owns Phoenix, Bandit, explicit human/agent bearer authentication, owner/scope/project-access enforcement, LiveView, JSON controllers, and assets. System discovery includes implemented core capabilities and an empty enabled-module list; no module registry exists. Planning begins later as an optional supervised official OTP application; community process execution follows only after official contract validation. See `docs/architecture.md` and ADRs 0007–0013.
+The Phase 2H server is a Phoenix umbrella. `brain_cloud` owns Ecto/PostgreSQL, human and agent accounts, organization tenancy, invitations, API credentials, browser login challenges and sessions, global auth events, teams/agents and retained links/grants, direct project access, lifecycle locking, organization audit, projects, memories, keyword search, readiness, release migrations/bootstrap, and domain supervision. `brain_cloud_web` owns Phoenix, Bandit, separate API bearer and human browser authentication, synchronous Swoosh delivery, encrypted session cookies, current-scope rehydration, the minimal LiveView identity shell, JSON controllers, and assets. System discovery still reports the same API capabilities and empty enabled-module list. See `docs/architecture.md` and ADRs 0007–0013.

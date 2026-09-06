@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-02T14:34:06Z"
+updated: "2026-09-06T13:58:09Z"
 ---
 # Brain Cloud
 
@@ -45,7 +45,7 @@ Planning must be optional. Brain works without Planning, with the official Plann
 
 ## Status
 
-Phase 2G adds owner-managed, member-only invitations with one-time expiring `bci1` acceptance secrets, public recipient acceptance, transactional membership and initial-credential issuance, tenant-safe constraints, and authentic invitation audits. Phase 2F human/agent provenance and agent-authored memory behavior remains intact. There is no email delivery or interactive login; owner invitations, proposals, custom roles, nested teams, sync, Hive Mind, module execution, Planning, and product UI remain roadmap work.
+Phase 2H adds closed-enrollment passwordless sign-in for existing humans, synchronous sign-in email through Swoosh, one-time login challenges, revocable browser sessions, active-organization selection, database-rehydrated LiveView identity, and a minimal authenticated shell. Existing invitation, API credential, access-control, provenance, memory, and search behavior remains intact. Automatic invitation delivery, interactive invitation acceptance, owner invitations, proposals, custom roles, nested teams, sync, Hive Mind, module execution, Planning, and product CRUD UI remain roadmap work.
 
 ## Local development
 
@@ -64,8 +64,13 @@ make run
 | `DATABASE_URL` | local development config | PostgreSQL connection URL |
 | `SECRET_KEY_BASE` | development-only value | cookie and LiveView signing secret |
 | `PHX_HOST` | `localhost` | externally visible host |
+| `PUBLIC_APP_URL` | required in production | absolute HTTPS origin used in sign-in links |
 | `PHX_SERVER` | unset locally | start the endpoint in an OTP release |
 | `POOL_SIZE` | `10` | PostgreSQL connection pool size |
+| `SMTP_RELAY` / `SMTP_PORT` | required / `587` in production | synchronous sign-in mail relay |
+| `SMTP_USERNAME` / `SMTP_PASSWORD` | unset | optional SMTP credentials; configure both or neither |
+| `SMTP_TLS` / `SMTP_SSL` | `always` / `false` | SMTP transport policy; implicit TLS requires `never` / `true` |
+| `SMTP_FROM_ADDRESS` / `SMTP_FROM_NAME` | required / `Brain Cloud` in production | sign-in sender identity |
 
 ```bash
 docker compose up --build -d
@@ -76,7 +81,7 @@ curl http://localhost:4000/readyz
 curl http://localhost:4000/v1/system/info
 ```
 
-The Compose file starts the Phoenix release and PostgreSQL. `/readyz` returns `503` until PostgreSQL accepts a query. Bootstrap the first owner after the release starts:
+The Compose file starts the Phoenix release, PostgreSQL, and a development-only Mailpit SMTP sink at `http://localhost:8025`. Its production release configuration still requires an HTTPS public origin; place a TLS reverse proxy in front before using browser sign-in outside smoke testing. `/readyz` returns `503` until PostgreSQL accepts a query. Bootstrap the first owner after the release starts:
 
 ```bash
 bootstrap_response="$(
@@ -119,6 +124,8 @@ curl --fail-with-body \
 ```
 
 API tokens use `bc1_<public_id>_<secret>` and invitation acceptance tokens use distinct `bci1_<public_id>_<secret>` values. Both are stored only as SHA-256 digests; raw secrets appear once in their successful create or acceptance response. Human token-management endpoints require an owner membership plus `tokens.manage`; membership lifecycle requires owner plus `members.manage`, team lifecycle/membership requires owner plus `teams.manage`, and agent lifecycle/credential operations require owner plus `agents.manage`. Direct human, team, and agent project-grant management requires owner plus `projects.manage_access`. Agent tokens are limited to non-empty subsets of `memory.write`, `memory.read`, and `search.keyword`, and direct agent grants are reader or editor. Agent writes record authentic agent revision and audit provenance; fixed route scopes remain independent from project access. Product routes always require both their fixed token scope and project access.
+
+Existing humans with an active membership can use `/sign-in`. Brain Cloud sends a 15-minute, one-use email link and establishes a tracked 14-day browser session after an explicit confirmation. A single active membership is selected automatically; multiple memberships enter the organization chooser. Browser sessions authenticate only the LiveView shell and never `/v1`; `bc1` credentials authenticate only the API and never the browser. Development mail is inspectable at `/dev/mailbox`.
 
 Invite a human member and let the recipient claim their own first credential:
 
