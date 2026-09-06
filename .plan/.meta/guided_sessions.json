@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "last_active_chain": "brainstorm/human-invitation-and-acceptance-foundation",
-  "last_updated_at": "2026-09-01T14:33:29Z",
+  "last_active_chain": "brainstorm/closed-enrollment-interactive-human-identity-bridge",
+  "last_updated_at": "2026-09-06T12:24:23Z",
   "sessions": {
     "brainstorm/agent-authored-memory-provenance-foundation": {
       "chain_id": "brainstorm/agent-authored-memory-provenance-foundation",
@@ -44,6 +44,20 @@
       "next_action": "Capture the user's vision in plain language.",
       "created_at": "2026-07-27T21:20:04Z",
       "updated_at": "2026-07-27T21:20:04Z"
+    },
+    "brainstorm/closed-enrollment-interactive-human-identity-bridge": {
+      "chain_id": "brainstorm/closed-enrollment-interactive-human-identity-bridge",
+      "brainstorm": "closed-enrollment-interactive-human-identity-bridge",
+      "current_stage": "brainstorm",
+      "current_cluster": 5,
+      "current_cluster_label": "handoff-epic",
+      "stage_statuses": {
+        "brainstorm": "in_progress"
+      },
+      "summary": "Recap:\nCurrent understanding: Phase 2G can create a real human identity, membership, and API credential, but a person still cannot prove control of that identity in a browser, establish a revocable Phoenix session, or safely enter a LiveView workspace. The missing bridge includes closed-enrollment sign-in, delivery, session security, organization selection, and deactivation behavior; hiding any of these behind the future UI would make that UI depend on an undefined identity model. / Existing owners and invited members gain a browser sign-in path tied to the same global user and organization memberships already used by the API. They can enter a minimal authenticated shell, choose an active organization, and end or lose access to sessions predictably without receiving a second identity or turning API bearer tokens into browser credentials.\nKey decisions: appetite captured.\nUnresolved risks or questions: there are still open questions to review.\nParked items: none.\nRecommended next stage: Review recap and continue into the epic stage when ready.",
+      "next_action": "Brainstorm handoff is ready when you want to continue into the epic stage.",
+      "created_at": "2026-09-06T12:22:26Z",
+      "updated_at": "2026-09-06T12:24:23Z"
     },
     "brainstorm/human-invitation-and-acceptance-foundation": {
       "chain_id": "brainstorm/human-invitation-and-acceptance-foundation",
