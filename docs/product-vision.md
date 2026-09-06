@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-02T14:37:21Z"
+updated: "2026-09-06T11:53:13Z"
 ---
 # Product vision
 
@@ -15,7 +15,9 @@ Core remains valuable on its own. A person or agent can use Brain without enabli
 
 Brain Cloud provides cloud-native Brain projects, hosted context and memory, users, organizations, teams, access control, retrieval, compilation, conversations, revisions, hybrid synchronization, Hive Mind, agent APIs, module management and configuration, cloud module execution, background work, hosted service operation, and self-hosting.
 
-Cloud-native projects are first-class knowledge spaces rather than backups. They can begin without a repository and remain exportable to a human-readable Brain-compatible structure.\n\nHuman access begins with owner approval and recipient-held credentials. The current API supports member-only, time-bounded invitations whose one-time acceptance creates the membership and first credential atomically; delivery and interactive identity remain later product layers rather than hidden infrastructure assumptions.
+Cloud-native projects are first-class knowledge spaces rather than backups. They can begin without a repository and remain exportable to a human-readable Brain-compatible structure.
+
+Human access begins with owner approval and recipient-held credentials. The current API supports member-only, time-bounded invitations whose one-time acceptance creates the membership and first credential atomically; delivery and interactive identity remain later product layers rather than hidden infrastructure assumptions.
 
 ## Hive Mind
 
