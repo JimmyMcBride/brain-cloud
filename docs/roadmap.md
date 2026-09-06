@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-02T14:33:34Z"
+updated: "2026-09-06T13:03:02Z"
 ---
 # Brain Cloud roadmap
 
@@ -71,7 +71,9 @@ Planning is the first major optional official Brain module. It is not a separate
 
 **Phase 2G complete.** [Human invitation and acceptance foundation](https://github.com/JimmyMcBride/brain-cloud/issues/22) adds owner-managed member-only invitations, one-time expiring acceptance, transactional membership and initial-credential issuance, tenant-safe constraints, linearized terminal states, and audit provenance without email delivery or interactive login.
 
-Later Phase 2 slices add interactive identity, owner invitations, and finer-grained access. Agent proposals remain in Phase 12.
+**Phase 2H ready for execution.** [Closed-enrollment interactive human identity bridge](https://github.com/JimmyMcBride/brain-cloud/issues/25) specifies Phoenix passwordless magic-link sign-in for existing humans, tracked browser sessions, explicit active-organization selection, rehydrated LiveView authorization, global auth security events, and a minimal authenticated shell without automatic invitation delivery or product CRUD UI.
+
+Later Phase 2 slices add automatic invitation delivery and interactive acceptance, owner invitations, and finer-grained access. Agent proposals remain in Phase 12.
 
 ### Phase 3 — Complete cloud-native Brain project model
 

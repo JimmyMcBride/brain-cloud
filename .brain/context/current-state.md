@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T12:28:48Z"
+updated: "2026-09-06T13:02:18Z"
 ---
 # Current State
 
@@ -52,4 +52,4 @@ Phase 2G is implemented from canonical GitHub spec [#22](https://github.com/Jimm
 
 When a local brainstorm has already been promoted in GitHub source mode, update the existing issue with `plan github adopt --issues <number>`; do not reapply `plan discuss promote`, whose preview does not reconcile local brainstorm sources to existing issues.
 
-Phase 2H planning is active on branch `codex/phase-2h-interactive-human-identity-bridge`. The refined and challenged local brainstorm `closed-enrollment-interactive-human-identity-bridge` recommends one closed-enrollment Phoenix passwordless magic-link spec with tracked browser sessions, explicit active-organization selection, rehydrated LiveView authorization, and a minimal authenticated shell. Phase 2G invitation delivery, product UI, passwords, passkeys, OAuth/OIDC, SSO, SCIM, MFA, and owner invitations remain separate later work until the brainstorm is reviewed and promoted through Plan GitHub mode.
+Phase 2H is ready for execution from canonical GitHub spec [#25](https://github.com/JimmyMcBride/brain-cloud/issues/25), `closed-enrollment-interactive-human-identity-bridge`. The approved direction is one closed-enrollment Phoenix passwordless magic-link slice with tracked browser sessions, explicit active-organization selection, rehydrated LiveView authorization, global auth security events, and a minimal authenticated shell. Phase 2G invitation delivery, product CRUD UI, passwords, passkeys, OAuth/OIDC, SSO, SCIM, MFA, and owner invitations remain separate later work.
