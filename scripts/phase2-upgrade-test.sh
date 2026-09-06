@@ -29,5 +29,7 @@ run_mix run scripts/phase2_upgrade_seed.exs
 run_mix ecto.migrate --to 20260728212000 --quiet
 run_mix run scripts/phase2_access_upgrade_seed.exs
 run_mix ecto.migrate --quiet
+run_mix ecto.rollback --step 1 --quiet
+run_mix ecto.migrate --quiet
 
 run_mix run scripts/phase2_upgrade_verify.exs

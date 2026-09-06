@@ -9,6 +9,7 @@ defmodule BrainCloud.Accounts do
   alias BrainCloud.Accounts.AuditEvent
   alias BrainCloud.Accounts.AuthContext
   alias BrainCloud.Accounts.Organization
+  alias BrainCloud.Accounts.OrganizationInvitation
   alias BrainCloud.Accounts.OrganizationMembership
   alias BrainCloud.Accounts.Scopes
   alias BrainCloud.Accounts.User
@@ -19,8 +20,16 @@ defmodule BrainCloud.Accounts do
 
   @phase_one_organization_id "00000000-0000-0000-0000-0000000000f1"
   @token_pattern ~r/\Abc1_([0-9a-f]{32})_([A-Za-z0-9_-]{43})\z/
+  @invitation_pattern ~r/\Abci1_([0-9a-f]{32})_([A-Za-z0-9_-]{43})\z/
   @validation_public_id String.duplicate("0", 32)
   @validation_digest :binary.copy(<<0>>, 32)
+  @member_forbidden_scopes ~w(
+    members.manage
+    projects.manage_access
+    teams.manage
+    agents.manage
+    tokens.manage
+  )
 
   def bootstrap_owner(attrs, opts \\ []) do
     attrs = Map.new(attrs)
@@ -77,6 +86,130 @@ defmodule BrainCloud.Accounts do
       |> unwrap_transaction()
     end
   end
+
+  def create_organization_invitation(%AuthContext{} = auth, attrs) do
+    attrs = Map.new(attrs)
+    now = DateTime.utc_now(:microsecond)
+
+    with :ok <- authorize_target_token_management(auth),
+         {:ok, invitation_attrs} <- validate_invitation_attrs(auth, attrs, now) do
+      Repo.transaction(fn ->
+        lock_email(invitation_attrs.email)
+
+        with :ok <- ensure_email_membership_absent(invitation_attrs.email, auth.organization_id),
+             :ok <- ensure_invitation_absent(invitation_attrs.email, auth.organization_id),
+             {raw_token, token_attrs} <- invitation_token_attrs(),
+             {:ok, invitation} <-
+               %OrganizationInvitation{}
+               |> OrganizationInvitation.create_changeset(
+                 Map.merge(invitation_attrs, token_attrs),
+                 now
+               )
+               |> Repo.insert(),
+             {:ok, _event} <-
+               audit_changeset(
+                 auth,
+                 "invitation.create",
+                 "organization_invitation",
+                 invitation.id,
+                 %{
+                   "scopes" => invitation.scopes,
+                   "expires_at" => DateTime.to_iso8601(invitation.expires_at)
+                 }
+               )
+               |> Repo.insert() do
+          {invitation, raw_token}
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+      |> case do
+        {:ok, {invitation, raw_token}} -> {:ok, invitation, raw_token}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  def list_organization_invitations(%AuthContext{} = auth) do
+    with :ok <- authorize_membership_management(auth) do
+      invitations =
+        Repo.all(
+          from invitation in OrganizationInvitation,
+            where: invitation.organization_id == ^auth.organization_id,
+            order_by: [asc: invitation.inserted_at, asc: invitation.id]
+        )
+
+      {:ok, invitations}
+    end
+  end
+
+  def revoke_organization_invitation(%AuthContext{} = auth, invitation_id) do
+    with :ok <- authorize_membership_management(auth),
+         {:ok, invitation_id} <- Ecto.UUID.cast(invitation_id) do
+      Repo.transaction(fn ->
+        case organization_invitation_for_update(auth.organization_id, invitation_id) do
+          nil ->
+            Repo.rollback(:invitation_not_found)
+
+          %OrganizationInvitation{accepted_at: accepted_at}
+          when not is_nil(accepted_at) ->
+            :ok
+
+          %OrganizationInvitation{revoked_at: revoked_at}
+          when not is_nil(revoked_at) ->
+            :ok
+
+          %OrganizationInvitation{} = invitation ->
+            with {:ok, _invitation} <-
+                   invitation
+                   |> Changeset.change(revoked_at: DateTime.utc_now(:microsecond))
+                   |> Repo.update(),
+                 {:ok, _event} <-
+                   audit_changeset(
+                     auth,
+                     "invitation.revoke",
+                     "organization_invitation",
+                     invitation.id
+                   )
+                   |> Repo.insert() do
+              :ok
+            else
+              {:error, reason} -> Repo.rollback(reason)
+            end
+        end
+      end)
+      |> unwrap_transaction()
+    else
+      :error -> {:error, :invitation_not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def accept_organization_invitation(raw_token) when is_binary(raw_token) do
+    with [_, public_id, _secret] <- Regex.run(@invitation_pattern, raw_token) do
+      Repo.transaction(fn ->
+        case invitation_by_public_id_for_update(public_id) do
+          %OrganizationInvitation{} = invitation ->
+            if valid_invitation?(invitation, raw_token) do
+              accept_locked_invitation(invitation)
+            else
+              Repo.rollback(:invitation_not_found)
+            end
+
+          nil ->
+            Repo.rollback(:invitation_not_found)
+        end
+      end)
+      |> case do
+        {:ok, result} -> {:ok, result}
+        {:error, reason} -> {:error, reason}
+      end
+    else
+      _invalid -> {:error, :invitation_not_found}
+    end
+  end
+
+  def accept_organization_invitation(_raw_token), do: {:error, :invitation_not_found}
 
   def list_organization_memberships(%AuthContext{} = auth) do
     with :ok <- authorize_membership_management(auth) do
@@ -409,11 +542,7 @@ defmodule BrainCloud.Accounts do
   end
 
   defp find_or_create_membership_user(attrs) do
-    Ecto.Adapters.SQL.query!(
-      Repo,
-      "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
-      [attrs.email]
-    )
+    lock_email(attrs.email)
 
     case Repo.get_by(User, email: attrs.email) do
       %User{} = user ->
@@ -445,6 +574,32 @@ defmodule BrainCloud.Accounts do
       nil -> :ok
       %OrganizationMembership{deactivated_at: nil} -> {:error, :membership_exists}
       %OrganizationMembership{} -> {:error, :membership_inactive}
+    end
+  end
+
+  defp ensure_email_membership_absent(email, organization_id) do
+    case Repo.one(
+           from membership in OrganizationMembership,
+             join: user in User,
+             on: user.id == membership.user_id,
+             where: user.email == ^email and membership.organization_id == ^organization_id,
+             select: membership.id
+         ) do
+      nil -> :ok
+      _membership_id -> {:error, :membership_exists}
+    end
+  end
+
+  defp ensure_invitation_absent(email, organization_id) do
+    case Repo.one(
+           from invitation in OrganizationInvitation,
+             where:
+               invitation.email == ^email and
+                 invitation.organization_id == ^organization_id and
+                 is_nil(invitation.accepted_at) and is_nil(invitation.revoked_at)
+         ) do
+      nil -> :ok
+      %OrganizationInvitation{} -> {:error, :invitation_exists}
     end
   end
 
@@ -595,6 +750,18 @@ defmodule BrainCloud.Accounts do
     end
   end
 
+  defp invitation_token_attrs do
+    public_id = :crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower)
+    secret = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
+    raw_token = "bci1_#{public_id}_#{secret}"
+
+    {raw_token,
+     %{
+       public_id: public_id,
+       secret_digest: :crypto.hash(:sha256, raw_token)
+     }}
+  end
+
   defp token_changeset(attrs, membership_id) when is_binary(membership_id) do
     token_changeset(attrs, %{membership_id: membership_id})
   end
@@ -650,6 +817,24 @@ defmodule BrainCloud.Accounts do
   end
 
   defp authorize_target_token_management(_auth), do: {:error, :forbidden}
+
+  defp organization_invitation_for_update(organization_id, invitation_id) do
+    Repo.one(
+      from invitation in OrganizationInvitation,
+        where:
+          invitation.id == ^invitation_id and
+            invitation.organization_id == ^organization_id,
+        lock: "FOR UPDATE"
+    )
+  end
+
+  defp invitation_by_public_id_for_update(public_id) do
+    Repo.one(
+      from invitation in OrganizationInvitation,
+        where: invitation.public_id == ^public_id,
+        lock: "FOR UPDATE"
+    )
+  end
 
   defp organization_membership_for_update(organization_id, membership_id) do
     Repo.one(
@@ -729,17 +914,7 @@ defmodule BrainCloud.Accounts do
           not Scopes.subset?(scopes, auth.scopes) ->
             {:error, scope_subset_changeset(attrs, membership.id)}
 
-          membership.role == "member" and
-              Enum.any?(
-                scopes,
-                &(&1 in [
-                    "members.manage",
-                    "projects.manage_access",
-                    "teams.manage",
-                    "agents.manage",
-                    "tokens.manage"
-                  ])
-              ) ->
+          membership.role == "member" and Enum.any?(scopes, &(&1 in @member_forbidden_scopes)) ->
             {:error, member_management_scope_changeset(attrs, membership.id)}
 
           true ->
@@ -755,6 +930,149 @@ defmodule BrainCloud.Accounts do
     attrs
     |> validation_token_changeset(membership_id)
     |> Changeset.add_error(:scopes, "cannot include management scopes for a member")
+  end
+
+  defp validate_invitation_attrs(auth, attrs, now) do
+    changeset =
+      OrganizationInvitation.create_changeset(
+        %OrganizationInvitation{},
+        %{
+          organization_id: auth.organization_id,
+          created_by_membership_id: auth.membership_id,
+          email: attribute(attrs, :email),
+          display_name: attribute(attrs, :display_name),
+          role: "member",
+          scopes: attribute(attrs, :scopes),
+          public_id: @validation_public_id,
+          secret_digest: @validation_digest,
+          expires_at: attribute(attrs, :expires_at)
+        },
+        now
+      )
+      |> validate_invitation_scopes(auth)
+
+    case Changeset.apply_action(changeset, :insert) do
+      {:ok, invitation} ->
+        {:ok,
+         %{
+           organization_id: invitation.organization_id,
+           created_by_membership_id: invitation.created_by_membership_id,
+           email: invitation.email,
+           display_name: invitation.display_name,
+           role: invitation.role,
+           scopes: invitation.scopes,
+           expires_at: invitation.expires_at
+         }}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  defp validate_invitation_scopes(changeset, auth) do
+    scopes = Changeset.get_field(changeset, :scopes)
+
+    cond do
+      not is_list(scopes) ->
+        changeset
+
+      not Scopes.subset?(scopes, auth.scopes) ->
+        Changeset.add_error(changeset, :scopes, "must be a subset of the current token scopes")
+
+      Enum.any?(scopes, &(&1 in @member_forbidden_scopes)) ->
+        Changeset.add_error(changeset, :scopes, "cannot include management scopes for a member")
+
+      true ->
+        changeset
+    end
+  end
+
+  defp valid_invitation?(invitation, raw_token) do
+    pending? = is_nil(invitation.accepted_at) and is_nil(invitation.revoked_at)
+    not_expired? = DateTime.after?(invitation.expires_at, DateTime.utc_now())
+    provided_digest = :crypto.hash(:sha256, raw_token)
+
+    digest_matches? =
+      byte_size(provided_digest) == byte_size(invitation.secret_digest) and
+        :crypto.hash_equals(provided_digest, invitation.secret_digest)
+
+    pending? and not_expired? and digest_matches?
+  end
+
+  defp accept_locked_invitation(invitation) do
+    lock_email(invitation.email)
+
+    with {:ok, user} <-
+           find_or_create_membership_user(%{
+             email: invitation.email,
+             display_name: invitation.display_name
+           }),
+         :ok <- ensure_invitation_membership_absent(user.id, invitation.organization_id),
+         {:ok, membership} <-
+           %OrganizationMembership{}
+           |> OrganizationMembership.changeset(%{
+             user_id: user.id,
+             organization_id: invitation.organization_id,
+             role: "member"
+           })
+           |> Repo.insert(),
+         {:ok, {token, raw_token}} <-
+           issue_token(
+             membership.id,
+             %{name: "Invitation acceptance", scopes: invitation.scopes},
+             false
+           ),
+         {:ok, accepted_invitation} <-
+           invitation
+           |> Changeset.change(
+             accepted_at: DateTime.utc_now(:microsecond),
+             accepted_membership_id: membership.id
+           )
+           |> Repo.update(),
+         {:ok, _event} <-
+           %AuditEvent{}
+           |> AuditEvent.changeset(%{
+             organization_id: invitation.organization_id,
+             actor_user_id: user.id,
+             api_token_id: token.id,
+             action: "invitation.accept",
+             resource_type: "organization_invitation",
+             resource_id: invitation.id,
+             metadata: %{
+               "accepted_membership_id" => membership.id,
+               "issued_token_id" => token.id,
+               "scopes" => token.scopes
+             }
+           })
+           |> Repo.insert() do
+      %{
+        invitation: accepted_invitation,
+        membership: Repo.preload(membership, :user),
+        token: token,
+        raw_token: raw_token
+      }
+    else
+      {:error, :membership_exists} -> Repo.rollback(:membership_exists)
+      {:error, reason} -> Repo.rollback(reason)
+    end
+  end
+
+  defp ensure_invitation_membership_absent(user_id, organization_id) do
+    case Repo.get_by(OrganizationMembership,
+           user_id: user_id,
+           organization_id: organization_id
+         ) do
+      nil -> :ok
+      %OrganizationMembership{} -> {:error, :membership_exists}
+    end
+  end
+
+  defp lock_email(email) do
+    Ecto.Adapters.SQL.query!(
+      Repo,
+      "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
+      [email]
+    )
   end
 
   defp active_bootstrap_token(membership_id) do

@@ -1,5 +1,13 @@
 alias BrainCloud.{Accounts, Agents, Memories, Projects, Repo}
-alias BrainCloud.Accounts.{ApiToken, AuditEvent, OrganizationMembership, User}
+
+alias BrainCloud.Accounts.{
+  ApiToken,
+  AuditEvent,
+  OrganizationInvitation,
+  OrganizationMembership,
+  User
+}
+
 alias BrainCloud.Agents.Agent
 alias BrainCloud.Memories.MemoryRevision
 alias BrainCloud.Projects.{AgentProjectAccessGrant, ProjectAccessGrant, TeamProjectAccessGrant}
@@ -47,6 +55,8 @@ true = Repo.aggregate(TeamMembership, :count, :id) == 0
 true = Repo.aggregate(TeamProjectAccessGrant, :count, :id) == 0
 true = Repo.aggregate(Agent, :count, :id) == 0
 true = Repo.aggregate(AgentProjectAccessGrant, :count, :id) == 0
+true = Repo.aggregate(OrganizationInvitation, :count, :id) == 0
+
 true =
   Repo.aggregate(from(event in AuditEvent, where: not is_nil(event.actor_agent_id)), :count, :id) ==
     0
@@ -192,4 +202,23 @@ agent_event = Repo.get_by!(AuditEvent, action: "memory.create", resource_id: age
 true = is_nil(agent_event.actor_user_id)
 true = agent_event.actor_agent_id == agent.id
 
-IO.puts("Phase 2F upgrade passed")
+{:ok, invitation, acceptance_token} =
+  Accounts.create_organization_invitation(auth, %{
+    email: "upgrade-invitee@example.test",
+    display_name: "Upgrade Invitee",
+    scopes: ["memory.read", "search.keyword"],
+    expires_at: DateTime.add(DateTime.utc_now(), 3600, :second)
+  })
+
+true = invitation.role == "member"
+true = invitation.secret_digest == :crypto.hash(:sha256, acceptance_token)
+{:ok, accepted} = Accounts.accept_organization_invitation(acceptance_token)
+true = accepted.membership.organization_id == auth.organization_id
+true = accepted.membership.role == "member"
+true = accepted.token.name == "Invitation acceptance"
+true = accepted.token.scopes == ["memory.read", "search.keyword"]
+{:ok, accepted_auth} = Accounts.authenticate(accepted.raw_token)
+true = accepted_auth.membership_id == accepted.membership.id
+{:error, :invitation_not_found} = Accounts.accept_organization_invitation(acceptance_token)
+
+IO.puts("Phase 2G upgrade passed")

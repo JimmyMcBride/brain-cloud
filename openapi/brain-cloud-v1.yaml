@@ -54,6 +54,98 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemInfo"
+  /v1/invitations/accept:
+    post:
+      operationId: acceptOrganizationInvitation
+      summary: Accept a human organization invitation
+      description: A valid one-time acceptance token creates or reuses the global user, creates a member membership, and returns one initial API credential. Every unavailable acceptance token is concealed behind the same not-found response.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvitationAcceptanceRequest"
+      responses:
+        "201":
+          description: Invitation accepted and initial credential created. The API token secret appears only in this response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationAcceptanceEnvelope"
+        "404":
+          $ref: "#/components/responses/InvitationNotFound"
+        "409":
+          $ref: "#/components/responses/MembershipExists"
+  /v1/organization/invitations:
+    post:
+      operationId: createOrganizationInvitation
+      summary: Create a one-time human member invitation
+      description: Authorization precedes validation. The role is fixed to member, the expiry is required and limited to seven days, and member-forbidden management scopes are rejected. The raw acceptance token appears only in this successful response.
+      x-required-role: owner
+      x-required-scopes: [members.manage, tokens.manage]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvitationCreate"
+      responses:
+        "201":
+          description: Invitation created; transfer the one-time acceptance token out of band.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationCreateEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/InvitationConflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+    get:
+      operationId: listOrganizationInvitations
+      summary: List safe invitation metadata for the caller's organization
+      description: Results are ordered by inserted_at and ID. Acceptance secrets and digests are never returned.
+      x-required-role: owner
+      x-required-scope: members.manage
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Caller-organization invitation metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationListEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /v1/organization/invitations/{invitation_id}:
+    delete:
+      operationId: revokeOrganizationInvitation
+      summary: Revoke an organization invitation
+      description: Authorization precedes tenant-concealed lookup. Pending and expired invitations transition to revoked; accepted or already revoked invitations are idempotent no-ops.
+      x-required-role: owner
+      x-required-scope: members.manage
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/InvitationId"
+      responses:
+        "204":
+          description: Invitation is revoked or already terminal.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/InvitationNotFound"
   /v1/organization/memberships:
     post:
       operationId: createOrganizationMembership
@@ -942,6 +1034,13 @@ components:
       schema:
         type: string
         format: uuid
+    InvitationId:
+      name: invitation_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     TeamId:
       name: team_id
       in: path
@@ -1069,6 +1168,47 @@ components:
                   code: membership_inactive
                   message: Organization membership is inactive
                   details: {}
+    MembershipExists:
+      description: The invited user already has an active or inactive membership in the target organization.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: membership_exists
+              message: Organization membership already exists
+              details: {}
+    InvitationConflict:
+      description: The normalized email already has a membership or unresolved invitation in the caller's organization.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          examples:
+            membership:
+              value:
+                error:
+                  code: membership_exists
+                  message: Organization membership already exists
+                  details: {}
+            invitation:
+              value:
+                error:
+                  code: invitation_exists
+                  message: An unresolved invitation already exists
+                  details: {}
+    InvitationNotFound:
+      description: The invitation ID is missing, malformed, or cross-tenant, or the acceptance token is malformed, unknown, wrong, expired, revoked, accepted, or replayed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            error:
+              code: invitation_not_found
+              message: Invitation not found
+              details: {}
     MembershipInactive:
       description: The target membership is inactive and cannot receive a credential or project grant.
       content:
@@ -1562,6 +1702,99 @@ components:
           maxLength: 120
         role:
           $ref: "#/components/schemas/MembershipRole"
+    InvitationCreate:
+      type: object
+      additionalProperties: false
+      required: [email, display_name, scopes, expires_at]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        scopes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Must be a subset of the creating credential and cannot contain member-forbidden management scopes.
+          items:
+            $ref: "#/components/schemas/TokenScope"
+        expires_at:
+          type: string
+          format: date-time
+          description: Must be in the future and no more than seven days from creation.
+    InvitationAcceptanceRequest:
+      type: object
+      additionalProperties: false
+      required: [acceptance_token]
+      properties:
+        acceptance_token:
+          type: string
+          pattern: "^bci1_[0-9a-f]{32}_[A-Za-z0-9_-]{43}$"
+          writeOnly: true
+    Invitation:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - email
+        - display_name
+        - role
+        - scopes
+        - status
+        - expires_at
+        - accepted_at
+        - revoked_at
+        - accepted_membership_id
+        - created_by_membership_id
+        - inserted_at
+        - updated_at
+      properties:
+        id: {type: string, format: uuid}
+        email: {type: string, format: email}
+        display_name: {type: string}
+        role: {type: string, const: member}
+        scopes:
+          type: array
+          items: {$ref: "#/components/schemas/TokenScope"}
+        status:
+          type: string
+          enum: [pending, expired, accepted, revoked]
+        expires_at: {type: string, format: date-time}
+        accepted_at: {type: [string, "null"], format: date-time}
+        revoked_at: {type: [string, "null"], format: date-time}
+        accepted_membership_id: {type: [string, "null"], format: uuid}
+        created_by_membership_id: {type: string, format: uuid}
+        inserted_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    InvitationCreateEnvelope:
+      type: object
+      additionalProperties: false
+      required: [invitation, acceptance_token]
+      properties:
+        invitation: {$ref: "#/components/schemas/Invitation"}
+        acceptance_token:
+          type: string
+          pattern: "^bci1_[0-9a-f]{32}_[A-Za-z0-9_-]{43}$"
+          readOnly: true
+    InvitationListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [invitations]
+      properties:
+        invitations:
+          type: array
+          items: {$ref: "#/components/schemas/Invitation"}
+    InvitationAcceptanceEnvelope:
+      type: object
+      additionalProperties: false
+      required: [membership, token]
+      properties:
+        membership: {$ref: "#/components/schemas/Membership"}
+        token: {$ref: "#/components/schemas/CreatedToken"}
     MembershipRoleUpdate:
       type: object
       additionalProperties: false

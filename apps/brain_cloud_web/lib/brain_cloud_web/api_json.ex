@@ -108,6 +108,24 @@ defmodule BrainCloudWeb.APIJSON do
     }
   end
 
+  def invitation(invitation) do
+    %{
+      id: invitation.id,
+      email: invitation.email,
+      display_name: invitation.display_name,
+      role: invitation.role,
+      scopes: invitation.scopes,
+      status: BrainCloud.Accounts.OrganizationInvitation.status(invitation),
+      expires_at: timestamp(invitation.expires_at),
+      accepted_at: optional_timestamp(invitation.accepted_at),
+      revoked_at: optional_timestamp(invitation.revoked_at),
+      accepted_membership_id: invitation.accepted_membership_id,
+      created_by_membership_id: invitation.created_by_membership_id,
+      inserted_at: timestamp(invitation.inserted_at),
+      updated_at: timestamp(invitation.updated_at)
+    }
+  end
+
   def memory(memory) do
     %{
       id: memory.id,

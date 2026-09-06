@@ -28,6 +28,10 @@ defmodule BrainCloudWeb.APIError do
     render(conn, :not_found, "membership_not_found", "Organization membership not found")
   end
 
+  def invitation_not_found(conn) do
+    render(conn, :not_found, "invitation_not_found", "Invitation not found")
+  end
+
   def team_not_found(conn) do
     render(conn, :not_found, "team_not_found", "Team not found")
   end
@@ -38,6 +42,10 @@ defmodule BrainCloudWeb.APIError do
 
   def membership_exists(conn) do
     render(conn, :conflict, "membership_exists", "Organization membership already exists")
+  end
+
+  def invitation_exists(conn) do
+    render(conn, :conflict, "invitation_exists", "An unresolved invitation already exists")
   end
 
   def membership_inactive(conn) do
