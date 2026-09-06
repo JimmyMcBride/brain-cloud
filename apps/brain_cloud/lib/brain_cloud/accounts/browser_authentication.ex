@@ -48,8 +48,16 @@ defmodule BrainCloud.Accounts.BrowserAuthentication do
               case %BrowserLoginChallenge{}
                    |> BrowserLoginChallenge.changeset(Map.put(attrs, :user_id, user.id))
                    |> Repo.insert() do
-                {:ok, challenge} -> {:deliver, challenge, raw_token, user}
-                {:error, reason} -> Repo.rollback(reason)
+                {:ok, challenge} ->
+                  {:deliver, challenge, raw_token, user}
+
+                {:error, changeset} ->
+                  if active_challenge_conflict?(changeset) do
+                    dummy_token_work()
+                    :accepted
+                  else
+                    Repo.rollback(changeset)
+                  end
               end
             end
         end
@@ -475,6 +483,15 @@ defmodule BrainCloud.Accounts.BrowserAuthentication do
     dummy = :crypto.strong_rand_bytes(32)
     :crypto.hash(:sha256, dummy)
   end
+
+  defp active_challenge_conflict?(%Changeset{
+         errors: [{:user_id, {_message, options}}]
+       }) do
+    options[:constraint] == :unique and
+      to_string(options[:constraint_name]) == "browser_login_challenges_active_user_index"
+  end
+
+  defp active_challenge_conflict?(_changeset), do: false
 
   defp login_challenge_for_update(challenge_id) do
     with {:ok, challenge_id} <- Ecto.UUID.cast(challenge_id) do

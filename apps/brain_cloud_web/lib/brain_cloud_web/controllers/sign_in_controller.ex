@@ -54,6 +54,7 @@ defmodule BrainCloudWeb.SignInController do
       {:ok, _email} ->
         case Accounts.mark_browser_login_sent(challenge.id) do
           {:ok, _sent} -> :ok
+          {:error, :login_unavailable} -> :ok
           {:error, _reason} -> delivery_failed(challenge.id)
         end
 
