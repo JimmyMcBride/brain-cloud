@@ -8,6 +8,7 @@ defmodule BrainCloud.Accounts do
   alias BrainCloud.Accounts.ApiToken
   alias BrainCloud.Accounts.AuditEvent
   alias BrainCloud.Accounts.AuthContext
+  alias BrainCloud.Accounts.BrowserAuthentication
   alias BrainCloud.Accounts.Organization
   alias BrainCloud.Accounts.OrganizationInvitation
   alias BrainCloud.Accounts.OrganizationMembership
@@ -30,6 +31,36 @@ defmodule BrainCloud.Accounts do
     agents.manage
     tokens.manage
   )
+
+  defdelegate request_browser_login(email, opts \\ []),
+    to: BrowserAuthentication,
+    as: :request_login
+
+  defdelegate mark_browser_login_sent(challenge_id, opts \\ []),
+    to: BrowserAuthentication,
+    as: :mark_login_sent
+
+  defdelegate invalidate_browser_login(challenge_id, opts \\ []),
+    to: BrowserAuthentication,
+    as: :invalidate_login
+
+  defdelegate confirm_browser_login(raw_token, opts \\ []),
+    to: BrowserAuthentication,
+    as: :confirm_login
+
+  defdelegate authenticate_browser_session(raw_token, opts \\ []),
+    to: BrowserAuthentication,
+    as: :authenticate_session
+
+  defdelegate select_browser_membership(raw_token, membership_id, opts \\ []),
+    to: BrowserAuthentication,
+    as: :select_membership
+
+  defdelegate logout_browser_session(raw_token, opts \\ []),
+    to: BrowserAuthentication,
+    as: :logout
+
+  defdelegate recently_authenticated?(scope, opts \\ []), to: BrowserAuthentication
 
   def bootstrap_owner(attrs, opts \\ []) do
     attrs = Map.new(attrs)
