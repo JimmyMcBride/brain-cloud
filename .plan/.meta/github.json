@@ -3,7 +3,7 @@
   "repo_url": "https://github.com/JimmyMcBride/brain-cloud",
   "default_branch": "develop",
   "last_enabled_at": "2026-07-27T17:50:25Z",
-  "last_updated_at": "2026-09-02T14:14:51Z",
+  "last_updated_at": "2026-09-06T13:01:30Z",
   "stories": {},
   "planning": {
     "agent-authored-memory-provenance-foundation": {
@@ -44,6 +44,19 @@
       "entry_mode": "local_promotion",
       "source_mode": "local",
       "updated_at": "2026-07-28T04:52:41Z"
+    },
+    "closed-enrollment-interactive-human-identity-bridge": {
+      "slug": "closed-enrollment-interactive-human-identity-bridge",
+      "kind": "spec",
+      "title": "Closed-enrollment interactive human identity bridge",
+      "issue_number": 25,
+      "issue_url": "https://github.com/JimmyMcBride/brain-cloud/issues/25",
+      "remote_state": "open",
+      "readiness": "ready",
+      "ownership_mode": "github",
+      "entry_mode": "local_promotion",
+      "source_mode": "local",
+      "updated_at": "2026-09-06T13:01:30Z"
     },
     "human-invitation-and-acceptance-foundation": {
       "slug": "human-invitation-and-acceptance-foundation",
