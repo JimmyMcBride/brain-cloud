@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T11:53:13Z"
+updated: "2026-09-06T13:58:09Z"
 ---
 # Product vision
 
@@ -17,7 +17,7 @@ Brain Cloud provides cloud-native Brain projects, hosted context and memory, use
 
 Cloud-native projects are first-class knowledge spaces rather than backups. They can begin without a repository and remain exportable to a human-readable Brain-compatible structure.
 
-Human access begins with owner approval and recipient-held credentials. The current API supports member-only, time-bounded invitations whose one-time acceptance creates the membership and first credential atomically; delivery and interactive identity remain later product layers rather than hidden infrastructure assumptions.
+Human access begins with owner approval. The current API supports member-only, time-bounded invitations whose one-time acceptance creates the membership and first API credential atomically. Existing humans with an active membership can then use closed-enrollment email sign-in and a revocable organization-aware browser session. Automatic invitation delivery and interactive invitation acceptance remain later product layers.
 
 ## Hive Mind
 

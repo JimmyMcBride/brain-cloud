@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-02T14:32:46Z"
+updated: "2026-09-06T13:58:09Z"
 ---
 # Workflows
 
@@ -62,10 +62,10 @@ Project-specific commands:
 - `make check`: formatting, warnings-as-errors compilation, database migrations/tests, and production assets.
 - `make run`: Phoenix and LiveView on `PORT` (default `4000`).
 - `Dockerfile`: multi-stage, non-root OTP release image with migration entrypoint.
-- `compose.yaml`: Phoenix release and PostgreSQL; operators create the initial organization owner through `/app/bin/bootstrap_owner`.
-- `make upgrade-phase2`: with PostgreSQL running, verify deterministic Phase 1 data migration, synthetic principals, explicit legacy adoption, selective owner-scope upgrades, direct-grant backfill including inactive members, empty team/agent tables, and preserved retrieval/search.
-- `make smoke-phase2`: against a running Compose project, verify public endpoints, owner bootstrap/recovery, human and agent token lifecycle, direct/team/agent project access, dormant lifecycle behavior, tenant isolation, create/retrieve/search, API restart durability, PostgreSQL outage health/readiness, and recovery.
+- `compose.yaml`: Phoenix release, PostgreSQL, and a development-only Mailpit SMTP sink; operators create the initial organization owner through `/app/bin/bootstrap_owner`.
+- `make upgrade-phase2`: with PostgreSQL running, verify historical data/API migration, empty browser-auth rollout, rollback/forward migration, and post-upgrade sign-in.
+- `make smoke-phase2`: against a running Compose project, verify existing API behavior plus SMTP-backed browser sign-in, selection/switching, scope freshness, logout/replay denial, restart persistence, and PostgreSQL outage/recovery.
 
-Active delivery branch is `develop`; `main` is releases and `release/vX.Y.Z` is stabilization. Phase 1 provides persistent project/memory/search. Phase 2A adds production API identity and organization tenancy. Phase 2B adds owner-managed human membership lifecycle and target credentials. Phase 2C adds direct human grants; Phase 2D adds reusable teams; Phase 2E adds first-class agents and read-only access; Phase 2F adds exact human/agent provenance, direct agent reader-editor grants, and scoped agent-authored immutable memory writes; Phase 2G adds owner-managed member invitations and public one-time acceptance. Email delivery, interactive identity, owner invitations, proposals, project creation or administration by agents, and broader policy remain later Phase 2 work.
+Active delivery branch is `develop`; `main` is releases and `release/vX.Y.Z` is stabilization. Phase 1 provides persistent project/memory/search. Phase 2A–2G add production API identity, organization tenancy, memberships, project/team/agent access, provenance, and invitations. Phase 2H adds closed-enrollment email sign-in and the organization-aware LiveView identity shell. Automatic invitation delivery, interactive invitation acceptance, product CRUD UI, owner invitations, proposals, project creation or administration by agents, and broader policy remain later work.
 
 Plan currently uses GitHub source mode only as transitional repository coordination. All Plan-owned GitHub mutations still go through Plan. The target product architecture stores optional Planning data in local/cloud/hybrid Brain, not permanently in GitHub. Module ecosystem implementation is deferred until Phase 10; the Planning migration requires a separate follow-up contract.

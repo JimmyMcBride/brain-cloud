@@ -46,6 +46,25 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
+// Login tokens arrive in the URL fragment, which browsers do not send to the server.
+// Move the token into the CSRF-protected final POST, then immediately clear the fragment.
+const prepareLoginConfirmation = () => {
+  const form = document.querySelector("[data-login-confirmation]")
+  if (!form) return
+
+  const token = new URLSearchParams(window.location.hash.slice(1)).get("token")
+  window.history.replaceState({}, document.title, window.location.pathname)
+
+  if (token) {
+    form.querySelector("[data-login-token]").value = token
+    form.querySelector("[data-login-submit]").disabled = false
+  } else {
+    document.querySelector("[data-login-missing]").hidden = false
+  }
+}
+
+window.addEventListener("DOMContentLoaded", prepareLoginConfirmation)
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //

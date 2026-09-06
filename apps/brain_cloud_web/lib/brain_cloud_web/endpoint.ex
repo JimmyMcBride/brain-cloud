@@ -1,15 +1,7 @@
 defmodule BrainCloudWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :brain_cloud_web
 
-  # The session will be stored in the cookie and signed,
-  # this means its contents can be read but not tampered with.
-  # Set :encryption_salt if you would also like to encrypt it.
-  @session_options [
-    store: :cookie,
-    key: "_brain_cloud_web_key",
-    signing_salt: "thgiYKjJ",
-    same_site: "Lax"
-  ]
+  @session_options Application.compile_env!(:brain_cloud_web, :session_options)
 
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]],

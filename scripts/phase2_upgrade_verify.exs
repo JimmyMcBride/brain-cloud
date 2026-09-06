@@ -3,8 +3,11 @@ alias BrainCloud.{Accounts, Agents, Memories, Projects, Repo}
 alias BrainCloud.Accounts.{
   ApiToken,
   AuditEvent,
+  BrowserLoginChallenge,
+  BrowserSession,
   OrganizationInvitation,
   OrganizationMembership,
+  UserAuthEvent,
   User
 }
 
@@ -14,6 +17,10 @@ alias BrainCloud.Projects.{AgentProjectAccessGrant, ProjectAccessGrant, TeamProj
 alias BrainCloud.Teams.{Team, TeamMembership}
 
 import Ecto.Query
+
+true = Repo.aggregate(BrowserLoginChallenge, :count, :id) == 0
+true = Repo.aggregate(BrowserSession, :count, :id) == 0
+true = Repo.aggregate(UserAuthEvent, :count, :id) == 0
 
 legacy_manager =
   Repo.one!(
@@ -221,4 +228,14 @@ true = accepted.token.scopes == ["memory.read", "search.keyword"]
 true = accepted_auth.membership_id == accepted.membership.id
 {:error, :invitation_not_found} = Accounts.accept_organization_invitation(acceptance_token)
 
-IO.puts("Phase 2G upgrade passed")
+{:ok, {:deliver, challenge, login_token, _user}} =
+  Accounts.request_browser_login("legacy-owner@example.test")
+
+{:ok, _challenge} = Accounts.mark_browser_login_sent(challenge.id)
+{:ok, browser_scope, browser_session_token} = Accounts.confirm_browser_login(login_token)
+true = browser_scope.user.id == bootstrap.user.id
+true = browser_scope.organization.id == bootstrap.organization.id
+{:ok, rehydrated_scope, nil} = Accounts.authenticate_browser_session(browser_session_token)
+true = rehydrated_scope.role == "owner"
+
+IO.puts("Phase 2H upgrade passed")

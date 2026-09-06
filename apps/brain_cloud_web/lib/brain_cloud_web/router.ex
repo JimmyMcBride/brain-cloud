@@ -5,6 +5,7 @@ defmodule BrainCloudWeb.Router do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_live_flash
+    plug BrainCloudWeb.BrowserAuth
     plug :put_root_layout, html: {BrainCloudWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
@@ -21,7 +22,16 @@ defmodule BrainCloudWeb.Router do
   scope "/", BrainCloudWeb do
     pipe_through :browser
 
-    live "/", HomeLive, :index
+    get "/sign-in", SignInController, :new
+    post "/sign-in", SignInController, :create
+    get "/sign-in/confirm", SignInController, :confirm
+    post "/sign-in/confirm", SignInController, :consume
+    post "/organizations/select", OrganizationSessionController, :update
+    delete "/session", BrowserSessionController, :delete
+
+    live_session :browser, on_mount: [{BrainCloudWeb.BrowserAuth, :current_scope}] do
+      live "/", HomeLive, :index
+    end
   end
 
   scope "/", BrainCloudWeb do
@@ -104,6 +114,7 @@ defmodule BrainCloudWeb.Router do
       pipe_through :browser
 
       live_dashboard "/dashboard", metrics: BrainCloudWeb.Telemetry
+      forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end
 end

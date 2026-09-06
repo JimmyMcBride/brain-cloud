@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T13:02:18Z"
+updated: "2026-09-06T18:00:07Z"
 ---
 # Current State
 
@@ -52,4 +52,6 @@ Phase 2G is implemented from canonical GitHub spec [#22](https://github.com/Jimm
 
 When a local brainstorm has already been promoted in GitHub source mode, update the existing issue with `plan github adopt --issues <number>`; do not reapply `plan discuss promote`, whose preview does not reconcile local brainstorm sources to existing issues.
 
-Phase 2H is ready for execution from canonical GitHub spec [#25](https://github.com/JimmyMcBride/brain-cloud/issues/25), `closed-enrollment-interactive-human-identity-bridge`. The approved direction is one closed-enrollment Phoenix passwordless magic-link slice with tracked browser sessions, explicit active-organization selection, rehydrated LiveView authorization, global auth security events, and a minimal authenticated shell. Phase 2G invitation delivery, product CRUD UI, passwords, passkeys, OAuth/OIDC, SSO, SCIM, MFA, and owner invitations remain separate later work.
+Phase 2H is implemented from canonical GitHub spec [#25](https://github.com/JimmyMcBride/brain-cloud/issues/25), `closed-enrollment-interactive-human-identity-bridge`: existing-user-only passwordless email sign-in, digest-only one-time challenges, synchronous Swoosh SMTP, revocable 14-day browser sessions with seven-day reissue, active-organization selection, PostgreSQL-rehydrated HTTP/LiveView scope, safe global auth events, and a minimal signed-out/chooser/signed-in shell. Browser and API credentials remain strictly separate. Automatic invitation delivery, interactive invitation acceptance, product CRUD UI, alternate authenticators, owner invitations, and generic rate-limit infrastructure remain later work.
+
+Concurrent sign-in issuance remains non-enumerating: the user row lock serializes normal challenge creation, the named active-challenge uniqueness race is accepted without logging, and a challenge superseded after synchronous delivery but before sent-state persistence is treated as an expected no-op while unexpected persistence failures still invalidate and log.

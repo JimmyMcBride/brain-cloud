@@ -1,0 +1,24 @@
+<Layouts.app flash={@flash}>
+  <section class="mx-auto max-w-lg space-y-7 text-center">
+    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">One final step</p>
+    <h1 class="text-4xl font-semibold tracking-tight text-slate-950">Confirm sign-in</h1>
+    <p class="leading-7 text-slate-600">
+      Continue to consume this one-time link and start your Brain Cloud browser session.
+    </p>
+    <form action={~p"/sign-in/confirm"} method="post" data-login-confirmation>
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+      <input type="hidden" name="login[token]" data-login-token />
+      <button
+        type="submit"
+        data-login-submit
+        disabled
+        class="rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Continue to Brain Cloud
+      </button>
+    </form>
+    <p data-login-missing class="text-sm text-rose-700" hidden>
+      This link is incomplete. Request a new sign-in email.
+    </p>
+  </section>
+</Layouts.app>

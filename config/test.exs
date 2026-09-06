@@ -40,6 +40,8 @@ config :brain_cloud_web, BrainCloudWeb.Endpoint,
   secret_key_base: "Q8VTo2ufeI0Snn8KjipaKiWThoprj5KaPCzFtNj+9L/a53NsZv62mEkmX6d3zsQQ",
   server: false
 
+config :brain_cloud_web, BrainCloudWeb.Mailer, adapter: Swoosh.Adapters.Test
+
 # Print only warnings and errors during test
 config :logger, level: :warning
 

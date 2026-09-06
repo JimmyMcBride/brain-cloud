@@ -1,0 +1,13 @@
+<Layouts.app flash={@flash}>
+  <section class="mx-auto max-w-lg space-y-6 text-center">
+    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">Check your inbox</p>
+    <h1 class="text-3xl font-semibold tracking-tight text-slate-950">{@acknowledgement}</h1>
+    <p class="leading-7 text-slate-600">
+      The link expires after 15 minutes and works once. You can safely retry if the message does
+      not arrive.
+    </p>
+    <a href={~p"/sign-in"} class="inline-block text-sm font-medium text-cyan-800 hover:underline">
+      Try another email
+    </a>
+  </section>
+</Layouts.app>

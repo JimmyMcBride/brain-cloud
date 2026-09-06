@@ -10,15 +10,18 @@ defmodule BrainCloud.Accounts.User do
   schema "users" do
     field :email, :string
     field :display_name, :string
+    field :email_verified_at, :utc_datetime_usec
 
     has_many :memberships, BrainCloud.Accounts.OrganizationMembership
+    has_many :browser_login_challenges, BrainCloud.Accounts.BrowserLoginChallenge
+    has_many :browser_sessions, BrainCloud.Accounts.BrowserSession
 
     timestamps()
   end
 
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:email, :display_name])
+    |> cast(attrs, [:email, :display_name, :email_verified_at])
     |> update_change(:email, &normalize_email/1)
     |> update_change(:display_name, &String.trim/1)
     |> validate_required([:email, :display_name])

@@ -7,17 +7,29 @@ services:
       PHX_SERVER: "true"
       POOL_SIZE: "10"
       PORT: "4000"
+      PUBLIC_APP_URL: https://localhost:4000
       SECRET_KEY_BASE: development-only-secret-key-base-development-only-secret-key-base-1234
+      SMTP_FROM_ADDRESS: brain-cloud@example.test
+      SMTP_RELAY: mailpit
+      SMTP_PORT: "1025"
+      SMTP_TLS: never
     ports:
       - "4000:4000"
     depends_on:
       postgres:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/healthz"]
       interval: 5s
       timeout: 3s
       retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.31.1
+    ports:
+      - "8025:8025"
 
   postgres:
     image: postgres:18-alpine
