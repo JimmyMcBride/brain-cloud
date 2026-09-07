@@ -226,6 +226,56 @@ defmodule BrainCloud.Accounts do
   """
   def accept_browser_invitation(raw_token), do: accept_invitation(raw_token, :browser)
 
+  def preview_browser_invitation(raw_token, raw_session) do
+    browser_invitation_transaction(raw_token, raw_session, false)
+  end
+
+  def accept_browser_invitation(raw_token, raw_session) do
+    browser_invitation_transaction(raw_token, raw_session, true)
+  end
+
+  defp browser_invitation_transaction(raw_token, raw_session, accept?) do
+    Repo.transaction(fn ->
+      scope =
+        if is_nil(raw_session) do
+          nil
+        else
+          case authenticate_browser_session(raw_session, rotate: false) do
+            {:ok, scope, nil} -> scope
+            _ -> Repo.rollback(:unauthorized)
+          end
+        end
+
+      invitation =
+        with true <- is_binary(raw_token),
+             [_, public_id, _secret] <- Regex.run(@invitation_pattern, raw_token),
+             %OrganizationInvitation{} = invitation <-
+               invitation_by_public_id_for_update(public_id),
+             true <- valid_invitation?(invitation, raw_token) do
+          invitation
+        else
+          _ -> Repo.rollback(:invitation_not_found)
+        end
+
+      if scope && scope.user.email != invitation.email, do: Repo.rollback(:identity_mismatch)
+
+      if accept? do
+        result = accept_locked_invitation(invitation, :browser)
+
+        if scope do
+          case select_browser_membership(raw_session, result.membership.id) do
+            {:ok, _scope} -> :ok
+            _ -> Repo.rollback(:unauthorized)
+          end
+        end
+
+        result
+      else
+        Repo.preload(invitation, :organization)
+      end
+    end)
+  end
+
   defp accept_invitation(raw_token, transport) when is_binary(raw_token) do
     with [_, public_id, _secret] <- Regex.run(@invitation_pattern, raw_token) do
       Repo.transaction(fn ->
@@ -1037,7 +1087,8 @@ defmodule BrainCloud.Accounts do
       byte_size(provided_digest) == byte_size(invitation.secret_digest) and
         :crypto.hash_equals(provided_digest, invitation.secret_digest)
 
-    pending? and not_expired? and digest_matches?
+    pending? and not_expired? and digest_matches? and
+      invitation.delivery_state in ["manual", "sent"]
   end
 
   defp accept_locked_invitation(invitation, transport) do

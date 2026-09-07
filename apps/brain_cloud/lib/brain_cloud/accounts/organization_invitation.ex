@@ -18,6 +18,8 @@ defmodule BrainCloud.Accounts.OrganizationInvitation do
     field :scopes, {:array, :string}, default: []
     field :public_id, :string
     field :secret_digest, :binary, redact: true
+    field :delivery_state, :string, default: "manual"
+    field :delivery_generation, :binary_id
     field :expires_at, :utc_datetime_usec
     field :accepted_at, :utc_datetime_usec
     field :revoked_at, :utc_datetime_usec

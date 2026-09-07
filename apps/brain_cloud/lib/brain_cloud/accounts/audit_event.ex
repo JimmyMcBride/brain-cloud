@@ -12,6 +12,9 @@ defmodule BrainCloud.Accounts.AuditEvent do
     invitation.create
     invitation.revoke
     invitation.accept
+    invitation.delivery_requested
+    invitation.delivery_sent
+    invitation.delivery_failed
     token.create
     token.revoke
     project.create
