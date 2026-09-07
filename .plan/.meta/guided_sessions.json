@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "last_active_chain": "brainstorm/invitation-delivery-and-browser-acceptance",
-  "last_updated_at": "2026-09-07T02:50:39Z",
+  "last_updated_at": "2026-09-07T03:04:07Z",
   "sessions": {
     "brainstorm/agent-authored-memory-provenance-foundation": {
       "chain_id": "brainstorm/agent-authored-memory-provenance-foundation",
@@ -77,15 +77,15 @@
       "chain_id": "brainstorm/invitation-delivery-and-browser-acceptance",
       "brainstorm": "invitation-delivery-and-browser-acceptance",
       "current_stage": "brainstorm",
-      "current_cluster": 1,
-      "current_cluster_label": "vision-intake",
+      "current_cluster": 5,
+      "current_cluster_label": "handoff-epic",
       "stage_statuses": {
         "brainstorm": "in_progress"
       },
-      "summary": "Vision still missing. No supporting material recorded yet.",
-      "next_action": "Capture the user's vision in plain language.",
+      "summary": "Vision and supporting material captured. User approved the owner invitation panel, separate sign-in after admission, and resend rotation without expiry extension. Canonical GitHub spec #28 is published; no unresolved shaping questions. Review the spec before implementation.",
+      "next_action": "Review canonical GitHub spec #28; no epic or duplicate promotion is needed.",
       "created_at": "2026-09-07T02:50:39Z",
-      "updated_at": "2026-09-07T02:50:39Z"
+      "updated_at": "2026-09-07T03:04:07Z"
     },
     "brainstorm/organization-membership-administration-foundation": {
       "chain_id": "brainstorm/organization-membership-administration-foundation",

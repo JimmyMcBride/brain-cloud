@@ -5,7 +5,7 @@ slug: invitation-delivery-and-browser-acceptance
 status: active
 title: Invitation delivery and browser acceptance
 type: brainstorm
-updated_at: "2026-09-07T02:50:39Z"
+updated_at: "2026-09-07T03:04:07Z"
 ---
 
 # Brainstorm: Invitation delivery and browser acceptance
@@ -39,8 +39,7 @@ Make the existing invitation and sign-in foundations usable together. Keep this 
 
 ## Open Questions
 
-None blocking promotion. The three proposed decisions were approved by the user. Concrete limits, routes, delivery states, and audit outcomes are specified below.
-
+- None.
 ## Ideas
 
 - Phase 2I: owner-triggered synchronous invitation email, browser acceptance without API credential issuance, then existing magic-link sign-in.
@@ -62,7 +61,7 @@ One Phase 2I spec covering invitation delivery, bounded owner controls, recipien
 
 ### Remaining Open Questions
 
-None blocking promotion; user approved all three recommendations.
+- None.
 
 ### Candidate Approaches
 
@@ -73,7 +72,6 @@ None blocking promotion; user approved all three recommendations.
 ### Decision Snapshot
 
 Approved direction: preserve Phase 2G API behavior, add a browser-specific acceptance result without issuing an API credential, and use Phase 2H for actual authentication. Never infer email verification from an invitation because owners receive invitation secrets through the existing API.
-
 ## Challenge
 
 ### Rabbit Holes
