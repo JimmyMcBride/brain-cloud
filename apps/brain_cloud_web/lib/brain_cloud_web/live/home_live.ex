@@ -113,6 +113,11 @@ defmodule BrainCloudWeb.HomeLive do
           {@current_scope.organization.name}
         </h2>
         <p class="mt-2 text-sm text-slate-600">Current role: {@current_scope.role}</p>
+        <.link
+          :if={@current_scope.role == "owner"}
+          href={~p"/organization/invitations"}
+          class="mt-4 inline-block text-cyan-700 underline"
+        >Invite members</.link>
       </div>
 
       <div

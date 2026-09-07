@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T14:15:15Z"
+updated: "2026-09-07T15:01:18Z"
 ---
 # Self-hosting direction
 
@@ -30,3 +30,9 @@ Owners administer agents through `/v1/organization/agents` with `agents.manage`,
 Production self-hosting still needs versioned image publication, backup and restore, upgrade runbooks, secret-manager integration, reverse-proxy IP rate limiting, observability, and broader operations hardening. Redis, object storage, queues, and vector databases are not assumed.
 
 Self-hosters will control which official and community modules are allowed and enabled. Production module operations eventually require version pinning, permission approval, publisher/integrity verification, configuration and migration tooling, worker/process lifecycle, diagnostics, and backup/export coverage for module-owned data. External community module execution is deferred until supervised official OTP applications validate the contracts.
+
+## Invitation delivery
+
+Owners use `/organization/invitations` after selecting an organization. Existing SMTP and public URL settings also serve invitations. Manual API creation still sends no email. Send/resend rotates the secret, invalidates earlier links, and preserves expiry. Limits: 60 seconds between attempts per invitation, five attempts per invitation/hour, and 20 per organization/hour; failures count. SMTP runs synchronously outside database locks. A failed send or crash leaves an unusable generation; explicitly retry after the cooldown. No automatic retry worker exists. Revoke an expired invitation before replacing it. Mail-server acceptance is not proof of inbox delivery.
+
+Migration adds delivery state/generation and tenant-bound attempt history. Existing invitations default to manual and remain usable. Rollback removes delivery safety state; do not roll back while emailed invitations are active without first revoking them. Recipients join through a fragment-based confirmation flow, then request existing email sign-in. Browser joining issues no API credential; manual API acceptance still does.

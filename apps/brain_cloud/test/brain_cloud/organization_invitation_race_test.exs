@@ -12,6 +12,81 @@ defmodule BrainCloud.OrganizationInvitationRaceTest do
   alias BrainCloud.Repo
   alias Ecto.Adapters.SQL.Sandbox
 
+  test "concurrent send reservations yield one generation and one cooldown" do
+    setup = unboxed(&invitation_setup/0)
+    on_exit(fn -> unboxed(fn -> cleanup(setup) end) end)
+    token = unboxed(fn -> owner_session(setup) end)
+
+    results =
+      race(
+        fn -> BrainCloud.Accounts.InvitationDelivery.reserve(token, setup.invitation.id) end,
+        fn -> BrainCloud.Accounts.InvitationDelivery.reserve(token, setup.invitation.id) end
+      )
+
+    assert Enum.count(results, &match?({:ok, _}, &1)) == 1
+    assert Enum.count(results, &match?({:error, {:throttled, _}}, &1)) == 1
+  end
+
+  test "send finalization racing revocation cannot revive a token" do
+    setup = unboxed(&invitation_setup/0)
+    on_exit(fn -> unboxed(fn -> cleanup(setup) end) end)
+
+    {token, reservation} =
+      unboxed(fn ->
+        token = owner_session(setup)
+
+        {:ok, reservation} =
+          BrainCloud.Accounts.InvitationDelivery.reserve(token, setup.invitation.id)
+
+        {token, reservation}
+      end)
+
+    race(
+      fn -> BrainCloud.Accounts.InvitationDelivery.finish(reservation.attempt.id, :sent) end,
+      fn -> BrainCloud.Accounts.InvitationDelivery.revoke(token, setup.invitation.id) end
+    )
+
+    assert unboxed(fn -> Accounts.accept_browser_invitation(reservation.token) end) ==
+             {:error, :invitation_not_found}
+  end
+
+  defp owner_session(setup) do
+    user = Repo.get!(BrainCloud.Accounts.User, setup.owner_user_id)
+    {:ok, {:deliver, challenge, raw, _}} = Accounts.request_browser_login(user.email)
+    {:ok, _} = Accounts.mark_browser_login_sent(challenge.id)
+    {:ok, _, token} = Accounts.confirm_browser_login(raw)
+    token
+  end
+
+  test "concurrent browser admission creates one membership and no credential" do
+    setup = unboxed(&invitation_setup/0)
+    on_exit(fn -> unboxed(fn -> cleanup(setup) end) end)
+
+    results =
+      race(fn -> Accounts.accept_browser_invitation(setup.raw_token) end, fn ->
+        Accounts.accept_browser_invitation(setup.raw_token)
+      end)
+
+    assert Enum.count(results, &match?({:ok, _}, &1)) == 1
+    assert Enum.count(results, &(&1 == {:error, :invitation_not_found})) == 1
+    assert_counts(setup, memberships: 1, tokens: 0, acceptance_audits: 1)
+  end
+
+  test "browser and API admission race commits one transport's effects" do
+    setup = unboxed(&invitation_setup/0)
+    on_exit(fn -> unboxed(fn -> cleanup(setup) end) end)
+
+    [browser, api] =
+      race(fn -> Accounts.accept_browser_invitation(setup.raw_token) end, fn ->
+        Accounts.accept_organization_invitation(setup.raw_token)
+      end)
+
+    assert Enum.count([browser, api], &match?({:ok, _}, &1)) == 1
+    assert Enum.count([browser, api], &(&1 == {:error, :invitation_not_found})) == 1
+    tokens = if match?({:ok, _}, api), do: 1, else: 0
+    assert_counts(setup, memberships: 1, tokens: tokens, acceptance_audits: 1)
+  end
+
   test "concurrent acceptance creates exactly one membership, token, and audit" do
     setup = unboxed(&invitation_setup/0)
     on_exit(fn -> unboxed(fn -> cleanup(setup) end) end)
@@ -216,6 +291,19 @@ defmodule BrainCloud.OrganizationInvitationRaceTest do
     owner_user_id = Ecto.UUID.dump!(setup.owner_user_id)
 
     Repo.query!("DELETE FROM audit_events WHERE organization_id = $1", [organization_id])
+
+    Repo.query!(
+      "UPDATE organization_invitations SET delivery_generation = NULL, delivery_state = 'manual' WHERE organization_id = $1",
+      [organization_id]
+    )
+
+    Repo.query!("DELETE FROM invitation_delivery_attempts WHERE organization_id = $1", [
+      organization_id
+    ])
+
+    Repo.query!("DELETE FROM user_auth_events WHERE user_id = $1", [owner_user_id])
+    Repo.query!("DELETE FROM browser_sessions WHERE user_id = $1", [owner_user_id])
+    Repo.query!("DELETE FROM browser_login_challenges WHERE user_id = $1", [owner_user_id])
 
     Repo.query!("DELETE FROM organization_invitations WHERE organization_id = $1", [
       organization_id

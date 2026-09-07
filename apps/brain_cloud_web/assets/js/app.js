@@ -58,12 +58,16 @@ const prepareLoginConfirmation = () => {
   if (token) {
     form.querySelector("[data-login-token]").value = token
     form.querySelector("[data-login-submit]").disabled = false
+    document.querySelector("[data-login-missing]").hidden = true
   } else {
+    form.querySelector("[data-login-token]").value = ""
+    form.querySelector("[data-login-submit]").disabled = true
     document.querySelector("[data-login-missing]").hidden = false
   }
 }
 
 window.addEventListener("DOMContentLoaded", prepareLoginConfirmation)
+window.addEventListener("hashchange", prepareLoginConfirmation)
 
 // The lines below enable quality of life phoenix_live_reload
 // development features:

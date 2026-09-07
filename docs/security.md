@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T13:58:09Z"
+updated: "2026-09-07T15:01:18Z"
 ---
 # Security direction
 
@@ -17,7 +17,7 @@ Every token belongs permanently to exactly one principal: a human organization m
 
 Bootstrap, token create/revoke, project create, and memory create commit immutable audit events in the same transaction as their durable action. The bootstrap secret is displayed once; explicit recovery revokes it and displays one replacement. Raw tokens and digests are excluded from normal logs, errors, audit metadata, inspection, list, and revoke output.
 
-API bearer credentials remain organization-bound and independent from the Phase 2H browser identity boundary. Passwords, passkeys, OAuth/OIDC, SSO, SCIM, MFA, interactive invitation UI, automatic invitation delivery, distributed rate limiting, and audit-query APIs remain unimplemented.
+API bearer credentials remain organization-bound and independent from the Phase 2H browser identity boundary. Passwords, passkeys, OAuth/OIDC, SSO, SCIM, MFA, distributed rate limiting, and audit-query APIs remain unimplemented.
 
 ## Phase 2B membership administration
 
@@ -53,7 +53,7 @@ Human member invitations use distinct one-time `bci1_<public_id>_<secret>` accep
 
 Each invitation is tenant-bound to its organization and inviter membership, expires within seven days, grants only the fixed `member` role, and cannot carry member-forbidden management scopes. PostgreSQL composite foreign keys, a partial unresolved-email uniqueness constraint, row locks, and email-scoped transaction advisory locks serialize creation, revocation, acceptance, and direct-membership races. Public acceptance conceals malformed, unknown, wrong, expired, revoked, accepted, and replayed tokens behind the same `404 invitation_not_found` response.
 
-Valid acceptance atomically creates or reuses the globally normalized user without overwriting an existing profile, creates one active membership, issues one non-expiring initial `bc1` credential with pre-approved scopes, marks the invitation accepted, and writes one authentic acceptance audit. Raw secrets, digests, email, and display name are excluded from audit metadata and safe responses. Automatic invitation delivery, interactive invitation acceptance, owner invitations, and invitation resend/recovery remain unimplemented.
+Valid API acceptance atomically creates or reuses the globally normalized user without overwriting an existing profile, creates one active membership, issues one non-expiring initial `bc1` credential with pre-approved scopes, marks the invitation accepted, and writes one authentic acceptance audit. Raw secrets, digests, email, and display name are excluded from audit metadata and safe responses. owner invitations remain unimplemented.
 
 ## Phase 2H browser identity
 
@@ -84,3 +84,9 @@ The module trust model will require:
 - separate Planning read, write, and approve permissions from context and memory permissions.
 
 Supervised official OTP applications run as trusted in-process code during the first stage but still follow formal behaviours and declared contracts. Community modules later use external processes for stronger isolation and crash containment. Brain does not claim complete sandboxing. A module must not bypass tenant isolation, project permissions, content visibility, provenance, or Hive Mind query scope.
+
+## Phase 2I invitation browser bridge
+
+Owners are reauthorized from the tracked session and locked active membership on every invitation operation. The selected organization is server-owned. Send reservations serialize per organization, with a 60-second invitation cooldown and rolling five/invitation and 20/organization hourly attempt limits, including failures. Raw secrets remain transient and are stored only as digests. Existing manual tokens remain valid until rotated; sending, failed, revoked, expired, and superseded generations cannot be accepted through either transport. SMTP runs outside transactions and stale finalization cannot revive a link.
+
+Browser links carry secrets only in URL fragments. The landing page clears the fragment, then uses CSRF-protected preview and explicit acceptance POSTs with no-store/no-referrer responses. No state-changing invitation GET exists. Valid preview may reveal the invitation email and organization only to a token holder. A mismatched authenticated email must explicitly sign out and reopen the original link. Browser admission creates membership and an `invitation.accept` event with `acceptance_method: browser_invitation`, never an API token, authentication event, session, or email verification. Matching sessions select the new membership transactionally. Signed-out recipients must subsequently sign in through the existing verified-email flow. Existing API acceptance preserves its credential and audit contract.
