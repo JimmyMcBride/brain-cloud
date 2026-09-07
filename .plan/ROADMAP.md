@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T15:01:19Z"
+updated: "2026-09-07T19:18:43Z"
 ---
 # Roadmap: brain-cloud
 
@@ -31,7 +31,7 @@ Phase 2G is complete from [#22](https://github.com/JimmyMcBride/brain-cloud/issu
 
 Phase 2H is implemented from [#25](https://github.com/JimmyMcBride/brain-cloud/issues/25): closed-enrollment Phoenix passwordless magic-link sign-in for existing humans, tracked browser sessions, explicit active-organization selection, rehydrated LiveView authorization, global auth security events, synchronous SMTP delivery, and a minimal authenticated shell. product CRUD UI, alternate authenticators, owner invitations, proposals, and finer-grained permissions remain later slices.
 
-Phase 2I is implemented on its work branch from [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28): a minimal owner invitation panel, synchronous email send/resend with secret rotation and unchanged expiry, credential-free browser acceptance, and separate existing sign-in. Preserve all existing API contracts. Implementation awaits PR review.
+Phase 2I is complete through merged PR #30 from [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28): a minimal owner invitation panel, synchronous email send/resend with secret rotation and unchanged expiry, credential-free browser acceptance, and separate existing sign-in. Preserve all existing API contracts. PR #30 is merged.
 
 ## Phase 3 — Complete cloud-native project model
 
@@ -96,3 +96,7 @@ Containers, Compose, migrations, backup/restore, upgrades, workers, observabilit
 ## Current non-goals
 
 This revision does not implement Planning, migrate standalone Plan, choose an external module transport, define the final manifest, load community code, or scaffold module UI.
+
+## Phase 3A specification
+
+Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31), Project discovery foundation, is published for review. Proposed scope: API-only accessible-project list/detail, explicit projects.read without token/invitation backfills, existing project fields, bounded keyset pagination, and fresh tenant/grant checks on every request. Bootstrap-token rotation is the deliberate upgrade path for existing owners needing the new scope. No new endpoints are implemented yet; spec approval precedes execution.

@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T15:01:18Z"
+updated: "2026-09-07T19:18:43Z"
 ---
 # Brain Cloud roadmap
 
@@ -154,3 +154,7 @@ Planning remains focused on turning durable project understanding into structure
 ## Current implementation non-goals
 
 The current implementation does not include product CRUD UI, owner invitations, alternate authenticators, proposals, custom roles, deny rules, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.
+
+## Phase 3A specification
+
+Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31), Project discovery foundation, is published for review. Proposed scope: API-only accessible-project list/detail, explicit projects.read without token/invitation backfills, existing project fields, bounded keyset pagination, and fresh tenant/grant checks on every request. Bootstrap-token rotation is the deliberate upgrade path for existing owners needing the new scope. No new endpoints are implemented yet; spec approval precedes execution.
