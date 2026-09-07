@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T15:09:22Z"
+updated: "2026-09-07T16:43:51Z"
 ---
 # Current State
 
@@ -69,3 +69,5 @@ Migration adds delivery state, a tenant-bound current generation, and bounded ro
 Validation: 156 ExUnit tests, formatting, warnings-as-errors compile, production assets, upgrade/rollback/forward tests, Docker image, and expanded Compose smoke passed. Browser landing layout was visually inspected. Same-tab fragment handling was fixed after QA and verified with an isolated JavaScript harness; final in-app browser recheck was blocked by its error-page navigation after deliberate server restarts. Existing controller tests and HTTP smoke cover confirmation and sign-in. SMTP failure/retry limits and concurrency are covered by domain/controller tests.
 
 Planning PRs must avoid closing keywords next to issue numbers, even in negated sentences: PR #29 accidentally closed #28 because GitHub interpreted a negated closing phrase. The issue was reopened and that phrase removed. Spec #28 should remain open until its implementation PR merges.
+
+PR #30 review follow-up: browser admission confirmation now distinguishes an already signed-in matching recipient from a signed-out recipient. Regression coverage checks both redirect/message pairs and selected-organization persistence.

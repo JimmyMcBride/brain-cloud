@@ -82,6 +82,10 @@ defmodule BrainCloudWeb.BrowserInvitationControllerTest do
     assert Repo.get!(OrganizationInvitation, invitation.id).accepted_at == nil
     joined = post(recycle(preview), ~p"/invitations/accept", invitation: %{token: token})
     assert redirected_to(joined, 303) == "/sign-in"
+
+    assert Phoenix.Flash.get(joined.assigns.flash, :info) ==
+             "You joined the organization. Sign in with your invited email to continue."
+
     assert get_session(joined, "browser_session_token") == nil
     assert Repo.aggregate(ApiToken, :count) == before_tokens
     assert Repo.get!(OrganizationInvitation, invitation.id).accepted_at
@@ -90,6 +94,24 @@ defmodule BrainCloudWeb.BrowserInvitationControllerTest do
              post(recycle(joined), ~p"/invitations/accept", invitation: %{token: token}),
              404
            )
+  end
+
+  test "matching signed-in recipient joins without another sign-in prompt", %{
+    conn: conn,
+    identity: owner
+  } do
+    recipient = BrainCloud.DataCase.identity_fixture(%{email: "recipient@example.test"})
+    {:ok, _, token} = invitation(owner)
+    browser = init_test_session(conn, %{"browser_session_token" => session(recipient)})
+    joined = post(browser, ~p"/invitations/accept", invitation: %{token: token})
+
+    assert redirected_to(joined, 303) == "/"
+    assert Phoenix.Flash.get(joined.assigns.flash, :info) == "You joined the organization."
+
+    {:ok, scope, _} =
+      Accounts.authenticate_browser_session(get_session(joined, "browser_session_token"))
+
+    assert scope.organization.id == owner.organization.id
   end
 
   test "mismatched identity must sign out and bearer auth cannot manage browser invites", %{

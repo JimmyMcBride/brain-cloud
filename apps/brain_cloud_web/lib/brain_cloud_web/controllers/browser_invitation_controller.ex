@@ -57,11 +57,13 @@ defmodule BrainCloudWeb.BrowserInvitationController do
       {:ok, _result} ->
         target = if conn.assigns.current_scope, do: ~p"/", else: ~p"/sign-in"
 
+        message =
+          if conn.assigns.current_scope,
+            do: "You joined the organization.",
+            else: "You joined the organization. Sign in with your invited email to continue."
+
         conn
-        |> put_flash(
-          :info,
-          "You joined the organization. Sign in with your invited email to continue."
-        )
+        |> put_flash(:info, message)
         |> put_status(:see_other)
         |> redirect(to: target)
 
