@@ -1,0 +1,19 @@
+<Layouts.app flash={@flash}>
+  <section class="mx-auto max-w-lg space-y-6">
+    <h1 class="text-4xl font-semibold tracking-tight">Your invitation</h1>
+    <p>Review the organization and invited email before choosing to join.</p>
+    <form action={~p"/invitations/preview"} method="post" data-login-confirmation>
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+      <input type="hidden" name="invitation[token]" data-login-token />
+      <button
+        data-login-submit
+        disabled
+        class="rounded-full bg-slate-950 px-6 py-3 font-semibold text-white disabled:opacity-40"
+      >Review invitation</button>
+    </form>
+    <p data-login-missing hidden>
+      This link is incomplete. Reopen the original invitation email.
+    </p>
+    <noscript>JavaScript is required to securely read this email link.</noscript>
+  </section>
+</Layouts.app>

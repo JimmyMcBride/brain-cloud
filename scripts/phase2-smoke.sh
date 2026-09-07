@@ -859,6 +859,17 @@ grep -q 'id="signed-in"' "$scratch_dir/single-root.html"
 grep -q "Smoke Organization A $run_suffix" "$scratch_dir/single-root.html"
 
 single_csrf="$(browser_csrf "$scratch_dir/single-root.html")"
+invitation_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+  --cookie "$browser_cookie_name=$browser_cookie" \
+  --data-urlencode "_csrf_token=$single_csrf" \
+  --data-urlencode "invitation[email]=browser-invite-$run_suffix@example.test" \
+  --data-urlencode 'invitation[display_name]=Browser Invitee' \
+  "$base_url/organization/invitations")"
+test "$invitation_status" = "303"
+curl --fail --silent --show-error "$mailpit_url/view/latest.txt" --output "$scratch_dir/invitation-email.txt"
+browser_invitation_token="$(grep -Eo 'bci1_[0-9a-f]{32}_[A-Za-z0-9_-]{43}' "$scratch_dir/invitation-email.txt" | head -1)"
+test -n "$browser_invitation_token"
+
 curl --silent --show-error \
   --cookie "$browser_cookie_name=$browser_cookie" \
   --data-urlencode "_csrf_token=$single_csrf" \
@@ -867,6 +878,33 @@ curl --silent --show-error \
   "$base_url/session"
 browser_root "single-logged-out"
 grep -q 'id="signed-out"' "$scratch_dir/single-logged-out-root.html"
+
+curl --fail --silent --show-error --dump-header "$scratch_dir/invitation-start.headers" \
+  --output "$scratch_dir/invitation-landing.html" "$base_url/invitations/accept"
+invitation_cookie="$(browser_cookie_from_headers "$scratch_dir/invitation-start.headers")"
+invitation_csrf="$(browser_csrf "$scratch_dir/invitation-landing.html")"
+! grep -q "$browser_invitation_token" "$scratch_dir/invitation-landing.html"
+curl --fail --silent --show-error --cookie "$browser_cookie_name=$invitation_cookie" \
+  --data-urlencode "_csrf_token=$invitation_csrf" \
+  --data-urlencode "invitation[token]=$browser_invitation_token" \
+  --output "$scratch_dir/invitation-preview.html" "$base_url/invitations/preview"
+grep -q "Smoke Organization A $run_suffix" "$scratch_dir/invitation-preview.html"
+invitation_csrf="$(browser_csrf "$scratch_dir/invitation-preview.html")"
+invitation_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+  --cookie "$browser_cookie_name=$invitation_cookie" \
+  --data-urlencode "_csrf_token=$invitation_csrf" \
+  --data-urlencode "invitation[token]=$browser_invitation_token" "$base_url/invitations/accept")"
+test "$invitation_status" = "303"
+invitation_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+  --cookie "$browser_cookie_name=$invitation_cookie" \
+  --data-urlencode "_csrf_token=$invitation_csrf" \
+  --data-urlencode "invitation[token]=$browser_invitation_token" "$base_url/invitations/accept")"
+test "$invitation_status" = "404"
+start_browser_sign_in "browser-invite-$run_suffix@example.test" "browser-invite"
+browser_root "browser-invite"
+grep -q "Smoke Organization A $run_suffix" "$scratch_dir/browser-invite-root.html"
+grep -q 'id="signed-in"' "$scratch_dir/browser-invite-root.html"
+printf 'Phase 2I smoke: invitation email, browser admission, replay denial, and sign-in passed\n'
 
 start_browser_sign_in "owner-b-$run_suffix@example.test" "multiple"
 browser_root "multiple"

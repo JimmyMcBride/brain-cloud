@@ -29,6 +29,14 @@ defmodule BrainCloudWeb.Router do
     post "/organizations/select", OrganizationSessionController, :update
     delete "/session", BrowserSessionController, :delete
 
+    get "/organization/invitations", BrowserInvitationController, :index
+    post "/organization/invitations", BrowserInvitationController, :create
+    post "/organization/invitations/:id/send", BrowserInvitationController, :send_invitation
+    delete "/organization/invitations/:id", BrowserInvitationController, :revoke
+    get "/invitations/accept", BrowserInvitationController, :landing
+    post "/invitations/preview", BrowserInvitationController, :preview
+    post "/invitations/accept", BrowserInvitationController, :accept
+
     live_session :browser, on_mount: [{BrainCloudWeb.BrowserAuth, :current_scope}] do
       live "/", HomeLive, :index
     end

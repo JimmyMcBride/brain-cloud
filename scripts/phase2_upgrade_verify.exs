@@ -21,6 +21,8 @@ import Ecto.Query
 true = Repo.aggregate(BrowserLoginChallenge, :count, :id) == 0
 true = Repo.aggregate(BrowserSession, :count, :id) == 0
 true = Repo.aggregate(UserAuthEvent, :count, :id) == 0
+true = Repo.aggregate(BrainCloud.Accounts.InvitationDeliveryAttempt, :count, :id) == 0
+false = Repo.exists?(from i in OrganizationInvitation, where: i.delivery_state != "manual")
 
 legacy_manager =
   Repo.one!(
@@ -238,4 +240,4 @@ true = browser_scope.organization.id == bootstrap.organization.id
 {:ok, rehydrated_scope, nil} = Accounts.authenticate_browser_session(browser_session_token)
 true = rehydrated_scope.role == "owner"
 
-IO.puts("Phase 2H upgrade passed")
+IO.puts("Phase 2I upgrade passed")
