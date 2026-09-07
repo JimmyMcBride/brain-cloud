@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T18:00:07Z"
+updated: "2026-09-07T02:59:55Z"
 ---
 # Current State
 
@@ -55,3 +55,7 @@ When a local brainstorm has already been promoted in GitHub source mode, update 
 Phase 2H is implemented from canonical GitHub spec [#25](https://github.com/JimmyMcBride/brain-cloud/issues/25), `closed-enrollment-interactive-human-identity-bridge`: existing-user-only passwordless email sign-in, digest-only one-time challenges, synchronous Swoosh SMTP, revocable 14-day browser sessions with seven-day reissue, active-organization selection, PostgreSQL-rehydrated HTTP/LiveView scope, safe global auth events, and a minimal signed-out/chooser/signed-in shell. Browser and API credentials remain strictly separate. Automatic invitation delivery, interactive invitation acceptance, product CRUD UI, alternate authenticators, owner invitations, and generic rate-limit infrastructure remain later work.
 
 Concurrent sign-in issuance remains non-enumerating: the user row lock serializes normal challenge creation, the named active-challenge uniqueness race is accepted without logging, and a challenge superseded after synchronous delivery but before sent-state persistence is treated as an expected no-op while unexpected persistence failures still invalidate and log.
+
+## Phase 2I shaping
+
+Phase 2I is planned in canonical GitHub spec [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28), `invitation-delivery-and-browser-acceptance`; it is not implemented. The user approved a minimal owner invitation panel, separate sign-in after admission, and secret rotation on resend without extending expiry. The spec fixes SMTP attempt limits and generation-safe delivery, credential-free browser acceptance, existing API compatibility, explicit mismatched-identity handling, and admission audit provenance. Review the canonical spec before execution. Existing API acceptance always mints a credential; browser admission must not silently mint and discard one. Invitation possession must never verify email or authenticate a browser.

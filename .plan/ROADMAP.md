@@ -1,3 +1,6 @@
+---
+updated: "2026-09-07T02:59:55Z"
+---
 # Roadmap: brain-cloud
 
 Created: 2026-07-27T17:43:26Z
@@ -27,6 +30,8 @@ Phase 2F is complete from [#19](https://github.com/JimmyMcBride/brain-cloud/issu
 Phase 2G is complete from [#22](https://github.com/JimmyMcBride/brain-cloud/issues/22) and merged [PR #24](https://github.com/JimmyMcBride/brain-cloud/pull/24): owner-managed, member-only invitations with one-time expiring acceptance, transactional membership and initial-credential issuance, tenant-safe constraints, linearized terminal states, and audit provenance.
 
 Phase 2H is implemented from [#25](https://github.com/JimmyMcBride/brain-cloud/issues/25): closed-enrollment Phoenix passwordless magic-link sign-in for existing humans, tracked browser sessions, explicit active-organization selection, rehydrated LiveView authorization, global auth security events, synchronous SMTP delivery, and a minimal authenticated shell. Automatic invitation delivery, interactive invitation acceptance, product CRUD UI, alternate authenticators, owner invitations, proposals, and finer-grained permissions remain later slices.
+
+Phase 2I is planned, not implemented, in [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28): a minimal owner invitation panel, synchronous email send/resend with secret rotation and unchanged expiry, credential-free browser acceptance, and separate existing sign-in. Preserve all existing API contracts. Canonical spec review precedes implementation.
 
 ## Phase 3 — Complete cloud-native project model
 
