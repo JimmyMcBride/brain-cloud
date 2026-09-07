@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T18:00:07Z"
+updated: "2026-09-07T02:52:25Z"
 ---
 # Current State
 
@@ -55,3 +55,7 @@ When a local brainstorm has already been promoted in GitHub source mode, update 
 Phase 2H is implemented from canonical GitHub spec [#25](https://github.com/JimmyMcBride/brain-cloud/issues/25), `closed-enrollment-interactive-human-identity-bridge`: existing-user-only passwordless email sign-in, digest-only one-time challenges, synchronous Swoosh SMTP, revocable 14-day browser sessions with seven-day reissue, active-organization selection, PostgreSQL-rehydrated HTTP/LiveView scope, safe global auth events, and a minimal signed-out/chooser/signed-in shell. Browser and API credentials remain strictly separate. Automatic invitation delivery, interactive invitation acceptance, product CRUD UI, alternate authenticators, owner invitations, and generic rate-limit infrastructure remain later work.
 
 Concurrent sign-in issuance remains non-enumerating: the user row lock serializes normal challenge creation, the named active-challenge uniqueness race is accepted without logging, and a challenge superseded after synchronous delivery but before sent-state persistence is treated as an expected no-op while unexpected persistence failures still invalidate and log.
+
+## Phase 2I shaping
+
+The invitation delivery and browser acceptance brainstorm is drafted in `.plan/brainstorms/invitation-delivery-and-browser-acceptance.md`; it is not approved or implemented. Review the proposed minimal owner invitation panel, separate sign-in after admission, and resend secret rotation before canonical GitHub promotion. Existing API acceptance always mints an API token, so browser acceptance must explicitly share admission logic without token issuance; invitation possession must not mark email verified or create an authenticated browser session.
