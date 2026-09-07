@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T02:52:25Z"
+updated: "2026-09-07T02:59:55Z"
 ---
 # Current State
 
@@ -58,4 +58,4 @@ Concurrent sign-in issuance remains non-enumerating: the user row lock serialize
 
 ## Phase 2I shaping
 
-The invitation delivery and browser acceptance brainstorm is drafted in `.plan/brainstorms/invitation-delivery-and-browser-acceptance.md`; it is not approved or implemented. Review the proposed minimal owner invitation panel, separate sign-in after admission, and resend secret rotation before canonical GitHub promotion. Existing API acceptance always mints an API token, so browser acceptance must explicitly share admission logic without token issuance; invitation possession must not mark email verified or create an authenticated browser session.
+Phase 2I is planned in canonical GitHub spec [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28), `invitation-delivery-and-browser-acceptance`; it is not implemented. The user approved a minimal owner invitation panel, separate sign-in after admission, and secret rotation on resend without extending expiry. The spec fixes SMTP attempt limits and generation-safe delivery, credential-free browser acceptance, existing API compatibility, explicit mismatched-identity handling, and admission audit provenance. Review the canonical spec before execution. Existing API acceptance always mints a credential; browser admission must not silently mint and discard one. Invitation possession must never verify email or authenticate a browser.

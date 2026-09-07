@@ -3,7 +3,7 @@
   "repo_url": "https://github.com/JimmyMcBride/brain-cloud",
   "default_branch": "develop",
   "last_enabled_at": "2026-07-27T17:50:25Z",
-  "last_updated_at": "2026-09-06T13:01:30Z",
+  "last_updated_at": "2026-09-07T02:59:25Z",
   "stories": {},
   "planning": {
     "agent-authored-memory-provenance-foundation": {
@@ -70,6 +70,19 @@
       "entry_mode": "local_promotion",
       "source_mode": "local",
       "updated_at": "2026-09-02T14:14:51Z"
+    },
+    "invitation-delivery-and-browser-acceptance": {
+      "slug": "invitation-delivery-and-browser-acceptance",
+      "kind": "spec",
+      "title": "Invitation delivery and browser acceptance",
+      "issue_number": 28,
+      "issue_url": "https://github.com/JimmyMcBride/brain-cloud/issues/28",
+      "remote_state": "open",
+      "readiness": "ready",
+      "ownership_mode": "github",
+      "entry_mode": "local_promotion",
+      "source_mode": "local",
+      "updated_at": "2026-09-07T02:59:25Z"
     },
     "organization-membership-administration-foundation": {
       "slug": "organization-membership-administration-foundation",

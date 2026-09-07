@@ -21,7 +21,7 @@ An owner sends a member invitation. The recipient opens an email, explicitly joi
 
 ## Vision
 
-Make the existing invitation and sign-in foundations usable together. Keep this an invitation bridge, not an administration dashboard or new identity system. Recommendations below await user review before canonical promotion.
+Make the existing invitation and sign-in foundations usable together. Keep this an invitation bridge, not an administration dashboard or new identity system. The user approved the small owner panel, separate sign-in after joining, and secret rotation on resend. Canonical promotion records those decisions; implementation remains a separate step.
 
 ## Supporting Material
 
@@ -39,9 +39,7 @@ Make the existing invitation and sign-in foundations usable together. Keep this 
 
 ## Open Questions
 
-- Recommended owner surface: one small invitation panel for the selected organization's owner, with email, display name, pending invitations, send, resend, and revoke. Alternative: API-triggered delivery now, owner UI later.
-- Recommended identity handoff: explicit acceptance followed by existing magic-link sign-in. Already signed-in matching users can continue; a mismatched user must sign out explicitly before accepting. Alternative: prove mailbox ownership before membership admission, requiring a new pre-membership challenge contract.
-- Recommended resend: rotate the invitation secret, invalidate older links, keep the original expiry, and synchronously send. A failed send leaves the invitation pending but the attempted secret unusable; retry rotates again. This must be reviewed because resending also invalidates any manually copied prior API token.
+None blocking promotion. The three proposed decisions were approved by the user. Concrete limits, routes, delivery states, and audit outcomes are specified below.
 
 ## Ideas
 
@@ -64,7 +62,7 @@ One Phase 2I spec covering invitation delivery, bounded owner controls, recipien
 
 ### Remaining Open Questions
 
-Review the three recommended decisions above before publishing a canonical execution spec.
+None blocking promotion; user approved all three recommendations.
 
 ### Candidate Approaches
 
@@ -74,7 +72,7 @@ Review the three recommended decisions above before publishing a canonical execu
 
 ### Decision Snapshot
 
-Proposed, not approved: preserve Phase 2G API behavior, add a browser-specific acceptance result without issuing an API credential, and use Phase 2H for actual authentication. Never infer email verification from an invitation because owners receive invitation secrets through the existing API.
+Approved direction: preserve Phase 2G API behavior, add a browser-specific acceptance result without issuing an API credential, and use Phase 2H for actual authentication. Never infer email verification from an invitation because owners receive invitation secrets through the existing API.
 
 ## Challenge
 
@@ -112,13 +110,15 @@ Invited humans cannot complete admission through email and a browser despite wor
 
 Scope:
 
-- Add a minimal owner-only invitation panel for the currently selected active organization; reauthorize all operations using fresh database scope. Mirror current member-only scope validation without fabricating API credentials for browser owners.
-- Add owner-triggered synchronous Swoosh invitation send/resend with digest-only secrets, fixed safe public URL, sanitized operational outcomes, and explicit bounded cooldown/rolling limits. Final spec must fix exact limits and response semantics.
-- Preserve existing API behavior; automatic email is not a hidden side effect of the existing API create operation. Define any additive API delivery operation explicitly before implementation.
-- Use generation-aware delivery state: reserve a new secret under lock, send outside the transaction, and finalize only if still current. Revocation, acceptance, and newer sends must win over stale completion. Store no recoverable raw secret. Preserve original expiration on resend; failed or uncertain delivery requires a new explicit attempt, never an automatic retry with a discarded token.
-- Browser links carry invitation secrets in fragments; clear the URL and require CSRF-protected explicit confirmation. Validate before revealing invitation details, never consume on GET, use fixed redirect destinations, and conceal invalid/expired/revoked/replayed tokens consistently.
-- Browser acceptance shares locked admission logic with API acceptance but creates no API credential. Atomically create/reuse the invited user, create member membership, mark acceptance, and record truthful audit provenance with no fictitious credential or unverified signed-in actor. Preserve historical audit rows and API acceptance metadata.
-- A signed-in different email cannot accept while retaining that identity; offer explicit logout and retain no raw invitation secret in a redirect or durable session. A matching signed-in user continues into the invited organization only after fresh membership validation. Signed-out acceptance leads to the existing sign-in request; no automatic verification or browser session creation.
+- Add a minimal owner-only invitation panel for the currently selected active organization: email and display-name inputs, fixed member role, seven-day expiry, pending invitation list, send/resend/revoke, and safe delivery status. Browser-created invitations carry fixed `memory.read` and `search.keyword` scopes for compatibility if accepted through the API; explain that these grant no project access and browser acceptance creates no credential. No scope editor or broad membership dashboard. Existing API-created invitations retain their original scopes and expiry when sent from the panel.
+- Authorize browser operations from the tracked human session and selected active owner membership, never from a fabricated API credential or client-supplied organization/role. Reauthorize inside the mutation transaction, including concurrent owner demotion/deactivation; use consistent lock ordering with existing membership operations. Missing session redirects to `/sign-in`, missing selected membership to `/`, and authenticated non-owner or foreign invitation IDs receive concealed 404. Rehydrate on LiveView events as well as mount/reconnect.
+- Deliver synchronously through existing Swoosh/SMTP and validated public URL configuration. Reserve attempts in PostgreSQL before sending: 60-second cooldown per invitation, maximum five attempts per invitation in a rolling hour, and maximum 20 attempts per organization in a rolling hour. Count failures and pending attempts; enforce limits across processes under locks. Throttled attempts neither rotate secrets nor change invitation state. New-create quota failure leaves no invitation; delivery failure after reservation leaves a pending invitation available for retry. Show owners a bounded retry time and sanitized failure, never SMTP internals. Reverse-proxy abuse limits remain an additional deployment boundary, not a new platform.
+- Preserve all 45 existing OpenAPI operations and response shapes, including API creation returning its raw token and API acceptance issuing a credential. Add no `/v1` operation in this slice and no hidden email side effect to API creation. Browser routes: `GET /organization/invitations` for the panel, `POST /organization/invitations` for create-and-send, `POST /organization/invitations/:id/send` for send/resend, and `DELETE /organization/invitations/:id` for revoke. Successful or delivery-failed owner mutations use 303 back to the panel with distinct safe feedback; validation renders 422, throttling 429 with Retry-After, invalid/terminal send target 404. Revocation retains existing idempotent terminal behavior. All browser mutations require CSRF.
+- Use generation-aware delivery state with `manual`, `sending`, `sent`, and `failed` outcomes. Existing/manual API invitations start `manual` and remain usable unchanged. An authorized send reserves a fresh generation and secret digest under lock, immediately invalidates all older secrets, and sets `sending`; send outside the transaction. Only current `manual` or `sent` secrets are acceptable through either transport. SMTP success atomically marks the current generation `sent`; failure marks it `failed`. Finalization may not revive an expired, accepted, revoked, or superseded invitation. Failed finalization or process crash leaves the generation unusable; after cooldown, an explicit send may replace `sending` with a new generation. No recovery of raw secrets or background retry. One current generation per invitation; bounded attempt history supports exact rolling limits.
+- Resend keeps the invitation's original expiry, role, email, display name, and approved scopes. Warn owners that resending invalidates manually copied API acceptance secrets too. Sending expired invitations is rejected; creating a replacement follows existing invitation uniqueness rules. An SMTP message may arrive after revocation or with a failed finalization; its link must remain unusable, and the UI must not claim email receipt merely because SMTP accepted delivery.
+- Email links use `/invitations/accept#token=...`. `GET /invitations/accept` serves only a generic landing page and makes no admission or auth mutation. Reuse the fragment-clearing pattern; keep the secret only in an in-memory/hidden form field. CSRF-protected `POST /invitations/preview` validates the secret, then shows invited email and organization plus explicit Join confirmation; `POST /invitations/accept` revalidates and atomically consumes. Valid preview returns 200. Invalid, expired, revoked, used, wrong-secret, unsent, and failed-generation results render the same 404 page. Existing active/inactive membership conflicts render 409 without overwriting or reactivating anything. Filter token parameters, set no-store and no-referrer for recipient responses, and permit no external return URL. No third-party content on token-handling pages.
+- Browser acceptance shares locked admission logic with API acceptance but creates no API credential. Atomically create/reuse the invited user, create member membership, mark acceptance, and record `invitation.accept` attributed to the admitted user as the invitation actor, with `api_token_id: nil` and metadata limited to `accepted_membership_id` and `acceptance_method: browser_invitation`. This is admission provenance, not proof of authenticated identity. Preserve historical audit rows and exact API acceptance metadata. Browser owner create/revoke retain existing actions with the owner user and nil API credential; sent-generation reservation writes `invitation.delivery_requested`, while current completion writes `invitation.delivery_sent` or `invitation.delivery_failed`, with only invitation/generation IDs and a safe failure category. Never store email, raw tokens, digests, or SMTP details in audit metadata.
+- A signed-in different email cannot accept while retaining that identity; offer explicit logout and retain no raw invitation secret in a redirect or durable session. A matching signed-in user continues into the invited organization only after fresh membership validation. Signed-out acceptance redirects 303 to `/sign-in` with a join-complete message; the user explicitly requests the existing magic link and then selects the organization if necessary. Do not prefill email through query parameters or store the invitation secret in the cookie. Matching signed-in acceptance selects the new active membership transactionally and redirects 303 to `/`, without reauthenticating or changing email verification. Mismatched identity renders 409 before admission; explicit existing logout and reopening the original email link is the recovery path. No automatic verification or browser session creation.
 - Preserve closed enrollment, existing profiles, inactive-membership conflict behavior, tenant isolation, existing invitation lifetime, and final-state concurrency rules.
 - Update security/self-hosting/API documentation only for shipped behavior. Do not imply broader product administration or Planning exists.
 
@@ -140,4 +140,4 @@ Verification:
 
 Dependencies: Phase 2G spec #22 and Phase 2H spec #25 are complete; PR #27 merged.
 
-Readiness: needs refinement; owner UI scope, identity handoff, and resend semantics await user review. Set exact delivery limits, routes, statuses, audit actions, and delivery-state transitions before canonical promotion.
+Readiness: ready. User approved the owner panel, separate authentication handoff, and resend rotation. Delivery limits, browser routes, public outcomes, audit provenance, and generation-state transitions are now explicit. Review the canonical spec before implementation.

@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T13:58:09Z"
+updated: "2026-09-07T02:59:55Z"
 ---
 # Brain Cloud roadmap
 
@@ -75,7 +75,9 @@ Planning is the first major optional official Brain module. It is not a separate
 
 Later Phase 2 slices add automatic invitation delivery and interactive acceptance, owner invitations, and finer-grained access. Agent proposals remain in Phase 12.
 
-### Phase 3 — Complete cloud-native Brain project model
+#**Phase 2I planned.** [Invitation delivery and browser acceptance](https://github.com/JimmyMcBride/brain-cloud/issues/28) defines minimal owner invitation controls, synchronous send/resend, browser joining without API credential issuance, and handoff to existing sign-in. Not implemented; review the canonical spec before execution.
+
+## Phase 3 — Complete cloud-native Brain project model
 
 Context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repository associations, and project relationships.
 
