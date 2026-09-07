@@ -3,7 +3,7 @@
   "repo_url": "https://github.com/JimmyMcBride/brain-cloud",
   "default_branch": "develop",
   "last_enabled_at": "2026-07-27T17:50:25Z",
-  "last_updated_at": "2026-09-07T03:15:13Z",
+  "last_updated_at": "2026-09-07T19:18:19Z",
   "stories": {},
   "planning": {
     "agent-authored-memory-provenance-foundation": {
@@ -122,6 +122,19 @@
       "entry_mode": "local_promotion",
       "source_mode": "local",
       "updated_at": "2026-07-29T06:25:51Z"
+    },
+    "project-discovery-foundation": {
+      "slug": "project-discovery-foundation",
+      "kind": "spec",
+      "title": "Project discovery foundation",
+      "issue_number": 31,
+      "issue_url": "https://github.com/JimmyMcBride/brain-cloud/issues/31",
+      "remote_state": "open",
+      "readiness": "clarifying",
+      "ownership_mode": "github",
+      "entry_mode": "local_promotion",
+      "source_mode": "local",
+      "updated_at": "2026-09-07T19:18:19Z"
     },
     "team-access-foundation": {
       "slug": "team-access-foundation",

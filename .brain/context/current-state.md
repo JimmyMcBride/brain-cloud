@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T16:49:30Z"
+updated: "2026-09-07T19:18:43Z"
 ---
 # Current State
 
@@ -77,3 +77,7 @@ PR #30 review follow-up: browser admission confirmation now distinguishes an alr
 PR #30 squash-merged into develop at 79f6303 after resolving its success-message review comment. Spec #28 is closed by the implementation merge. Final verification: 157 tests, migration checks, Docker release smoke, and GitHub CI passed.
 
 Next shaping branch: codex/phase-3a-project-discovery-plan. Plan brainstorm project-discovery-foundation proposes API-only accessible-project list/detail before broader Phase 3 work. This is not an approved spec. Read scopes and compatibility, bounded stable pagination, exact errors, and permission freshness require review before canonical GitHub promotion. No next-slice code has been implemented.
+
+## Phase 3A specification
+
+Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31), Project discovery foundation, is published for review. Proposed scope: API-only accessible-project list/detail, explicit projects.read without token/invitation backfills, existing project fields, bounded keyset pagination, and fresh tenant/grant checks on every request. Bootstrap-token rotation is the deliberate upgrade path for existing owners needing the new scope. No new endpoints are implemented yet; spec approval precedes execution.
