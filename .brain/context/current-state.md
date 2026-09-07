@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T02:59:55Z"
+updated: "2026-09-07T03:18:46Z"
 ---
 # Current State
 
@@ -59,3 +59,11 @@ Concurrent sign-in issuance remains non-enumerating: the user row lock serialize
 ## Phase 2I shaping
 
 Phase 2I is planned in canonical GitHub spec [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28), `invitation-delivery-and-browser-acceptance`; it is not implemented. The user approved a minimal owner invitation panel, separate sign-in after admission, and secret rotation on resend without extending expiry. The spec fixes SMTP attempt limits and generation-safe delivery, credential-free browser acceptance, existing API compatibility, explicit mismatched-identity handling, and admission audit provenance. Review the canonical spec before execution. Existing API acceptance always mints a credential; browser admission must not silently mint and discard one. Invitation possession must never verify email or authenticate a browser.
+
+## Phase 2I execution checkpoint
+
+Spec #28 remains open. PR #29 was planning-only: its negated closing phrase was still parsed by GitHub as a closing directive. The issue was reopened and the phrase removed; planning PR text must avoid closing keywords next to issue numbers even in negated sentences.
+
+Implementation began on `codex/invitation-delivery-and-browser-acceptance` from fresh develop. First domain slice separates shared locked invitation admission from API credential issuance. `Accounts.accept_browser_invitation` creates membership and admission audit only; no email verification or browser session. Existing API results and audit metadata stay unchanged. Browser transport identity validation, delivery generations/throttling, SMTP, owner/recipient pages, and their tests are still pending; no browser route exposes the new domain function yet.
+
+First-slice verification: 144 tests pass, plus warnings-as-errors compilation, formatting, assets, historical upgrade, Docker release build, and existing Phase 2H runtime smoke including database outage/recovery. New Phase 2I delivery/UI smoke coverage remains pending with those surfaces. Start Docker and the development PostgreSQL service before database tests when the machine has restarted.

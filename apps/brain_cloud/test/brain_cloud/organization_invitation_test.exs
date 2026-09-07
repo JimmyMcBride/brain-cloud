@@ -7,6 +7,56 @@ defmodule BrainCloud.OrganizationInvitationTest do
   alias BrainCloud.Accounts.OrganizationInvitation
   alias BrainCloud.Accounts.User
 
+  test "browser admission issues no credential, session, or email verification" do
+    identity = identity_fixture()
+    {:ok, invitation, raw_token} = create_invitation(identity, "browser@example.test")
+    token_count = Repo.aggregate(ApiToken, :count)
+    session_count = Repo.aggregate(BrainCloud.Accounts.BrowserSession, :count)
+    event_count = Repo.aggregate(AuditEvent, :count)
+
+    assert {:ok, result} = Accounts.accept_browser_invitation(raw_token)
+    assert Enum.sort(Map.keys(result)) == [:invitation, :membership]
+    assert result.membership.organization_id == identity.organization.id
+    assert result.membership.role == "member"
+    assert result.membership.user.email_verified_at == nil
+    assert Repo.aggregate(ApiToken, :count) == token_count
+    assert Repo.aggregate(BrainCloud.Accounts.BrowserSession, :count) == session_count
+    assert Repo.aggregate(AuditEvent, :count) == event_count + 1
+
+    event = Repo.get_by!(AuditEvent, action: "invitation.accept", resource_id: invitation.id)
+    assert event.actor_user_id == result.membership.user_id
+    assert event.api_token_id == nil
+
+    assert event.metadata == %{
+             "accepted_membership_id" => result.membership.id,
+             "acceptance_method" => "browser_invitation"
+           }
+
+    assert {:error, :invitation_not_found} = Accounts.accept_browser_invitation(raw_token)
+    assert {:error, :invitation_not_found} = Accounts.accept_organization_invitation(raw_token)
+  end
+
+  test "browser admission preserves an existing profile and conceals invalid invitations" do
+    owner = identity_fixture()
+
+    existing =
+      identity_fixture(%{email: "browser-existing@example.test", display_name: "Original"})
+
+    {:ok, _invitation, token} = create_invitation(owner, existing.user.email)
+    assert {:ok, result} = Accounts.accept_browser_invitation(token)
+    assert result.membership.user_id == existing.user.id
+    assert result.membership.user.display_name == "Original"
+    assert result.membership.user.email_verified_at == existing.user.email_verified_at
+
+    for invalid <- [nil, "", "invalid", token] do
+      assert {:error, :invitation_not_found} = Accounts.accept_browser_invitation(invalid)
+    end
+
+    {:ok, revoked, revoked_token} = create_invitation(owner, "revoked-browser@example.test")
+    {:ok, :ok} = Accounts.revoke_organization_invitation(owner.auth_context, revoked.id)
+    assert {:error, :invitation_not_found} = Accounts.accept_browser_invitation(revoked_token)
+  end
+
   test "creates a normalized invitation with a digest and exact safe audits" do
     identity = identity_fixture()
     expires_at = DateTime.add(DateTime.utc_now(:second), 3600, :second)
@@ -157,6 +207,7 @@ defmodule BrainCloud.OrganizationInvitationTest do
       audit_count = Repo.aggregate(AuditEvent, :count, :id)
 
       assert {:error, :membership_exists} = Accounts.accept_organization_invitation(raw_token)
+      assert {:error, :membership_exists} = Accounts.accept_browser_invitation(raw_token)
       assert Repo.aggregate(ApiToken, :count, :id) == token_count
       assert Repo.aggregate(AuditEvent, :count, :id) == audit_count
       assert Repo.get!(OrganizationInvitation, invitation.id).accepted_at == nil

@@ -12,6 +12,35 @@ defmodule BrainCloud.OrganizationInvitationRaceTest do
   alias BrainCloud.Repo
   alias Ecto.Adapters.SQL.Sandbox
 
+  test "concurrent browser admission creates one membership and no credential" do
+    setup = unboxed(&invitation_setup/0)
+    on_exit(fn -> unboxed(fn -> cleanup(setup) end) end)
+
+    results =
+      race(fn -> Accounts.accept_browser_invitation(setup.raw_token) end, fn ->
+        Accounts.accept_browser_invitation(setup.raw_token)
+      end)
+
+    assert Enum.count(results, &match?({:ok, _}, &1)) == 1
+    assert Enum.count(results, &(&1 == {:error, :invitation_not_found})) == 1
+    assert_counts(setup, memberships: 1, tokens: 0, acceptance_audits: 1)
+  end
+
+  test "browser and API admission race commits one transport's effects" do
+    setup = unboxed(&invitation_setup/0)
+    on_exit(fn -> unboxed(fn -> cleanup(setup) end) end)
+
+    [browser, api] =
+      race(fn -> Accounts.accept_browser_invitation(setup.raw_token) end, fn ->
+        Accounts.accept_organization_invitation(setup.raw_token)
+      end)
+
+    assert Enum.count([browser, api], &match?({:ok, _}, &1)) == 1
+    assert Enum.count([browser, api], &(&1 == {:error, :invitation_not_found})) == 1
+    tokens = if match?({:ok, _}, api), do: 1, else: 0
+    assert_counts(setup, memberships: 1, tokens: tokens, acceptance_audits: 1)
+  end
+
   test "concurrent acceptance creates exactly one membership, token, and audit" do
     setup = unboxed(&invitation_setup/0)
     on_exit(fn -> unboxed(fn -> cleanup(setup) end) end)
