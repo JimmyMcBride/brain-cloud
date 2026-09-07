@@ -216,13 +216,23 @@ defmodule BrainCloud.Accounts do
     end
   end
 
-  def accept_organization_invitation(raw_token) when is_binary(raw_token) do
+  def accept_organization_invitation(raw_token), do: accept_invitation(raw_token, :api)
+
+  @doc """
+  Admits the invited human without issuing an API credential or authenticating them.
+
+  Browser transport must separately validate the current browser identity before
+  calling this admission boundary. Invitation possession is not email verification.
+  """
+  def accept_browser_invitation(raw_token), do: accept_invitation(raw_token, :browser)
+
+  defp accept_invitation(raw_token, transport) when is_binary(raw_token) do
     with [_, public_id, _secret] <- Regex.run(@invitation_pattern, raw_token) do
       Repo.transaction(fn ->
         case invitation_by_public_id_for_update(public_id) do
           %OrganizationInvitation{} = invitation ->
             if valid_invitation?(invitation, raw_token) do
-              accept_locked_invitation(invitation)
+              accept_locked_invitation(invitation, transport)
             else
               Repo.rollback(:invitation_not_found)
             end
@@ -240,7 +250,7 @@ defmodule BrainCloud.Accounts do
     end
   end
 
-  def accept_organization_invitation(_raw_token), do: {:error, :invitation_not_found}
+  defp accept_invitation(_raw_token, _transport), do: {:error, :invitation_not_found}
 
   def list_organization_memberships(%AuthContext{} = auth) do
     with :ok <- authorize_membership_management(auth) do
@@ -1030,7 +1040,7 @@ defmodule BrainCloud.Accounts do
     pending? and not_expired? and digest_matches?
   end
 
-  defp accept_locked_invitation(invitation) do
+  defp accept_locked_invitation(invitation, transport) do
     lock_email(invitation.email)
 
     with {:ok, user} <-
@@ -1047,12 +1057,7 @@ defmodule BrainCloud.Accounts do
              role: "member"
            })
            |> Repo.insert(),
-         {:ok, {token, raw_token}} <-
-           issue_token(
-             membership.id,
-             %{name: "Invitation acceptance", scopes: invitation.scopes},
-             false
-           ),
+         {:ok, credential} <- invitation_credential(transport, membership, invitation),
          {:ok, accepted_invitation} <-
            invitation
            |> Changeset.change(
@@ -1065,27 +1070,51 @@ defmodule BrainCloud.Accounts do
            |> AuditEvent.changeset(%{
              organization_id: invitation.organization_id,
              actor_user_id: user.id,
-             api_token_id: token.id,
+             api_token_id: credential && credential.token.id,
              action: "invitation.accept",
              resource_type: "organization_invitation",
              resource_id: invitation.id,
-             metadata: %{
-               "accepted_membership_id" => membership.id,
-               "issued_token_id" => token.id,
-               "scopes" => token.scopes
-             }
+             metadata: invitation_acceptance_metadata(membership, credential)
            })
            |> Repo.insert() do
-      %{
+      result = %{
         invitation: accepted_invitation,
-        membership: Repo.preload(membership, :user),
-        token: token,
-        raw_token: raw_token
+        membership: Repo.preload(membership, :user)
       }
+
+      if credential, do: Map.merge(result, credential), else: result
     else
       {:error, :membership_exists} -> Repo.rollback(:membership_exists)
       {:error, reason} -> Repo.rollback(reason)
     end
+  end
+
+  defp invitation_credential(:browser, _membership, _invitation), do: {:ok, nil}
+
+  defp invitation_credential(:api, membership, invitation) do
+    case issue_token(
+           membership.id,
+           %{name: "Invitation acceptance", scopes: invitation.scopes},
+           false
+         ) do
+      {:ok, {token, raw_token}} -> {:ok, %{token: token, raw_token: raw_token}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp invitation_acceptance_metadata(membership, nil) do
+    %{
+      "accepted_membership_id" => membership.id,
+      "acceptance_method" => "browser_invitation"
+    }
+  end
+
+  defp invitation_acceptance_metadata(membership, %{token: token}) do
+    %{
+      "accepted_membership_id" => membership.id,
+      "issued_token_id" => token.id,
+      "scopes" => token.scopes
+    }
   end
 
   defp ensure_invitation_membership_absent(user_id, organization_id) do
