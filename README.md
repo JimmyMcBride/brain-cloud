@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T13:58:09Z"
+updated: "2026-09-07T15:01:18Z"
 ---
 # Brain Cloud
 
@@ -45,7 +45,7 @@ Planning must be optional. Brain works without Planning, with the official Plann
 
 ## Status
 
-Phase 2H adds closed-enrollment passwordless sign-in for existing humans, synchronous sign-in email through Swoosh, one-time login challenges, revocable browser sessions, active-organization selection, database-rehydrated LiveView identity, and a minimal authenticated shell. Existing invitation, API credential, access-control, provenance, memory, and search behavior remains intact. Automatic invitation delivery, interactive invitation acceptance, owner invitations, proposals, custom roles, nested teams, sync, Hive Mind, module execution, Planning, and product CRUD UI remain roadmap work.
+Phase 2H adds closed-enrollment passwordless sign-in for existing humans, synchronous sign-in email through Swoosh, one-time login challenges, revocable browser sessions, active-organization selection, database-rehydrated LiveView identity, and a minimal authenticated shell. Existing invitation, API credential, access-control, provenance, memory, and search behavior remains intact. owner invitations, proposals, custom roles, nested teams, sync, Hive Mind, module execution, Planning, and product CRUD UI remain roadmap work.
 
 ## Local development
 
@@ -197,3 +197,5 @@ Grants survive suspension/reactivation and role changes. They are dormant while 
 ## Branches
 
 `develop` is the active integration/default branch, `release/vX.Y.Z` stabilizes releases, and `main` is the release branch. Recommended protections for `develop` and `main`: require pull requests, passing CI, resolved review conversations, and no force pushes or deletion.
+
+Phase 2I implements spec [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28): owner-only invitation controls, synchronous invitation email, generation-checked resend with unchanged expiry, credential-free browser admission, and separate existing email sign-in. Existing API contracts remain unchanged. No broader product dashboard or Planning implementation is included.

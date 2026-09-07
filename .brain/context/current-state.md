@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T03:18:46Z"
+updated: "2026-09-07T15:09:22Z"
 ---
 # Current State
 
@@ -58,12 +58,14 @@ Concurrent sign-in issuance remains non-enumerating: the user row lock serialize
 
 ## Phase 2I shaping
 
-Phase 2I is planned in canonical GitHub spec [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28), `invitation-delivery-and-browser-acceptance`; it is not implemented. The user approved a minimal owner invitation panel, separate sign-in after admission, and secret rotation on resend without extending expiry. The spec fixes SMTP attempt limits and generation-safe delivery, credential-free browser acceptance, existing API compatibility, explicit mismatched-identity handling, and admission audit provenance. Review the canonical spec before execution. Existing API acceptance always mints a credential; browser admission must not silently mint and discard one. Invitation possession must never verify email or authenticate a browser.
+Phase 2I was approved in canonical GitHub spec [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28), `invitation-delivery-and-browser-acceptance`; implementation status is recorded below. The user approved a minimal owner invitation panel, separate sign-in after admission, and secret rotation on resend without extending expiry. The spec fixes SMTP attempt limits and generation-safe delivery, credential-free browser acceptance, existing API compatibility, explicit mismatched-identity handling, and admission audit provenance. The canonical spec remains the acceptance contract. Existing API acceptance always mints a credential; browser admission must not silently mint and discard one. Invitation possession must never verify email or authenticate a browser.
 
-## Phase 2I execution checkpoint
+## Phase 2I implementation
 
-Spec #28 remains open. PR #29 was planning-only: its negated closing phrase was still parsed by GitHub as a closing directive. The issue was reopened and the phrase removed; planning PR text must avoid closing keywords next to issue numbers even in negated sentences.
+Spec #28 is implemented on `codex/invitation-delivery-and-browser-acceptance-v2`, based on fresh develop with the tested admission slice carried over. InvitationDelivery owns owner reauthorization, generation-safe reservations/finalization, and PostgreSQL-backed attempt limits. The owner invitation panel uses synchronous Swoosh delivery; recipient landing/preview/accept pages require CSRF and explicit intent. Browser admission issues no API credential and never verifies email or creates a session. Matching sessions select the new membership transactionally; mismatched identities must sign out. All 45 existing OpenAPI operations remain unchanged.
 
-Implementation began on `codex/invitation-delivery-and-browser-acceptance` from fresh develop. First domain slice separates shared locked invitation admission from API credential issuance. `Accounts.accept_browser_invitation` creates membership and admission audit only; no email verification or browser session. Existing API results and audit metadata stay unchanged. Browser transport identity validation, delivery generations/throttling, SMTP, owner/recipient pages, and their tests are still pending; no browser route exposes the new domain function yet.
+Migration adds delivery state, a tenant-bound current generation, and bounded rolling attempt history. Old invitations remain manual until explicitly sent. SMTP runs outside locks; failed/crashed/superseded generations remain unusable. Limits count every reserved attempt: 60-second invitation cooldown, five per invitation/hour, and 20 per organization/hour. Active owners lock in membership-ID order, followed by invitation and organization quota locks. Rolling history keeps current generations for safe referential integrity; old noncurrent rows expire during reservations. No background jobs or additional public API endpoints.
 
-First-slice verification: 144 tests pass, plus warnings-as-errors compilation, formatting, assets, historical upgrade, Docker release build, and existing Phase 2H runtime smoke including database outage/recovery. New Phase 2I delivery/UI smoke coverage remains pending with those surfaces. Start Docker and the development PostgreSQL service before database tests when the machine has restarted.
+Validation: 156 ExUnit tests, formatting, warnings-as-errors compile, production assets, upgrade/rollback/forward tests, Docker image, and expanded Compose smoke passed. Browser landing layout was visually inspected. Same-tab fragment handling was fixed after QA and verified with an isolated JavaScript harness; final in-app browser recheck was blocked by its error-page navigation after deliberate server restarts. Existing controller tests and HTTP smoke cover confirmation and sign-in. SMTP failure/retry limits and concurrency are covered by domain/controller tests.
+
+Planning PRs must avoid closing keywords next to issue numbers, even in negated sentences: PR #29 accidentally closed #28 because GitHub interpreted a negated closing phrase. The issue was reopened and that phrase removed. Spec #28 should remain open until its implementation PR merges.

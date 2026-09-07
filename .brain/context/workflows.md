@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T13:58:09Z"
+updated: "2026-09-07T15:01:19Z"
 ---
 # Workflows
 
@@ -66,6 +66,8 @@ Project-specific commands:
 - `make upgrade-phase2`: with PostgreSQL running, verify historical data/API migration, empty browser-auth rollout, rollback/forward migration, and post-upgrade sign-in.
 - `make smoke-phase2`: against a running Compose project, verify existing API behavior plus SMTP-backed browser sign-in, selection/switching, scope freshness, logout/replay denial, restart persistence, and PostgreSQL outage/recovery.
 
-Active delivery branch is `develop`; `main` is releases and `release/vX.Y.Z` is stabilization. Phase 1 provides persistent project/memory/search. Phase 2A–2G add production API identity, organization tenancy, memberships, project/team/agent access, provenance, and invitations. Phase 2H adds closed-enrollment email sign-in and the organization-aware LiveView identity shell. Automatic invitation delivery, interactive invitation acceptance, product CRUD UI, owner invitations, proposals, project creation or administration by agents, and broader policy remain later work.
+Active delivery branch is `develop`; `main` is releases and `release/vX.Y.Z` is stabilization. Phase 1 provides persistent project/memory/search. Phase 2A–2G add production API identity, organization tenancy, memberships, project/team/agent access, provenance, and invitations. Phase 2H adds closed-enrollment email sign-in and the organization-aware LiveView identity shell. product CRUD UI, owner invitations, proposals, project creation or administration by agents, and broader policy remain later work.
 
 Plan currently uses GitHub source mode only as transitional repository coordination. All Plan-owned GitHub mutations still go through Plan. The target product architecture stores optional Planning data in local/cloud/hybrid Brain, not permanently in GitHub. Module ecosystem implementation is deferred until Phase 10; the Planning migration requires a separate follow-up contract.
+
+Phase 2I implements spec [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28): owner-only invitation controls, synchronous invitation email, generation-checked resend with unchanged expiry, credential-free browser admission, and separate existing email sign-in. Existing API contracts remain unchanged. No broader product dashboard or Planning implementation is included.

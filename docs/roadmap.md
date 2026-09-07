@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T03:03:35Z"
+updated: "2026-09-07T15:01:18Z"
 ---
 # Brain Cloud roadmap
 
@@ -73,9 +73,9 @@ Planning is the first major optional official Brain module. It is not a separate
 
 **Phase 2H implemented.** [Closed-enrollment interactive human identity bridge](https://github.com/JimmyMcBride/brain-cloud/issues/25) adds Phoenix passwordless magic-link sign-in for existing humans, tracked browser sessions, explicit active-organization selection, rehydrated LiveView authorization, global auth security events, synchronous SMTP delivery, and a minimal authenticated shell without automatic invitation delivery or product CRUD UI.
 
-Later Phase 2 slices add automatic invitation delivery and interactive acceptance, owner invitations, and finer-grained access. Agent proposals remain in Phase 12.
+Later Phase 2 slices add owner invitations and finer-grained access. Agent proposals remain in Phase 12.
 
-**Phase 2I planned.** [Invitation delivery and browser acceptance](https://github.com/JimmyMcBride/brain-cloud/issues/28) defines minimal owner invitation controls, synchronous send/resend, browser joining without API credential issuance, and handoff to existing sign-in. Not implemented; review the canonical spec before execution.
+**Phase 2I implemented.** [Invitation delivery and browser acceptance](https://github.com/JimmyMcBride/brain-cloud/issues/28) defines minimal owner invitation controls, synchronous send/resend, browser joining without API credential issuance, and handoff to existing sign-in. Implemented on the spec #28 work branch; awaiting PR review.
 
 ### Phase 3 — Complete cloud-native Brain project model
 
@@ -153,4 +153,4 @@ Planning remains focused on turning durable project understanding into structure
 
 ## Current implementation non-goals
 
-The current implementation does not include automatic invitation delivery, interactive invitation acceptance, product CRUD UI, owner invitations, alternate authenticators, proposals, custom roles, deny rules, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.
+The current implementation does not include product CRUD UI, owner invitations, alternate authenticators, proposals, custom roles, deny rules, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.

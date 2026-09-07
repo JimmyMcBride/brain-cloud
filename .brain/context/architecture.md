@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T13:58:09Z"
+updated: "2026-09-07T15:01:19Z"
 ---
 # Architecture
 
@@ -34,3 +34,5 @@ Brain Cloud is API-first and implements, but never imports, external SDKs.
 - Planning is an optional official module, not Plan Cloud. It receives no private internal access and has separate permissions.
 - Supervised official OTP applications validate Stage 1 behaviours; community modules later use an external process protocol.
 - Hive Mind remains Core and modules cannot bypass its permission, scope, tenant, or provenance rules.
+
+Phase 2I implements spec [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28): owner-only invitation controls, synchronous invitation email, generation-checked resend with unchanged expiry, credential-free browser admission, and separate existing email sign-in. Existing API contracts remain unchanged. No broader product dashboard or Planning implementation is included.
