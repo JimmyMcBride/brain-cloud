@@ -3,6 +3,7 @@ defmodule BrainCloud.Accounts.Scopes do
 
   @all ~w(
     projects.create
+    projects.read
     projects.manage_access
     memory.write
     memory.read

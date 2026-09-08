@@ -75,11 +75,28 @@ defmodule BrainCloud.Projects do
   def authorize_project(id, %AuthContext{} = auth, required_access)
       when required_access in [:reader, :editor] do
     with {:ok, id} <- Ecto.UUID.cast(id),
-         %Project{} = project <- authorized_project(id, auth, required_access) do
+         %Project{} = project <-
+           auth
+           |> authorized_projects_query(required_access)
+           |> where([project], project.id == ^id)
+           |> Repo.one() do
       {:ok, project}
     else
       _missing -> {:error, :project_not_found}
     end
+  end
+
+  def list_projects(%AuthContext{} = auth, limit, cursor \\ nil)
+      when is_integer(limit) and limit in 1..100 do
+    query =
+      auth
+      |> authorized_projects_query(:reader)
+      |> after_cursor(cursor)
+      |> order_by([project], asc: project.inserted_at, asc: project.id)
+      |> limit(^(limit + 1))
+
+    rows = Repo.all(query)
+    {Enum.take(rows, limit), length(rows) > limit}
   end
 
   def authorize_memory_write(id, %AuthContext{principal_type: :human} = auth),
@@ -316,74 +333,81 @@ defmodule BrainCloud.Projects do
     end
   end
 
-  defp authorized_project(id, %AuthContext{role: "owner"} = auth, _required_access) do
-    tenant_project(id, auth.organization_id)
+  defp authorized_projects_query(%AuthContext{role: "owner"} = auth, _required_access) do
+    from project in Project,
+      where: project.organization_id == ^auth.organization_id
   end
 
-  defp authorized_project(id, %AuthContext{role: "member"} = auth, required_access) do
+  defp authorized_projects_query(%AuthContext{role: "member"} = auth, required_access) do
     allowed_access =
       case required_access do
         :reader -> @reader_access
         :editor -> @editor_access
       end
 
-    Repo.one(
-      from project in Project,
-        join: membership in OrganizationMembership,
-        on:
-          membership.id == ^auth.membership_id and
-            membership.organization_id == project.organization_id,
-        left_join: grant in ProjectAccessGrant,
-        on:
-          grant.project_id == project.id and
-            grant.organization_id == project.organization_id and
-            grant.organization_membership_id == membership.id,
-        left_join: link in TeamMembership,
-        on:
-          link.organization_id == project.organization_id and
-            link.organization_membership_id == membership.id,
-        left_join: team in Team,
-        on:
-          team.id == link.team_id and team.organization_id == link.organization_id and
-            is_nil(team.deactivated_at),
-        left_join: team_grant in TeamProjectAccessGrant,
-        on:
-          team_grant.project_id == project.id and
-            team_grant.organization_id == project.organization_id and
-            team_grant.team_id == team.id,
-        where:
-          project.id == ^id and
-            project.organization_id == ^auth.organization_id and
-            membership.role == "member" and
-            is_nil(membership.deactivated_at) and
-            (grant.access in ^allowed_access or team_grant.access in ^allowed_access),
-        distinct: true
-    )
+    from project in Project,
+      join: membership in OrganizationMembership,
+      on:
+        membership.id == ^auth.membership_id and
+          membership.organization_id == project.organization_id,
+      left_join: grant in ProjectAccessGrant,
+      on:
+        grant.project_id == project.id and
+          grant.organization_id == project.organization_id and
+          grant.organization_membership_id == membership.id,
+      left_join: link in TeamMembership,
+      on:
+        link.organization_id == project.organization_id and
+          link.organization_membership_id == membership.id,
+      left_join: team in Team,
+      on:
+        team.id == link.team_id and team.organization_id == link.organization_id and
+          is_nil(team.deactivated_at),
+      left_join: team_grant in TeamProjectAccessGrant,
+      on:
+        team_grant.project_id == project.id and
+          team_grant.organization_id == project.organization_id and
+          team_grant.team_id == team.id,
+      where:
+        project.organization_id == ^auth.organization_id and
+          membership.role == "member" and
+          is_nil(membership.deactivated_at) and
+          (grant.access in ^allowed_access or team_grant.access in ^allowed_access),
+      distinct: true
   end
 
-  defp authorized_project(id, %AuthContext{role: "agent"} = auth, required_access)
+  defp authorized_projects_query(%AuthContext{role: "agent"} = auth, required_access)
        when required_access in [:reader, :editor] do
     allowed_access = if required_access == :reader, do: @reader_access, else: @editor_access
 
-    Repo.one(
-      from project in Project,
-        join: agent in Agent,
-        on:
-          agent.id == ^auth.agent_id and
-            agent.organization_id == project.organization_id and
-            is_nil(agent.deactivated_at),
-        join: grant in AgentProjectAccessGrant,
-        on:
-          grant.project_id == project.id and
-            grant.organization_id == project.organization_id and
-            grant.agent_id == agent.id and grant.access in ^allowed_access,
-        where:
-          project.id == ^id and
-            project.organization_id == ^auth.organization_id
-    )
+    from project in Project,
+      join: agent in Agent,
+      on:
+        agent.id == ^auth.agent_id and
+          agent.organization_id == project.organization_id and
+          is_nil(agent.deactivated_at),
+      join: grant in AgentProjectAccessGrant,
+      on:
+        grant.project_id == project.id and
+          grant.organization_id == project.organization_id and
+          grant.agent_id == agent.id and grant.access in ^allowed_access,
+      where: project.organization_id == ^auth.organization_id
   end
 
-  defp authorized_project(_id, _auth, _required_access), do: nil
+  defp authorized_projects_query(_auth, _required_access) do
+    from project in Project, where: false
+  end
+
+  defp after_cursor(query, nil), do: query
+
+  defp after_cursor(query, {inserted_at, id}) do
+    where(
+      query,
+      [project],
+      project.inserted_at > ^inserted_at or
+        (project.inserted_at == ^inserted_at and project.id > ^id)
+    )
+  end
 
   defp authorize_agent_memory_write(id, auth) do
     with {:ok, id} <- Ecto.UUID.cast(id),
