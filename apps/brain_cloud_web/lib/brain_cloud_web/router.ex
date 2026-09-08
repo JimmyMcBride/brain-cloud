@@ -87,7 +87,9 @@ defmodule BrainCloudWeb.Router do
     get "/organization/agents/:agent_id/tokens", AgentTokenController, :index
     delete "/organization/agents/:agent_id/tokens/:id", AgentTokenController, :delete
 
+    get "/projects", ProjectController, :index
     post "/projects", ProjectController, :create
+    get "/projects/:id", ProjectController, :show
     get "/projects/:project_id/access", ProjectAccessController, :index
     put "/projects/:project_id/access/:membership_id", ProjectAccessController, :update
     delete "/projects/:project_id/access/:membership_id", ProjectAccessController, :delete

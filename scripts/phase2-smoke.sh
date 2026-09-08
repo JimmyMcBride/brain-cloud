@@ -67,7 +67,7 @@ curl --fail --silent --show-error "$base_url/readyz" |
   jq -e '. == {"status":"ready"}' >/dev/null
 
 curl --fail --silent --show-error "$base_url/v1/system/info" |
-  jq -e '.modules == [] and (.capabilities | contains(["system.info", "projects.create", "projects.manage_access", "memory.write", "memory.read", "search.keyword", "members.manage", "teams.manage", "agents.manage", "tokens.manage"]))' >/dev/null
+  jq -e '.modules == [] and (.capabilities | contains(["system.info", "projects.create", "projects.read", "projects.manage_access", "memory.write", "memory.read", "search.keyword", "members.manage", "teams.manage", "agents.manage", "tokens.manage"]))' >/dev/null
 
 organization_a_slug="smoke-a-$run_suffix"
 organization_b_slug="smoke-b-$run_suffix"
@@ -238,7 +238,7 @@ second_owner_id="$(printf '%s' "$second_owner_response" | jq -er '.membership.id
 second_owner_token_response="$(
   authorized_curl "$token_a" \
     --header 'Content-Type: application/json' \
-    --data '{"name":"Second owner","scopes":["projects.create","projects.manage_access","memory.write","memory.read","search.keyword","members.manage","teams.manage","tokens.manage"]}' \
+    --data '{"name":"Second owner","scopes":["projects.create","projects.read","projects.manage_access","memory.write","memory.read","search.keyword","members.manage","teams.manage","tokens.manage"]}' \
     "$base_url/v1/organization/memberships/$second_owner_id/tokens"
 )"
 second_owner_token="$(printf '%s' "$second_owner_token_response" | jq -er '.token.token')"
@@ -254,7 +254,7 @@ member_id="$(printf '%s' "$member_response" | jq -er '.membership.id')"
 member_token_response="$(
   authorized_curl "$second_owner_token" \
     --header 'Content-Type: application/json' \
-    --data '{"name":"Member project operator","scopes":["memory.write","memory.read","search.keyword"]}' \
+    --data '{"name":"Member project operator","scopes":["projects.read","memory.write","memory.read","search.keyword"]}' \
     "$base_url/v1/organization/memberships/$member_id/tokens"
 )"
 member_token="$(printf '%s' "$member_token_response" | jq -er '.token.token')"
@@ -282,6 +282,14 @@ project_id="$(printf '%s' "$project_response" | jq -er '.project.id')"
 printf '%s' "$project_response" |
   jq -e --arg organization_id "$organization_a_id" \
     '.project.name == "Tenant A Research" and .project.organization_id == $organization_id' >/dev/null
+
+authorized_curl "$token_a" "$base_url/v1/projects?limit=100" |
+  jq -e --arg project_id "$project_id" \
+    'any(.projects[]; .id == $project_id) and has("next_cursor")' >/dev/null
+authorized_curl "$token_a" "$base_url/v1/projects/$project_id" |
+  jq -e --arg project_id "$project_id" '.project.id == $project_id' >/dev/null
+authorized_curl "$member_token" "$base_url/v1/projects" |
+  jq -e '.projects == [] and .next_cursor == null' >/dev/null
 
 reader_write_status="$(
   curl --silent --show-error \
@@ -317,6 +325,11 @@ authorized_curl "$token_a" \
   jq -e --arg team_id "$team_id" \
     '.team_access_grant.team_id == $team_id and .team_access_grant.access == "reader"' >/dev/null
 
+authorized_curl "$member_token" "$base_url/v1/projects" |
+  jq -e --arg project_id "$project_id" '.projects[0].id == $project_id' >/dev/null
+authorized_curl "$member_token" "$base_url/v1/projects/$project_id" |
+  jq -e --arg project_id "$project_id" '.project.id == $project_id' >/dev/null
+
 team_memory_response="$(
   authorized_curl "$token_a" \
     --header 'Content-Type: application/json' \
@@ -328,6 +341,8 @@ authorized_curl "$member_token" "$base_url/v1/projects/$project_id/memories/$tea
   jq -e --arg memory_id "$team_memory_id" '.memory.id == $memory_id' >/dev/null
 
 authorized_curl "$token_a" --request DELETE "$base_url/v1/organization/teams/$team_id" >/dev/null
+authorized_curl "$member_token" "$base_url/v1/projects" |
+  jq -e '.projects == [] and .next_cursor == null' >/dev/null
 team_inactive_status="$(
   curl --silent --show-error --output "$scratch_dir/team-inactive.json" --write-out '%{http_code}' \
     --header "Authorization: Bearer $member_token" \
@@ -437,7 +452,7 @@ agent_id="$(printf '%s' "$agent_response" | jq -er '.agent.id')"
 agent_token_response="$(
   authorized_curl "$token_a" \
     --header 'Content-Type: application/json' \
-    --data '{"name":"Smoke agent writer","scopes":["memory.write","memory.read","search.keyword"]}' \
+    --data '{"name":"Smoke agent writer","scopes":["projects.read","memory.write","memory.read","search.keyword"]}' \
     "$base_url/v1/organization/agents/$agent_id/tokens"
 )"
 agent_token_id="$(printf '%s' "$agent_token_response" | jq -er '.token.id')"
@@ -453,6 +468,10 @@ authorized_curl "$token_a" \
 
 authorized_curl "$agent_token" "$base_url/v1/projects/$project_id/memories/$memory_id" |
   jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
+authorized_curl "$agent_token" "$base_url/v1/projects?limit=1" |
+  jq -e --arg project_id "$project_id" '.projects[0].id == $project_id' >/dev/null
+authorized_curl "$agent_token" "$base_url/v1/projects/$project_id" |
+  jq -e --arg project_id "$project_id" '.project.id == $project_id' >/dev/null
 authorized_curl "$agent_token" "$base_url/v1/projects/$project_id/search?q=phoenix" |
   jq -e --arg memory_id "$memory_id" 'any(.results[]; .memory_id == $memory_id)' >/dev/null
 
