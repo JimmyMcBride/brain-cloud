@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-08T01:07:31Z"
+updated: "2026-09-08T01:18:27Z"
 ---
 # Current State
 
@@ -74,4 +74,4 @@ PR #30 review follow-up: browser admission confirmation now distinguishes an alr
 
 ## Phase 3A project discovery implementation
 
-Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) is approved. Branch `codex/project-discovery-foundation` implements bearer-only project list/detail, explicit `projects.read`, strict bounded keyset cursors, PostgreSQL access filtering, and no credential or invitation backfill. Existing owners deliberately rotate bootstrap credentials with `ROTATE_TOKEN=true` when they need the additive scope. Implementation verification and review remain in progress.
+Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) is approved. Branch `codex/project-discovery-foundation` implements bearer-only project list/detail, explicit `projects.read`, strict bounded keyset cursors, PostgreSQL access filtering, and no credential or invitation backfill. Existing owners deliberately rotate bootstrap credentials with `ROTATE_TOKEN=true` when they need the additive scope. Implementation is verified locally: 168 tests, migration rollback/forward, optimized representative query plan, production assets, Docker image, Compose smoke, database outage/recovery, OpenAPI validation, Brain audit, and Plan check pass. GitHub review remains.
