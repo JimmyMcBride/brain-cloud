@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-06T13:58:09Z"
+updated: "2026-09-08T01:07:07Z"
 ---
 # Project Architecture
 
@@ -20,4 +20,4 @@ Use this file for the structural shape of the repository.
 
 ## Local Notes
 
-The Phase 2H server is a Phoenix umbrella. `brain_cloud` owns Ecto/PostgreSQL, human and agent accounts, organization tenancy, invitations, API credentials, browser login challenges and sessions, global auth events, teams/agents and retained links/grants, direct project access, lifecycle locking, organization audit, projects, memories, keyword search, readiness, release migrations/bootstrap, and domain supervision. `brain_cloud_web` owns Phoenix, Bandit, separate API bearer and human browser authentication, synchronous Swoosh delivery, encrypted session cookies, current-scope rehydration, the minimal LiveView identity shell, JSON controllers, and assets. System discovery still reports the same API capabilities and empty enabled-module list. See `docs/architecture.md` and ADRs 0007–0013.
+The current server is a Phoenix umbrella. `brain_cloud` owns Ecto/PostgreSQL, human and agent accounts, organization tenancy, invitations, API credentials, browser login challenges and sessions, global auth events, teams/agents and retained links/grants, direct project access, lifecycle locking, organization audit, projects, memories, keyword search, readiness, release migrations/bootstrap, and domain supervision. `brain_cloud_web` owns Phoenix, Bandit, separate API bearer and human browser authentication, synchronous Swoosh delivery, encrypted session cookies, current-scope rehydration, the minimal LiveView identity shell, JSON controllers, and assets. System discovery reports the additive `projects.read` capability alongside the existing API capabilities and empty enabled-module list. See `docs/architecture.md` and ADRs 0007–0013.

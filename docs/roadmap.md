@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T19:18:43Z"
+updated: "2026-09-08T01:08:02Z"
 ---
 # Brain Cloud roadmap
 
@@ -79,7 +79,7 @@ Later Phase 2 slices add owner invitations and finer-grained access. Agent propo
 
 ### Phase 3 — Complete cloud-native Brain project model
 
-Context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repository associations, and project relationships.
+**Phase 3A in implementation.** Canonical spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) adds permission-filtered project list/detail, explicit `projects.read`, and bounded keyset pagination without credential backfill. Later Phase 3 slices cover context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repository associations, and project relationships.
 
 ### Phase 4 — Hosted retrieval and context compilation
 
@@ -157,4 +157,4 @@ The current implementation does not include product CRUD UI, owner invitations, 
 
 ## Phase 3A specification
 
-Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31), Project discovery foundation, is published for review. Proposed scope: API-only accessible-project list/detail, explicit projects.read without token/invitation backfills, existing project fields, bounded keyset pagination, and fresh tenant/grant checks on every request. Bootstrap-token rotation is the deliberate upgrade path for existing owners needing the new scope. No new endpoints are implemented yet; spec approval precedes execution.
+Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31), Project discovery foundation, is approved and in implementation. It adds API-only accessible-project list/detail, explicit `projects.read` without token/invitation backfills, existing project fields, bounded keyset pagination, and fresh tenant/grant checks on every request. Bootstrap-token rotation is the deliberate upgrade path for existing owners needing the new scope.

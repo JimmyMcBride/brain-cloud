@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T15:01:18Z"
+updated: "2026-09-08T01:07:07Z"
 ---
 # Self-hosting direction
 
@@ -7,7 +7,7 @@ Self-hosting is a first-class Brain Cloud deployment, using the same API and cli
 
 Phase 2H supplies a non-root Phoenix release image and Compose stack containing the server, PostgreSQL, and a development-only Mailpit SMTP sink. The release runs Ecto migrations before startup, readiness verifies PostgreSQL with `SELECT 1`, and the schema stores the existing tenant/project domain plus digest-only login challenges, tracked browser sessions, email verification timestamps, and global human-auth events.
 
-After first startup, run `/app/bin/bootstrap_owner` inside the API container with `OWNER_EMAIL`, `OWNER_DISPLAY_NAME`, `ORGANIZATION_NAME`, and `ORGANIZATION_SLUG`. The idempotent command prints the initial full-scope `bc1_...` token once. Store that output in a secret manager; neither Brain Cloud nor a repeated bootstrap can recover it. `ROTATE_TOKEN=true` explicitly revokes the active bootstrap token and prints one replacement. `ADOPT_PHASE_ONE=true` explicitly attaches the new owner to the deterministic `phase-1-import` organization created for migrated data; omit organization name and slug in that mode.
+After first startup, run `/app/bin/bootstrap_owner` inside the API container with `OWNER_EMAIL`, `OWNER_DISPLAY_NAME`, `ORGANIZATION_NAME`, and `ORGANIZATION_SLUG`. The idempotent command prints the initial full-scope `bc1_...` token once. Store that output in a secret manager; neither Brain Cloud nor a repeated bootstrap can recover it. `ROTATE_TOKEN=true` explicitly revokes the active bootstrap token and prints one replacement with the current full scope set, including `projects.read`. Existing credentials and pending invitations are not backfilled; rotate deliberately, then issue replacement human or agent credentials where project discovery is required. `ADOPT_PHASE_ONE=true` explicitly attaches the new owner to the deterministic `phase-1-import` organization created for migrated data; omit organization name and slug in that mode.
 
 The release command emits safe JSON to standard output. Initial and recovery invocations contain the one-time raw token; protect terminal capture and automation logs accordingly. Normal API list/revoke responses, audit metadata, application logs, and database rows never contain raw token material or token digests. Product credentials are organization-bound and cannot select another tenant through headers or request bodies.
 
@@ -25,7 +25,7 @@ Owners administer direct project grants through `/v1/projects/{project_id}/acces
 
 Owners administer teams through `/v1/organization/teams` with `teams.manage`, link active memberships through each team's `/members` route, and administer separate team grants through `/v1/projects/{project_id}/team-access` with `projects.manage_access`. Deactivation retains links/grants but immediately makes team-derived access dormant. The Phase 2D upgrade adds `teams.manage` only to active owner tokens already containing every pre-Phase 2D supported scope; partial tokens remain unchanged.
 
-Owners administer agents through `/v1/organization/agents` with `agents.manage`, issue one-time write/read/search credentials through nested `/tokens` routes, and administer reader/editor grants through `/v1/projects/{project_id}/agent-access` with `projects.manage_access`. Agent deactivation revokes active credentials and retains dormant grants; reactivation requires fresh credentials. The Phase 2E identity upgrade adds `agents.manage` only to active full-scope owner tokens containing every pre-Phase 2E scope; partial and member tokens remain unchanged. No agents or grants are backfilled.
+Owners administer agents through `/v1/organization/agents` with `agents.manage`, issue one-time project-discovery/write/read/search credentials through nested `/tokens` routes, and administer reader/editor grants through `/v1/projects/{project_id}/agent-access` with `projects.manage_access`. Agent deactivation revokes active credentials and retains dormant grants; reactivation requires fresh credentials. The Phase 2E identity upgrade adds `agents.manage` only to active full-scope owner tokens containing every pre-Phase 2E scope; partial and member tokens remain unchanged. No agents or grants are backfilled.
 
 Production self-hosting still needs versioned image publication, backup and restore, upgrade runbooks, secret-manager integration, reverse-proxy IP rate limiting, observability, and broader operations hardening. Redis, object storage, queues, and vector databases are not assumed.
 

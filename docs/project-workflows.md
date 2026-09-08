@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-02T14:37:21Z"
+updated: "2026-09-08T01:07:07Z"
 ---
 # Project Workflows
 
@@ -57,4 +57,4 @@ After `brain adopt` creates starter context, the AI agent must scan the repo bef
 
 ## Local Notes
 
-Use `make check` for formatting, warnings-as-errors compilation, database migrations/tests, and production assets. Use `make upgrade-phase2` with PostgreSQL running to verify the Phase 1 data upgrade/adoption path, selective Phase 2D/2E scope migrations with no team/agent/invitation backfill, and one post-upgrade invitation acceptance. Against a running Compose project, use `make smoke-phase2` to verify release bootstrap/recovery, invitation create/list/revoke/reissue/accept/replay handling, existing-user acceptance, human and agent token lifecycle, direct/team/agent project access, two-organization isolation, API restart durability, PostgreSQL outage readiness, and recovery. Active integration work targets `develop`; release stabilization uses `release/vX.Y.Z`; `main` contains releases. Plan owns GitHub planning artifacts whenever source mode is `github`.
+Use `make check` for formatting, warnings-as-errors compilation, database migrations/tests, and production assets. Use `make upgrade-phase2` with PostgreSQL running to verify the Phase 1 data upgrade/adoption path, selective Phase 2D/2E scope migrations with no team/agent/invitation backfill, and one post-upgrade invitation acceptance. Against a running Compose project, use `make smoke-phase2` to verify release bootstrap/recovery, invitation create/list/revoke/reissue/accept/replay handling, existing-user acceptance, human and agent token lifecycle, direct/team/agent project access, permission-filtered project discovery and pagination, two-organization isolation, API restart durability, PostgreSQL outage readiness, and recovery. Active integration work targets `develop`; release stabilization uses `release/vX.Y.Z`; `main` contains releases. Plan owns GitHub planning artifacts whenever source mode is `github`.
