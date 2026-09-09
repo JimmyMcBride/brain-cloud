@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T15:01:19Z"
+updated: "2026-09-08T01:14:08Z"
 ---
 # Architecture
 
@@ -24,8 +24,8 @@ Brain Cloud is API-first and implements, but never imports, external SDKs.
 
 - `apps/brain_cloud` owns Ecto/PostgreSQL, users, organizations, memberships/invitations, human/agent API token digests, one-time browser login challenges, tracked browser sessions, global human-auth events, teams/agents and retained grants, project access, organization audit, projects, immutable memory revisions, search, readiness, release migrations/bootstrap, and domain supervision.
 - `apps/brain_cloud_web` owns Phoenix, Bandit, separate API bearer and browser authentication, synchronous Swoosh delivery, encrypted cookies, database-rehydrated current scope, structured JSON controllers, the minimal LiveView identity shell, assets, and the HTTP endpoint.
-- Implemented routes include public invitation acceptance plus protected invitation, human token/membership lifecycle, team lifecycle/membership, agent lifecycle/nested credentials, project creation, direct human/team/agent project grants, memory creation/retrieval, and keyword search. Root, health, readiness, and system discovery remain public.
-- Every authenticated request derives principal type/ID, organization, credential, and fixed scopes; human contexts also carry user/membership/role. Tenant- and grant-aware Ecto predicates run before protected content loads.
+- Implemented routes include public invitation acceptance plus protected invitation, human token/membership lifecycle, team lifecycle/membership, agent lifecycle/nested credentials, project creation and permission-filtered project discovery/detail, direct human/team/agent project grants, memory creation/retrieval, and keyword search. Root, health, readiness, and system discovery remain public.
+- Every authenticated request derives principal type/ID, organization, credential, and fixed scopes; human contexts also carry user/membership/role. Tenant- and grant-aware Ecto predicates run before protected content loads. Project discovery uses strict unpadded base64url JSON cursors and the `projects_organization_pagination_index` for ordered tenant traversal.
 - Production releases emit JSON logs, validate HTTPS/SMTP configuration, and run Ecto migrations before startup.
 - `openapi/brain-cloud-v1.yaml` records only implemented routes and reserves future `/v1` domain areas without speculative schemas.
 - `scripts/phase2-upgrade-test.sh` verifies historical data/API compatibility, empty browser-auth rollout, rollback/forward migration, and post-upgrade sign-in. `scripts/phase2-smoke.sh` also verifies SMTP delivery, one/multiple-organization browser sign-in, switching, scope freshness, logout/replay denial, restart persistence, and PostgreSQL outage/recovery.

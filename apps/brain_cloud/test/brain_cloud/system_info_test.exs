@@ -9,6 +9,7 @@ defmodule BrainCloud.SystemInfoTest do
              capabilities: [
                "system.info",
                "projects.create",
+               "projects.read",
                "projects.manage_access",
                "memory.write",
                "memory.read",

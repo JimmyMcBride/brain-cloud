@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T15:01:18Z"
+updated: "2026-09-08T01:07:07Z"
 ---
 # Brain Cloud
 
@@ -123,7 +123,7 @@ curl --fail-with-body \
   "http://localhost:4000/v1/projects/${project_id}/search?q=durable"
 ```
 
-API tokens use `bc1_<public_id>_<secret>` and invitation acceptance tokens use distinct `bci1_<public_id>_<secret>` values. Both are stored only as SHA-256 digests; raw secrets appear once in their successful create or acceptance response. Human token-management endpoints require an owner membership plus `tokens.manage`; membership lifecycle requires owner plus `members.manage`, team lifecycle/membership requires owner plus `teams.manage`, and agent lifecycle/credential operations require owner plus `agents.manage`. Direct human, team, and agent project-grant management requires owner plus `projects.manage_access`. Agent tokens are limited to non-empty subsets of `memory.write`, `memory.read`, and `search.keyword`, and direct agent grants are reader or editor. Agent writes record authentic agent revision and audit provenance; fixed route scopes remain independent from project access. Product routes always require both their fixed token scope and project access.
+API tokens use `bc1_<public_id>_<secret>` and invitation acceptance tokens use distinct `bci1_<public_id>_<secret>` values. Both are stored only as SHA-256 digests; raw secrets appear once in their successful create or acceptance response. Human token-management endpoints require an owner membership plus `tokens.manage`; membership lifecycle requires owner plus `members.manage`, team lifecycle/membership requires owner plus `teams.manage`, and agent lifecycle/credential operations require owner plus `agents.manage`. Direct human, team, and agent project-grant management requires owner plus `projects.manage_access`. Agent tokens are limited to non-empty subsets of `projects.read`, `memory.write`, `memory.read`, and `search.keyword`, and direct agent grants are reader or editor. Agent writes record authentic agent revision and audit provenance; fixed route scopes remain independent from project access. Project discovery uses `GET /v1/projects` and `GET /v1/projects/{id}` with explicit `projects.read`; owners see their tenant, while members and agents see only reader/editor grants. List responses use bounded keyset cursors and both reads send `Cache-Control: no-store`. Product routes always require both their fixed token scope and project access.
 
 Existing humans with an active membership can use `/sign-in`. Brain Cloud sends a 15-minute, one-use email link and establishes a tracked 14-day browser session after an explicit confirmation. A single active membership is selected automatically; multiple memberships enter the organization chooser. Browser sessions authenticate only the LiveView shell and never `/v1`; `bc1` credentials authenticate only the API and never the browser. Development mail is inspectable at `/dev/mailbox`.
 

@@ -5,7 +5,7 @@ slug: project-discovery-foundation
 status: active
 title: Project discovery foundation
 type: brainstorm
-updated_at: "2026-09-07T19:18:16Z"
+updated_at: "2026-09-08T01:26:00Z"
 ---
 # Brainstorm: Project discovery foundation
 
@@ -101,4 +101,4 @@ Verification:
 
 Dependencies: Phase 2I spec #28 is complete through merged PR #30; existing identity, scope, project access, and agent foundations are present on develop.
 
-Readiness: review. Contract is bounded and recommendations are explicit; canonical GitHub spec requires review before execution. This planning work implements no API operations.
+Readiness: approved. Contract reviewed and accepted for execution as canonical GitHub spec #31; implementation must preserve the no-backfill and access-semantics constraints.

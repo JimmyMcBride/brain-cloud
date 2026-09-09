@@ -403,7 +403,7 @@ paths:
     post:
       operationId: createAgentToken
       summary: Create a one-time scoped credential for an active agent
-      description: The raw token appears only in this response. Agent scopes are restricted to memory.write, memory.read, and search.keyword.
+      description: The raw token appears only in this response. Agent scopes are restricted to projects.read, memory.write, memory.read, and search.keyword.
       x-required-role: owner
       x-required-scope: agents.manage
       security: [{bearerAuth: []}]
@@ -604,6 +604,32 @@ paths:
         "403": {$ref: "#/components/responses/Forbidden"}
         "404": {$ref: "#/components/responses/TeamOrMembershipNotFound"}
   /v1/projects:
+    get:
+      operationId: listProjects
+      summary: List projects visible to the authenticated principal
+      description: Owners see all organization projects. Members see direct and active-team grants; agents see direct agent grants. Results use ascending keyset pagination by inserted_at and id.
+      x-required-scope: projects.read
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+        - in: query
+          name: cursor
+          description: Opaque unpadded base64url project position returned by the prior page.
+          schema: {type: string, minLength: 1, maxLength: 512}
+      responses:
+        "200":
+          description: Accessible projects. The response is never cacheable.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProjectListEnvelope"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
     post:
       operationId: createProject
       summary: Create a cloud project
@@ -633,6 +659,27 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "422":
           $ref: "#/components/responses/ValidationFailed"
+  /v1/projects/{project_id}:
+    get:
+      operationId: getProject
+      summary: Retrieve an accessible project
+      description: Conceals malformed, absent, foreign-tenant, and inaccessible project identifiers with the same not-found response.
+      x-required-scope: projects.read
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Accessible project. The response is never cacheable.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ProjectEnvelope"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/ProjectNotFound"}
   /v1/projects/{project_id}/access:
     get:
       operationId: listProjectAccessGrants
@@ -1427,6 +1474,16 @@ components:
       properties:
         project:
           $ref: "#/components/schemas/Project"
+    ProjectListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [projects, next_cursor]
+      properties:
+        projects:
+          type: array
+          items: {$ref: "#/components/schemas/Project"}
+        next_cursor:
+          type: [string, "null"]
     Project:
       type: object
       additionalProperties: false
@@ -1655,7 +1712,7 @@ components:
           uniqueItems: true
           items:
             type: string
-            enum: [memory.write, memory.read, search.keyword]
+            enum: [projects.read, memory.write, memory.read, search.keyword]
         expires_at:
           type: [string, "null"]
           format: date-time
@@ -1679,6 +1736,7 @@ components:
       type: string
       enum:
         - projects.create
+        - projects.read
         - projects.manage_access
         - memory.write
         - memory.read

@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T23:12:49Z"
+updated: "2026-09-08T01:18:27Z"
 ---
 # Current State
 
@@ -72,12 +72,6 @@ Planning PRs must avoid closing keywords next to issue numbers, even in negated 
 
 PR #30 review follow-up: browser admission confirmation now distinguishes an already signed-in matching recipient from a signed-out recipient. Regression coverage checks both redirect/message pairs and selected-organization persistence.
 
-## Phase 2I merged and Phase 3A proposal
+## Phase 3A project discovery implementation
 
-PR #30 squash-merged into develop at 79f6303 after resolving its success-message review comment. Spec #28 is closed by the implementation merge. Final verification: 157 tests, migration checks, Docker release smoke, and GitHub CI passed.
-
-Next shaping branch: codex/phase-3a-project-discovery-plan. Plan brainstorm project-discovery-foundation proposes API-only accessible-project list/detail before broader Phase 3 work. This is not an approved spec. Read scopes and compatibility, bounded stable pagination, exact errors, and permission freshness require review before canonical GitHub promotion. No next-slice code has been implemented.
-
-## Phase 3A specification
-
-Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31), Project discovery foundation, is published for review. Proposed scope: API-only accessible-project list/detail, explicit projects.read without token/invitation backfills, existing project fields, bounded keyset pagination, and fresh tenant/grant checks on every request. Bootstrap-token rotation is the deliberate upgrade path for existing owners needing the new scope. No new endpoints are implemented yet; spec approval precedes execution.
+Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) is approved. Branch `codex/project-discovery-foundation` implements bearer-only project list/detail, explicit `projects.read`, strict bounded keyset cursors, PostgreSQL access filtering, and no credential or invitation backfill. Existing owners deliberately rotate bootstrap credentials with `ROTATE_TOKEN=true` when they need the additive scope. Implementation is verified locally: 168 tests, migration rollback/forward, optimized representative query plan, production assets, Docker image, Compose smoke, database outage/recovery, OpenAPI validation, Brain audit, and Plan check pass. GitHub review remains.

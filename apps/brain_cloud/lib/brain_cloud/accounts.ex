@@ -560,7 +560,12 @@ defmodule BrainCloud.Accounts do
     case attribute(attrs, :scopes) do
       scopes when is_list(scopes) ->
         if scopes != [] and
-             Scopes.subset?(scopes, ["memory.write", "memory.read", "search.keyword"]) do
+             Scopes.subset?(scopes, [
+               "projects.read",
+               "memory.write",
+               "memory.read",
+               "search.keyword"
+             ]) do
           issue_token_for(%{agent_id: agent_id}, attrs, false)
         else
           {:error, agent_scope_changeset(attrs, agent_id)}
@@ -1272,7 +1277,10 @@ defmodule BrainCloud.Accounts do
   defp agent_scope_changeset(attrs, agent_id) do
     attrs
     |> agent_validation_token_changeset(agent_id)
-    |> Changeset.add_error(:scopes, "may include only memory.read and search.keyword")
+    |> Changeset.add_error(
+      :scopes,
+      "may include only projects.read, memory.write, memory.read, and search.keyword"
+    )
   end
 
   defp unwrap_transaction({:ok, value}), do: {:ok, value}

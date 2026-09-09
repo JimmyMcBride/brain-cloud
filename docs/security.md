@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T15:01:18Z"
+updated: "2026-09-08T01:07:07Z"
 ---
 # Security direction
 
@@ -28,6 +28,8 @@ Requested target-token scopes must be a subset of the caller's scopes. A member 
 PostgreSQL row locks serialize changes that could remove an active owner. The final active owner cannot be demoted or deactivated, including concurrent attempts against the last two owners. Deactivation and owner-to-member demotion revoke every active credential bound to the target membership in the same transaction. Reactivation never clears revocation, so access resumes only after an owner explicitly issues a fresh credential. Membership create, role change, deactivate, and reactivate actions commit safe immutable audit events transactionally.
 
 ## Phase 2C project access control
+
+Project discovery requires the independent `projects.read` scope. Owners see all projects in their organization; members see the distinct union of direct and active-team reader/editor grants; agents see direct reader/editor grants only. Access filtering runs in PostgreSQL before keyset pagination and serialization. Missing, malformed, foreign, and inaccessible detail IDs remain indistinguishable. Existing credentials and pending invitations are never widened automatically.
 
 Project access combines fixed token scopes with membership-level authorization. Owners have implicit full access. Active members need a direct `reader` or `editor` grant: readers may retrieve memories and search, while editors may also create memories. Authorization occurs before any memory, revision, or search query so denied projects return the same non-enumerating `404 project_not_found` response as missing, malformed, inaccessible, and cross-tenant projects.
 
