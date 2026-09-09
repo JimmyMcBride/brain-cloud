@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "last_active_chain": "brainstorm/project-discovery-foundation",
-  "last_updated_at": "2026-09-07T16:49:02Z",
+  "last_active_chain": "brainstorm/memory-discovery-foundation",
+  "last_updated_at": "2026-09-09T04:21:41Z",
   "sessions": {
     "brainstorm/agent-authored-memory-provenance-foundation": {
       "chain_id": "brainstorm/agent-authored-memory-provenance-foundation",
@@ -86,6 +86,20 @@
       "next_action": "Review canonical GitHub spec #28; no epic or duplicate promotion is needed.",
       "created_at": "2026-09-07T02:50:39Z",
       "updated_at": "2026-09-07T03:04:07Z"
+    },
+    "brainstorm/memory-discovery-foundation": {
+      "chain_id": "brainstorm/memory-discovery-foundation",
+      "brainstorm": "memory-discovery-foundation",
+      "current_stage": "brainstorm",
+      "current_cluster": 5,
+      "current_cluster_label": "handoff-epic",
+      "stage_statuses": {
+        "brainstorm": "in_progress"
+      },
+      "summary": "Recap:\nCurrent understanding: Project discovery now exposes accessible projects, but clients still cannot browse the memories inside one. They must already know a memory ID or invent a search term, leaving the basic discovery path incomplete. / Authorized human and agent clients can move from project discovery to a deterministic inventory of memories, then use existing detail or search operations without guessing identifiers or queries.\nKey decisions: appetite captured.\nUnresolved risks or questions: there are still open questions to review.\nParked items: none.\nRecommended next stage: Review recap and continue into the epic stage when ready.",
+      "next_action": "Review recap and continue into the epic stage when ready.",
+      "created_at": "2026-09-09T04:20:00Z",
+      "updated_at": "2026-09-09T04:21:41Z"
     },
     "brainstorm/organization-membership-administration-foundation": {
       "chain_id": "brainstorm/organization-membership-administration-foundation",

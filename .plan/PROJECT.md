@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-07T19:18:43Z"
+updated: "2026-09-09T04:23:49Z"
 ---
 # Project: brain-cloud
 
@@ -42,6 +42,6 @@ Brain Cloud is the hosted and self-hostable platform for Brain Core and optional
 
 Phase 1 through Phase 2H are complete. Phase 2I is complete through merged PR #30 from canonical GitHub spec [#28](https://github.com/JimmyMcBride/brain-cloud/issues/28): minimal owner invitation controls, synchronous invitation delivery and resend, credential-free browser acceptance, and handoff to existing sign-in. PR #30 is merged. Broader product UI, owner invitations, alternate authenticators, and finer-grained policy remain later work. Module framework implementation begins in Phase 10; Planning integration requires its dedicated contract.
 
-## Phase 3A specification
+## Current Phase 3 focus
 
-Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31), Project discovery foundation, is published for review. Proposed scope: API-only accessible-project list/detail, explicit projects.read without token/invitation backfills, existing project fields, bounded keyset pagination, and fresh tenant/grant checks on every request. Bootstrap-token rotation is the deliberate upgrade path for existing owners needing the new scope. No new endpoints are implemented yet; spec approval precedes execution.
+Phase 3A project discovery is complete through merged PR #34 from canonical spec #31. Active Phase 3B brainstorm `memory-discovery-foundation` targets the missing memory inventory bridge: one scoped collection endpoint with compact latest-revision summaries and stable pagination, without revision mutation, archive, metadata, UI, SDK, or CLI scope.
