@@ -5,8 +5,7 @@ slug: project-discovery-foundation
 status: active
 title: Project discovery foundation
 type: brainstorm
-updated: "2026-09-08T00:57:05Z"
-updated_at: "2026-09-07T19:18:16Z"
+updated_at: "2026-09-08T01:26:00Z"
 ---
 # Brainstorm: Project discovery foundation
 
