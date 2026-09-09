@@ -5,7 +5,7 @@ slug: memory-discovery-foundation
 status: active
 title: Memory discovery foundation
 type: brainstorm
-updated_at: "2026-09-09T04:26:00Z"
+updated_at: "2026-09-09T04:31:00Z"
 ---
 
 # Brainstorm: Memory discovery foundation
@@ -48,7 +48,7 @@ Project discovery should lead naturally into memory discovery. Humans and agents
 - What exact validation envelope and cursor encoding should align with project discovery without prematurely creating a generic paginator?
 ## Ideas
 
-- Add one bearer-only GET /v1/projects/:project_id/memories collection route using existing memory.read plus reader/editor project access.
+- Add one bearer-only GET /v1/projects/{project_id}/memories collection route using existing memory.read plus reader/editor project access.
 - Return existing memory identity and current revision fields with bounded stable keyset pagination; no totals, new metadata, or revision history.
 - Preserve project-first concealment, fresh authorization, exact existing detail/search semantics, and no credential backfill.
 ## Raw Notes
@@ -116,7 +116,7 @@ A reusable pagination DSL, current-revision materialized view, stored excerpt co
 
 ### Simpler Alternative
 
-Add only GET /v1/projects/:project_id/memories with existing auth. Return bounded compact summaries for the latest revision, ordered by memory creation tuple with a strict v1 cursor. Reuse existing error, excerpt, timestamp, and no-store conventions. Measure the query; add only the precise index proven necessary.
+Add only GET /v1/projects/{project_id}/memories with existing auth. Return bounded compact summaries for the latest revision, ordered by memory creation tuple with a strict v1 cursor. Reuse existing error, excerpt, timestamp, and no-store conventions. Measure the query; add only the precise index proven necessary.
 
 ## Risks and Mitigations
 
@@ -132,7 +132,7 @@ Clients can now discover accessible projects but cannot enumerate memories insid
 
 Scope:
 
-- Add bearer-only `GET /v1/projects/:project_id/memories`. Reuse the existing `memory.read` scope and reader/editor project authorization for owners, members through direct or active-team grants, and agents through direct grants. Add no scope, capability, credential, invitation, or audit-row backfill. Browser cookies remain insufficient for `/v1`.
+- Add bearer-only `GET /v1/projects/{project_id}/memories`. Reuse the existing `memory.read` scope and reader/editor project authorization for owners, members through direct or active-team grants, and agents through direct grants. Add no scope, capability, credential, invitation, or audit-row backfill. Browser cookies remain insufficient for `/v1`.
 - Preserve project-first concealment and freshness. Error precedence is authenticate, require `memory.read`, authorize the project from current PostgreSQL state, then validate pagination. Missing/invalid/revoked credentials use existing `401 unauthorized`; missing scope uses existing `403 forbidden`; malformed, foreign, or inaccessible projects use existing `404 project_not_found` even when pagination is also invalid. Project access changes committed before a subsequent request affect that request. Requests already in flight may use their read snapshot.
 - Return `200 {"memories":[<summary>],"next_cursor":<string-or-null>}` with `Cache-Control: no-store`. Empty results use an empty array and null cursor. No totals. Unknown unrelated query parameters are ignored.
 - Each summary has exactly `id`, `project_id`, `inserted_at`, `updated_at`, and `revision`. The nested latest-revision summary has exactly `id`, `memory_id`, `revision_number`, `title`, `content_type`, `content_hash`, `excerpt`, `actor_type`, `actor_id`, and `inserted_at`. It excludes full `content`. Timestamp, actor, hash, and content-type semantics match existing detail/search responses. `excerpt` reuses the existing deterministic Markdown-to-plain-text normalization and 240-character bound.
