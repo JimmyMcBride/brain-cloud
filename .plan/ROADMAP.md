@@ -35,7 +35,7 @@ Phase 2I is complete through merged PR #30 from [#28](https://github.com/JimmyMc
 
 ## Phase 3 — Complete cloud-native project model
 
-Context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repositories, and project relationships.
+Phase 3A is complete through merged PR #34: permission-filtered project discovery and detail, explicit `projects.read`, and stable keyset pagination. Phase 3B planning now targets the missing memory inventory bridge. Later slices retain context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repositories, and project relationships.
 
 ## Phase 4 — Hosted retrieval and context compilation
 
@@ -97,6 +97,6 @@ Containers, Compose, migrations, backup/restore, upgrades, workers, observabilit
 
 This revision does not implement Planning, migrate standalone Plan, choose an external module transport, define the final manifest, load community code, or scaffold module UI.
 
-## Phase 3A specification
+## Phase 3A completion and Phase 3B planning
 
-Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31), Project discovery foundation, is published for review. Proposed scope: API-only accessible-project list/detail, explicit projects.read without token/invitation backfills, existing project fields, bounded keyset pagination, and fresh tenant/grant checks on every request. Bootstrap-token rotation is the deliberate upgrade path for existing owners needing the new scope. No new endpoints are implemented yet; spec approval precedes execution.
+Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) is complete through squash-merged PR [#34](https://github.com/JimmyMcBride/brain-cloud/pull/34). Active brainstorm `memory-discovery-foundation` proposes one bearer-only, access-filtered memory collection endpoint with compact latest-revision summaries and bounded keyset pagination. Revision mutation/history, archive, metadata, UI, SDK, and CLI remain later work.

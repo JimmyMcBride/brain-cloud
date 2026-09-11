@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-08T01:08:02Z"
+updated: "2026-09-09T04:23:49Z"
 ---
 # Brain Cloud roadmap
 
@@ -79,7 +79,7 @@ Later Phase 2 slices add owner invitations and finer-grained access. Agent propo
 
 ### Phase 3 — Complete cloud-native Brain project model
 
-**Phase 3A in implementation.** Canonical spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) adds permission-filtered project list/detail, explicit `projects.read`, and bounded keyset pagination without credential backfill. Later Phase 3 slices cover context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repository associations, and project relationships.
+**Phase 3A complete.** Canonical spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) shipped through merged PR [#34](https://github.com/JimmyMcBride/brain-cloud/pull/34): permission-filtered project list/detail, explicit `projects.read`, and bounded keyset pagination without credential backfill. **Phase 3B planning** now targets the missing memory inventory bridge. Later Phase 3 slices cover context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repository associations, and project relationships.
 
 ### Phase 4 — Hosted retrieval and context compilation
 
@@ -155,6 +155,6 @@ Planning remains focused on turning durable project understanding into structure
 
 The current implementation does not include product CRUD UI, owner invitations, alternate authenticators, proposals, custom roles, deny rules, complete revision history, semantic search, context compilation, sync, Hive Mind, SDK/CLI integration, the module registry, Planning domain, external process protocol, module sandbox, module UI, or module package format.
 
-## Phase 3A specification
+## Phase 3B planning
 
-Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31), Project discovery foundation, is approved and in implementation. It adds API-only accessible-project list/detail, explicit `projects.read` without token/invitation backfills, existing project fields, bounded keyset pagination, and fresh tenant/grant checks on every request. Bootstrap-token rotation is the deliberate upgrade path for existing owners needing the new scope.
+Active brainstorm `memory-discovery-foundation` proposes one bearer-only `GET /v1/projects/{project_id}/memories` collection route using existing `memory.read` plus project reader/editor access. Recommended shape: compact latest-revision summaries without full content, deterministic memory creation cursors, no totals, and no credential backfill. Revision creation/history/diff/restore, archive/delete, categories, custom metadata, UI, SDK, and CLI remain later work.

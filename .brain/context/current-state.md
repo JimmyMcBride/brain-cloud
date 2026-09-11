@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-08T01:18:27Z"
+updated: "2026-09-09T04:23:49Z"
 ---
 # Current State
 
@@ -72,6 +72,6 @@ Planning PRs must avoid closing keywords next to issue numbers, even in negated 
 
 PR #30 review follow-up: browser admission confirmation now distinguishes an already signed-in matching recipient from a signed-out recipient. Regression coverage checks both redirect/message pairs and selected-organization persistence.
 
-## Phase 3A project discovery implementation
+## Phase 3A complete and Phase 3B shaping
 
-Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) is approved. Branch `codex/project-discovery-foundation` implements bearer-only project list/detail, explicit `projects.read`, strict bounded keyset cursors, PostgreSQL access filtering, and no credential or invitation backfill. Existing owners deliberately rotate bootstrap credentials with `ROTATE_TOKEN=true` when they need the additive scope. Implementation is verified locally: 168 tests, migration rollback/forward, optimized representative query plan, production assets, Docker image, Compose smoke, database outage/recovery, OpenAPI validation, Brain audit, and Plan check pass. GitHub review remains.
+Canonical spec #31 shipped through squash-merged PR #34 at `33edf36`. Project list/detail, explicit `projects.read`, strict project cursors, PostgreSQL access filtering, and the composite pagination index are on `develop`; CI passed. Active branch `codex/memory-discovery-foundation` holds the next bounded brainstorm: one access-filtered memory collection endpoint with compact latest-revision summaries and stable pagination. No Phase 3B code or canonical GitHub spec exists yet.
