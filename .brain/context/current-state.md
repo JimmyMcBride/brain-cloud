@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-09T04:23:49Z"
+updated: "2026-09-12T01:11:27Z"
 ---
 # Current State
 
@@ -72,6 +72,6 @@ Planning PRs must avoid closing keywords next to issue numbers, even in negated 
 
 PR #30 review follow-up: browser admission confirmation now distinguishes an already signed-in matching recipient from a signed-out recipient. Regression coverage checks both redirect/message pairs and selected-organization persistence.
 
-## Phase 3A complete and Phase 3B shaping
+## Phase 3A complete and Phase 3B specification
 
-Canonical spec #31 shipped through squash-merged PR #34 at `33edf36`. Project list/detail, explicit `projects.read`, strict project cursors, PostgreSQL access filtering, and the composite pagination index are on `develop`; CI passed. Active branch `codex/memory-discovery-foundation` holds the next bounded brainstorm: one access-filtered memory collection endpoint with compact latest-revision summaries and stable pagination. No Phase 3B code or canonical GitHub spec exists yet.
+Canonical spec #31 shipped through squash-merged PR #34 at `33edf36`. Project list/detail, explicit `projects.read`, strict project cursors, PostgreSQL access filtering, and the composite pagination index are on `develop`; CI passed. Canonical GitHub spec #36, `memory-discovery-foundation`, now defines the next bounded slice: one access-filtered memory collection endpoint with compact latest-revision summaries and stable pagination. It remains in review; no Phase 3B implementation exists yet.
