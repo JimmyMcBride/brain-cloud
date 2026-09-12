@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-09T04:23:49Z"
+updated: "2026-09-12T04:50:41Z"
 ---
 # Brain Cloud roadmap
 
@@ -79,7 +79,7 @@ Later Phase 2 slices add owner invitations and finer-grained access. Agent propo
 
 ### Phase 3 — Complete cloud-native Brain project model
 
-**Phase 3A complete.** Canonical spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) shipped through merged PR [#34](https://github.com/JimmyMcBride/brain-cloud/pull/34): permission-filtered project list/detail, explicit `projects.read`, and bounded keyset pagination without credential backfill. **Phase 3B planning** now targets the missing memory inventory bridge. Later Phase 3 slices cover context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repository associations, and project relationships.
+**Phase 3A complete.** Canonical spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) shipped through merged PR [#34](https://github.com/JimmyMcBride/brain-cloud/pull/34): permission-filtered project list/detail, explicit `projects.read`, and bounded keyset pagination without credential backfill. **Phase 3B approved.** Canonical spec [#36](https://github.com/JimmyMcBride/brain-cloud/issues/36) defines the missing memory inventory bridge and is ready for execution after its planning PR merges. Later Phase 3 slices cover context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repository associations, and project relationships.
 
 ### Phase 4 — Hosted retrieval and context compilation
 
@@ -157,4 +157,4 @@ The current implementation does not include product CRUD UI, owner invitations, 
 
 ## Phase 3B planning
 
-Active brainstorm `memory-discovery-foundation` proposes one bearer-only `GET /v1/projects/{project_id}/memories` collection route using existing `memory.read` plus project reader/editor access. Recommended shape: compact latest-revision summaries without full content, deterministic memory creation cursors, no totals, and no credential backfill. Revision creation/history/diff/restore, archive/delete, categories, custom metadata, UI, SDK, and CLI remain later work.
+Approved canonical spec [#36](https://github.com/JimmyMcBride/brain-cloud/issues/36), `memory-discovery-foundation`, defines one bearer-only `GET /v1/projects/{project_id}/memories` collection route using existing `memory.read` plus project reader/editor access. It is ready for execution after its planning PR merges. Its shape is compact latest-revision summaries without full content, deterministic memory creation cursors, no totals, and no credential backfill. Revision creation/history/diff/restore, archive/delete, categories, custom metadata, UI, SDK, and CLI remain later work.
