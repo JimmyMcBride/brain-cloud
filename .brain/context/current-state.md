@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-12T01:11:27Z"
+updated: "2026-09-12T04:50:41Z"
 ---
 # Current State
 
@@ -74,4 +74,4 @@ PR #30 review follow-up: browser admission confirmation now distinguishes an alr
 
 ## Phase 3A complete and Phase 3B specification
 
-Canonical spec #31 shipped through squash-merged PR #34 at `33edf36`. Project list/detail, explicit `projects.read`, strict project cursors, PostgreSQL access filtering, and the composite pagination index are on `develop`; CI passed. Canonical GitHub spec #36, `memory-discovery-foundation`, now defines the next bounded slice: one access-filtered memory collection endpoint with compact latest-revision summaries and stable pagination. It remains in review; no Phase 3B implementation exists yet.
+Canonical spec #31 shipped through squash-merged PR #34 at `33edf36`. Project list/detail, explicit `projects.read`, strict project cursors, PostgreSQL access filtering, and the composite pagination index are on `develop`; CI passed. Approved canonical GitHub spec #36, `memory-discovery-foundation`, defines the next bounded slice: one access-filtered memory collection endpoint with compact latest-revision summaries, stable pagination, a required composite memory index, and no revision-writing expansion. It is ready for execution after planning PR #37 merges; no Phase 3B implementation exists yet.

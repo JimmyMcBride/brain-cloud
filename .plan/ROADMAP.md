@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-12T01:16:04Z"
+updated: "2026-09-12T04:50:41Z"
 ---
 # Roadmap: brain-cloud
 
@@ -35,7 +35,7 @@ Phase 2I is complete through merged PR #30 from [#28](https://github.com/JimmyMc
 
 ## Phase 3 — Complete cloud-native project model
 
-Phase 3A is complete through merged PR #34: permission-filtered project discovery and detail, explicit `projects.read`, and stable keyset pagination. Canonical Phase 3B spec #36 now defines the missing memory inventory bridge and remains in review before implementation. Later slices retain context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repositories, and project relationships.
+Phase 3A is complete through merged PR #34: permission-filtered project discovery and detail, explicit `projects.read`, and stable keyset pagination. Approved canonical Phase 3B spec #36 defines the missing memory inventory bridge and is ready for execution after its planning PR merges. Later slices retain context/memory categories, metadata, revisions, diff/restore, archive/delete, import/export, repositories, and project relationships.
 
 ## Phase 4 — Hosted retrieval and context compilation
 
@@ -99,4 +99,4 @@ This revision does not implement Planning, migrate standalone Plan, choose an ex
 
 ## Phase 3A completion and Phase 3B planning
 
-Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) is complete through squash-merged PR [#34](https://github.com/JimmyMcBride/brain-cloud/pull/34). Canonical Phase 3B spec [#36](https://github.com/JimmyMcBride/brain-cloud/issues/36), `memory-discovery-foundation`, proposes one bearer-only, access-filtered memory collection endpoint with compact latest-revision summaries and bounded keyset pagination; it remains in review before implementation. Revision mutation/history, archive, metadata, UI, SDK, and CLI remain later work.
+Canonical GitHub spec [#31](https://github.com/JimmyMcBride/brain-cloud/issues/31) is complete through squash-merged PR [#34](https://github.com/JimmyMcBride/brain-cloud/pull/34). Approved canonical Phase 3B spec [#36](https://github.com/JimmyMcBride/brain-cloud/issues/36), `memory-discovery-foundation`, defines one bearer-only, access-filtered memory collection endpoint with compact latest-revision summaries and bounded keyset pagination; it is ready for execution after its planning PR merges. Revision mutation/history, archive, metadata, UI, SDK, and CLI remain later work.
