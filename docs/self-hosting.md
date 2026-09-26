@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-08T01:07:07Z"
+updated: "2026-09-26T22:32:21Z"
 ---
 # Self-hosting direction
 
@@ -26,6 +26,8 @@ Owners administer direct project grants through `/v1/projects/{project_id}/acces
 Owners administer teams through `/v1/organization/teams` with `teams.manage`, link active memberships through each team's `/members` route, and administer separate team grants through `/v1/projects/{project_id}/team-access` with `projects.manage_access`. Deactivation retains links/grants but immediately makes team-derived access dormant. The Phase 2D upgrade adds `teams.manage` only to active owner tokens already containing every pre-Phase 2D supported scope; partial tokens remain unchanged.
 
 Owners administer agents through `/v1/organization/agents` with `agents.manage`, issue one-time project-discovery/write/read/search credentials through nested `/tokens` routes, and administer reader/editor grants through `/v1/projects/{project_id}/agent-access` with `projects.manage_access`. Agent deactivation revokes active credentials and retains dormant grants; reactivation requires fresh credentials. The Phase 2E identity upgrade adds `agents.manage` only to active full-scope owner tokens containing every pre-Phase 2E scope; partial and member tokens remain unchanged. No agents or grants are backfilled.
+
+Authorized humans and agents enumerate a project's memories through `GET /v1/projects/{project_id}/memories` with `memory.read`. The collection returns compact latest-revision summaries and excerpts, never full content or totals, and uses opaque bounded cursors. Its migration replaces the single-column memory project index with `(project_id, inserted_at, id)`; the leading project column preserves lookup support while the complete index supports stable traversal. Run migrations before starting the upgraded release and use `make smoke-phase2` to exercise listing, pagination, access revocation, tenant isolation, restart durability, and readiness recovery.
 
 Production self-hosting still needs versioned image publication, backup and restore, upgrade runbooks, secret-manager integration, reverse-proxy IP rate limiting, observability, and broader operations hardening. Redis, object storage, queues, and vector databases are not assumed.
 

@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-08T01:07:07Z"
+updated: "2026-09-26T22:32:21Z"
 ---
 # Security direction
 
@@ -31,7 +31,7 @@ PostgreSQL row locks serialize changes that could remove an active owner. The fi
 
 Project discovery requires the independent `projects.read` scope. Owners see all projects in their organization; members see the distinct union of direct and active-team reader/editor grants; agents see direct reader/editor grants only. Access filtering runs in PostgreSQL before keyset pagination and serialization. Missing, malformed, foreign, and inaccessible detail IDs remain indistinguishable. Existing credentials and pending invitations are never widened automatically.
 
-Project access combines fixed token scopes with membership-level authorization. Owners have implicit full access. Active members need a direct `reader` or `editor` grant: readers may retrieve memories and search, while editors may also create memories. Authorization occurs before any memory, revision, or search query so denied projects return the same non-enumerating `404 project_not_found` response as missing, malformed, inaccessible, and cross-tenant projects.
+Project access combines fixed token scopes with membership-level authorization. Owners have implicit full access. Active members need a direct or active-team `reader` or `editor` grant; active agents need a direct grant. Readers may list/retrieve memories and search, while editors may also create memories. Memory listing requires `memory.read`, authorizes the project before cursor validation, performs authorization on every page, returns no totals or full revision content, and emits no read audit row. Denied projects return the same non-enumerating `404 project_not_found` response as missing, malformed, inaccessible, and cross-tenant projects.
 
 Grant administration requires an active owner plus `projects.manage_access`. PostgreSQL composite foreign keys enforce that each grant, project, and membership share one organization. Inactive memberships cannot receive grants, but existing grants survive suspension/reactivation and role changes; they are dormant for inactive memberships and owners. Member-created projects atomically grant the creator editor access. Existing member/project pairs are backfilled as editors during upgrade, including inactive memberships, while owners remain implicit.
 
