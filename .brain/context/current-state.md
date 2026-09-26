@@ -1,5 +1,5 @@
 ---
-updated: "2026-09-12T04:50:41Z"
+updated: "2026-09-26T22:32:21Z"
 ---
 # Current State
 
@@ -72,6 +72,6 @@ Planning PRs must avoid closing keywords next to issue numbers, even in negated 
 
 PR #30 review follow-up: browser admission confirmation now distinguishes an already signed-in matching recipient from a signed-out recipient. Regression coverage checks both redirect/message pairs and selected-organization persistence.
 
-## Phase 3A complete and Phase 3B specification
+## Phase 3A complete and Phase 3B implementation
 
-Canonical spec #31 shipped through squash-merged PR #34 at `33edf36`. Project list/detail, explicit `projects.read`, strict project cursors, PostgreSQL access filtering, and the composite pagination index are on `develop`; CI passed. Approved canonical GitHub spec #36, `memory-discovery-foundation`, defines the next bounded slice: one access-filtered memory collection endpoint with compact latest-revision summaries, stable pagination, a required composite memory index, and no revision-writing expansion. It is ready for execution after planning PR #37 merges; no Phase 3B implementation exists yet.
+Canonical spec #31 shipped through squash-merged PR #34 at `33edf36`. Project list/detail, explicit `projects.read`, strict project cursors, PostgreSQL access filtering, and the composite pagination index are on `develop`; CI passed. Canonical GitHub spec #36, `memory-discovery-foundation`, is implemented for review on `codex/memory-discovery-foundation-implementation`: one access-filtered memory collection endpoint with compact latest-revision summaries, strict pagination, a composite `(project_id, inserted_at, id)` index, and no revision-writing expansion. OpenAPI, tests, durable docs, and Compose smoke cover the additive route.
