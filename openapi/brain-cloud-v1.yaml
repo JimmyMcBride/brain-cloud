@@ -880,6 +880,37 @@ paths:
         "403": {$ref: "#/components/responses/Forbidden"}
         "404": {$ref: "#/components/responses/ProjectOrAgentNotFound"}
   /v1/projects/{project_id}/memories:
+    get:
+      operationId: listProjectMemories
+      summary: List memory summaries for an accessible project
+      description: Requires owner, direct reader/editor, active-team reader/editor, or direct agent reader/editor access in addition to memory.read. Results use ascending keyset pagination by memory inserted_at and id; each summary contains the latest revision metadata and excerpt but never revision content.
+      x-required-scope: memory.read
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - in: query
+          name: limit
+          schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+        - in: query
+          name: cursor
+          description: Opaque unpadded base64url memory position returned by the prior page.
+          schema: {type: string, minLength: 1, maxLength: 512}
+      responses:
+        "200":
+          description: Project-scoped memory summaries. The response is never cacheable.
+          headers:
+            Cache-Control: {schema: {type: string, const: no-store}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MemoryListEnvelope"}
+              examples:
+                found:
+                  $ref: "#/components/examples/MemoryList"
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
     post:
       operationId: createMemory
       summary: Create a memory with immutable revision 1
@@ -1406,6 +1437,25 @@ components:
             actor_type: human
             actor_id: 00000000-0000-0000-0000-000000000001
             inserted_at: "2026-07-28T05:01:00.000000Z"
+    MemoryList:
+      value:
+        memories:
+          - id: 22222222-2222-4222-8222-222222222222
+            project_id: 11111111-1111-4111-8111-111111111111
+            inserted_at: "2026-07-28T05:01:00.000000Z"
+            updated_at: "2026-07-28T05:01:00.000000Z"
+            revision:
+              id: 33333333-3333-4333-8333-333333333333
+              memory_id: 22222222-2222-4222-8222-222222222222
+              revision_number: 1
+              title: Phoenix Notes
+              content_type: text/markdown
+              content_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+              excerpt: Durable Phoenix cloud memory
+              actor_type: human
+              actor_id: 00000000-0000-0000-0000-000000000001
+              inserted_at: "2026-07-28T05:01:00.000000Z"
+        next_cursor: null
     TokenCreated:
       value:
         token:
@@ -2011,6 +2061,79 @@ components:
       properties:
         memory:
           $ref: "#/components/schemas/Memory"
+    MemoryListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [memories, next_cursor]
+      properties:
+        memories:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemorySummary"
+        next_cursor:
+          type: [string, "null"]
+    MemorySummary:
+      type: object
+      additionalProperties: false
+      required: [id, project_id, inserted_at, updated_at, revision]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        revision:
+          $ref: "#/components/schemas/MemoryRevisionSummary"
+    MemoryRevisionSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - memory_id
+        - revision_number
+        - title
+        - content_type
+        - content_hash
+        - excerpt
+        - actor_type
+        - actor_id
+        - inserted_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        memory_id:
+          type: string
+          format: uuid
+        revision_number:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        content_type:
+          const: text/markdown
+        content_hash:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        excerpt:
+          type: string
+          maxLength: 240
+        actor_type:
+          type: string
+          enum: [human, agent]
+        actor_id:
+          type: string
+          format: uuid
+        inserted_at:
+          type: string
+          format: date-time
     Memory:
       type: object
       additionalProperties: false

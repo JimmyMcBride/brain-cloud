@@ -44,4 +44,4 @@ Phase 1 through Phase 2H are complete. Phase 2I is complete through merged PR #3
 
 ## Current Phase 3 focus
 
-Phase 3A project discovery is complete through merged PR #34 from canonical spec #31. Approved canonical Phase 3B spec [#36](https://github.com/JimmyMcBride/brain-cloud/issues/36), `memory-discovery-foundation`, defines the missing memory inventory bridge: one scoped collection endpoint with compact latest-revision summaries and stable pagination, without revision mutation, archive, metadata, UI, SDK, or CLI scope. It is ready for execution after its planning PR merges.
+Phase 3A project discovery is complete through merged PR #34 from canonical spec #31. Canonical Phase 3B spec [#36](https://github.com/JimmyMcBride/brain-cloud/issues/36), `memory-discovery-foundation`, is implemented for review: one scoped collection endpoint with compact latest-revision summaries, strict stable pagination, and a supporting composite index, without revision mutation, archive, metadata, UI, SDK, or CLI scope.

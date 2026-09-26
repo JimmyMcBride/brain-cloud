@@ -441,6 +441,24 @@ printf '%s' "$memory_response" |
      .memory.revision.content_hash == $hash and
      .memory.revision.actor_type == "human"' >/dev/null
 
+memory_list_response="$(
+  authorized_curl "$token_a" \
+    --dump-header "$scratch_dir/memory-list-headers" \
+    "$base_url/v1/projects/$project_id/memories?limit=1"
+)"
+memory_cursor="$(printf '%s' "$memory_list_response" | jq -er '.next_cursor')"
+grep -Eiq '^cache-control: no-store\r?$' "$scratch_dir/memory-list-headers"
+printf '%s' "$memory_list_response" |
+  jq -e '
+    (.memories | length) == 1 and
+    (.memories[0] | keys | sort) == ["id","inserted_at","project_id","revision","updated_at"] and
+    (.memories[0].revision | keys | sort) == ["actor_id","actor_type","content_hash","content_type","excerpt","id","inserted_at","memory_id","revision_number","title"] and
+    (.memories[0].revision | has("content") | not)' >/dev/null
+
+authorized_curl "$token_a" \
+  "$base_url/v1/projects/$project_id/memories?limit=100&cursor=$memory_cursor" |
+  jq -e '.memories | length >= 1' >/dev/null
+
 agent_response="$(
   authorized_curl "$token_a" \
     --header 'Content-Type: application/json' \
@@ -468,6 +486,9 @@ authorized_curl "$token_a" \
 
 authorized_curl "$agent_token" "$base_url/v1/projects/$project_id/memories/$memory_id" |
   jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
+authorized_curl "$agent_token" "$base_url/v1/projects/$project_id/memories?limit=100" |
+  jq -e --arg memory_id "$memory_id" \
+    'any(.memories[]; .id == $memory_id) and has("next_cursor")' >/dev/null
 authorized_curl "$agent_token" "$base_url/v1/projects?limit=1" |
   jq -e --arg project_id "$project_id" '.projects[0].id == $project_id' >/dev/null
 authorized_curl "$agent_token" "$base_url/v1/projects/$project_id" |
@@ -625,6 +646,7 @@ authorized_curl "$token_a" "$base_url/v1/auth/tokens" |
     'all(.tokens[]; .id != $agent_token_id)' >/dev/null
 
 for tenant_b_path in \
+  "$base_url/v1/projects/$project_id/memories" \
   "$base_url/v1/projects/$project_id/memories/$memory_id" \
   "$base_url/v1/projects/$project_id/search?q=phoenix"; do
   cross_status="$(
@@ -671,6 +693,9 @@ authorized_curl "$reader_token" \
 authorized_curl "$member_token" \
   "$base_url/v1/projects/$project_id/memories/$memory_id" |
   jq -e --arg memory_id "$memory_id" '.memory.id == $memory_id' >/dev/null
+authorized_curl "$member_token" \
+  "$base_url/v1/projects/$project_id/memories?limit=100" |
+  jq -e --arg memory_id "$memory_id" 'any(.memories[]; .id == $memory_id)' >/dev/null
 
 authorized_curl "$second_owner_token" \
   --request DELETE \

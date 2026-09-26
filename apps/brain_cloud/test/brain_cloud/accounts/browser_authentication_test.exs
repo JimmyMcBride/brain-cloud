@@ -228,9 +228,11 @@ defmodule BrainCloud.Accounts.BrowserAuthenticationTest do
     refute is_nil(Repo.get!(BrowserSession, old_session.id).revoked_at)
     assert {:error, :unauthorized} = Accounts.authenticate_browser_session(session_token)
 
-    assert :ok = Accounts.logout_browser_session(replacement_token)
-    assert :ok = Accounts.logout_browser_session(replacement_token)
-    assert {:error, :unauthorized} = Accounts.authenticate_browser_session(replacement_token)
+    assert :ok = Accounts.logout_browser_session(replacement_token, now: reissue_at)
+    assert :ok = Accounts.logout_browser_session(replacement_token, now: reissue_at)
+
+    assert {:error, :unauthorized} =
+             Accounts.authenticate_browser_session(replacement_token, now: reissue_at)
 
     assert Repo.aggregate(
              from(event in UserAuthEvent, where: event.action == "session.logout"),
