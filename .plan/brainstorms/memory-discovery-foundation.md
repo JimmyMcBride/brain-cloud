@@ -5,9 +5,9 @@ slug: memory-discovery-foundation
 status: active
 title: Memory discovery foundation
 type: brainstorm
-updated_at: "2026-09-09T04:31:00Z"
+updated: "2026-09-12T04:50:41Z"
+updated_at: "2026-09-12T02:45:00Z"
 ---
-
 # Brainstorm: Memory discovery foundation
 
 Started: 2026-09-09T04:20:00Z
@@ -136,11 +136,11 @@ Scope:
 - Preserve project-first concealment and freshness. Error precedence is authenticate, require `memory.read`, authorize the project from current PostgreSQL state, then validate pagination. Missing/invalid/revoked credentials use existing `401 unauthorized`; missing scope uses existing `403 forbidden`; malformed, foreign, or inaccessible projects use existing `404 project_not_found` even when pagination is also invalid. Project access changes committed before a subsequent request affect that request. Requests already in flight may use their read snapshot.
 - Return `200 {"memories":[<summary>],"next_cursor":<string-or-null>}` with `Cache-Control: no-store`. Empty results use an empty array and null cursor. No totals. Unknown unrelated query parameters are ignored.
 - Each summary has exactly `id`, `project_id`, `inserted_at`, `updated_at`, and `revision`. The nested latest-revision summary has exactly `id`, `memory_id`, `revision_number`, `title`, `content_type`, `content_hash`, `excerpt`, `actor_type`, `actor_id`, and `inserted_at`. It excludes full `content`. Timestamp, actor, hash, and content-type semantics match existing detail/search responses. `excerpt` reuses the existing deterministic Markdown-to-plain-text normalization and 240-character bound.
-- Define latest revision as the row with greatest `revision_number` for the memory. Select exactly one latest revision in PostgreSQL before serialization; do not preload all history. This definition is forward-compatible but exposes no revision creation, history, diff, or restore operation.
+- Define latest revision as the row with greatest `revision_number` for the memory. Select exactly one latest revision in PostgreSQL before serialization; do not preload all history. This definition is forward-compatible but exposes no revision creation, history, diff, or restore operation. Preserve the existing revision-1 write invariant: do not relax `MemoryRevision.changeset/2` or add a revision-writing path. Multi-revision coverage must use test-only database fixtures.
 - List parameters mirror project discovery: `limit` defaults to 20 and accepts only a supplied scalar decimal integer from 1 through 100; `cursor` is optional. Empty, malformed, or non-scalar values return existing `422 validation_failed` with `details.limit = ["must be an integer between 1 and 100"]` and/or `details.cursor = ["is invalid"]`, including both keys when both inputs are invalid.
 - Order ascending by immutable memory `inserted_at` and UUID. Filter to the already-authorized project, select one latest revision per memory, then take `limit + 1`. Return at most `limit`; emit the last returned memory cursor only when another authorized row exists. Cursor anchors need not remain present. Concurrent inserts behind the cursor may be missed until traversal restarts; no snapshot-export guarantee.
 - Cursor v1 is an unpadded base64url UTF-8 JSON object with exactly `v: 1`, `inserted_at` as UTC RFC3339 with six fractional digits, and `id` as canonical lowercase UUID. Enforce scalar input and a 512-byte encoded maximum before safe JSON decode, exact keys/types/version/time/UUID, and no Erlang term decoding. Cursor is an unsigned position, never authorization, project identity, or persisted state. Use a memory-specific helper; do not extract a generic pagination framework.
-- Keep query and latest-revision selection in `brain_cloud`; keep controller, cursor decoding, and JSON projection in `brain_cloud_web`. Add no business-data schema change. Review representative project-size query plans; a focused reversible `(project_id, inserted_at, id)` memory index is allowed only if evidence warrants it. Existing `(memory_id, revision_number)` uniqueness should support latest-revision lookup unless evidence shows otherwise.
+- Keep query and latest-revision selection in `brain_cloud`; keep controller, cursor decoding, and JSON projection in `brain_cloud_web`. Add no logical data-model change. Add a reversible migration that replaces the existing single-column memories `project_id` index with `(project_id, inserted_at, id)`, whose leading column preserves project lookup support while its full order supports keyset traversal. Existing `(memory_id, revision_number)` uniqueness supports backward latest-revision lookup. Confirm both access paths with representative `EXPLAIN ANALYZE` output.
 - Update OpenAPI, README, architecture/security/self-hosting/workflow/roadmap, Brain context, and release smoke. Preserve existing project discovery, memory create/detail/search, identity, access, browser, invitation, and system-info wire contracts. The operation count changes only for this one endpoint.
 - Non-goals: revision creation/history/diff/restore; memory update/archive/delete; categories, tags, custom metadata, relationships, repositories, import/export; search changes; product UI; Planning; SDK/CLI; generic policy/pagination frameworks; background jobs.
 
@@ -155,10 +155,10 @@ Acceptance criteria:
 Verification:
 
 - Domain/controller tests cover owner, direct member, active-team member, agent, overlapping grants, no grants, foreign tenant, malformed project, invalid/revoked token, missing scope, and browser-cookie-only access.
-- Pagination/cursor tests cover defaults, empty/final pages, limits 1/100, equal timestamps, anchor deletion, latest-revision selection, interleaved inaccessible projects, invalid encoding/keys/types/version/time/UUID, 512-byte boundary, nested parameters, and cross-credential reuse.
+- Pagination/cursor tests cover defaults, empty/final pages, limits 1/100, equal timestamps, anchor deletion, latest-revision selection, interleaved inaccessible projects, invalid encoding/keys/types/version/time/UUID, 512-byte boundary, nested parameters, and cross-credential reuse. Create any revision 2+ rows only through test-only database fixtures and assert the production changeset still rejects revision numbers other than 1.
 - Assert exact success/error JSON, exact field exclusion of `content`, 240-character excerpt behavior, no-store, no read audits, fresh lifecycle/access changes, unchanged existing endpoint contracts, and unchanged system capabilities.
-- Run `make check`, `make upgrade-phase2`, Docker build, expanded Compose smoke, OpenAPI parse/operation assertions, representative `EXPLAIN ANALYZE`, reversible optional-index testing if added, `brain context audit`, `plan check`, `git diff --check`, and Brain session finish. No production migration or deployment.
+- Run `make check`, `make upgrade-phase2`, Docker build, expanded Compose smoke, OpenAPI parse/operation assertions, representative `EXPLAIN ANALYZE` for the composite memory and latest-revision indexes, reversible index-migration testing, `brain context audit`, `plan check`, `git diff --check`, and Brain session finish. No production migration or deployment.
 
 Dependencies: none. Phase 3A canonical spec #31 is complete through merged PR #34; existing read authorization, immutable revision-1 persistence, provenance, detail/search projections, and cursor precedent are available on `develop`.
 
-Readiness: review. The brainstorm recommends one bounded spec; exact contract should receive review before Plan promotion to canonical GitHub issue.
+Readiness: approved. Review accepted the bounded contract, preserved the revision-1 write boundary, and fixed the composite-index requirement. Canonical GitHub spec #36 is ready for execution after the planning PR merges.
