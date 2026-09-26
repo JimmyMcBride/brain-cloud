@@ -106,6 +106,7 @@ defmodule BrainCloudWeb.Router do
            AgentProjectAccessController,
            :delete
 
+    get "/projects/:project_id/memories", MemoryController, :index
     post "/projects/:project_id/memories", MemoryController, :create
     get "/projects/:project_id/memories/:id", MemoryController, :show
     get "/projects/:project_id/search", SearchController, :index

@@ -10,6 +10,7 @@ defmodule BrainCloud.Memories do
   alias BrainCloud.Accounts
   alias BrainCloud.Accounts.AuthContext
   alias BrainCloud.Projects
+  alias BrainCloud.Projects.Project
   alias BrainCloud.Repo
   alias Ecto.Multi
 
@@ -70,6 +71,43 @@ defmodule BrainCloud.Memories do
       :error -> {:error, :memory_not_found}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  def list_memories(%Project{id: project_id}, limit, cursor \\ nil)
+      when is_integer(limit) and limit in 1..100 do
+    latest_revision =
+      from revision in MemoryRevision,
+        where: revision.memory_id == parent_as(:memory).id,
+        order_by: [desc: revision.revision_number],
+        limit: 1
+
+    query =
+      from memory in Memory,
+        as: :memory,
+        inner_lateral_join: revision in subquery(latest_revision),
+        on: true,
+        where: memory.project_id == ^project_id,
+        select: {memory, revision}
+
+    rows =
+      query
+      |> after_memory_cursor(cursor)
+      |> order_by([memory], asc: memory.inserted_at, asc: memory.id)
+      |> limit(^(limit + 1))
+      |> Repo.all()
+
+    memories =
+      rows
+      |> Enum.take(limit)
+      |> Enum.map(fn {memory, revision} ->
+        %{
+          memory: memory,
+          revision: revision,
+          excerpt: plain_text_excerpt(revision.content)
+        }
+      end)
+
+    {memories, length(rows) > limit}
   end
 
   def search(project_id, query, %AuthContext{} = auth) do
@@ -165,6 +203,17 @@ defmodule BrainCloud.Memories do
     |> Map.put(:actor_type, "agent")
     |> Map.put(:actor_id, result.actor_agent_id)
     |> Map.drop([:actor_user_id, :actor_agent_id])
+  end
+
+  defp after_memory_cursor(query, nil), do: query
+
+  defp after_memory_cursor(query, {inserted_at, id}) do
+    where(
+      query,
+      [memory],
+      memory.inserted_at > ^inserted_at or
+        (memory.inserted_at == ^inserted_at and memory.id > ^id)
+    )
   end
 
   defp plain_text_excerpt(content) do

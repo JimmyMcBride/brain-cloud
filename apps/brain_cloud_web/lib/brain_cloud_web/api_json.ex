@@ -136,6 +136,27 @@ defmodule BrainCloudWeb.APIJSON do
     }
   end
 
+  def memory_summary(%{memory: memory, revision: revision, excerpt: excerpt}) do
+    %{
+      id: memory.id,
+      project_id: memory.project_id,
+      inserted_at: timestamp(memory.inserted_at),
+      updated_at: timestamp(memory.updated_at),
+      revision: %{
+        id: revision.id,
+        memory_id: revision.memory_id,
+        revision_number: revision.revision_number,
+        title: revision.title,
+        content_type: revision.content_type,
+        content_hash: revision.content_hash,
+        excerpt: excerpt,
+        actor_type: BrainCloud.Memories.MemoryRevision.actor_type(revision),
+        actor_id: BrainCloud.Memories.MemoryRevision.actor_id(revision),
+        inserted_at: timestamp(revision.inserted_at)
+      }
+    }
+  end
+
   def search_result(result) do
     %{
       memory_id: result.memory_id,
